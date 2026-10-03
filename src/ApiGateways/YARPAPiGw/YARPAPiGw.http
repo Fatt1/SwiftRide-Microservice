@@ -1,0 +1,6 @@
+@YARPAPiGw_HostAddress = http://localhost:5047
+
+GET {{YARPAPiGw_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

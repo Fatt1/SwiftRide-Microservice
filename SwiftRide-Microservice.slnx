@@ -1,0 +1,41 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/ApiGateways/">
+    <Project Path="src/ApiGateways/YARPAPiGw/YARPAPiGw.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Common.Logging/Common.Logging.csproj" />
+    <Project Path="src/BuildingBlocks/Contracts/Contracts.csproj" />
+    <Project Path="src/BuildingBlocks/EventBus.Messages/EventBus.Messages.csproj" />
+    <Project Path="src/BuildingBlocks/Infrastructure/Infrastructure.csproj" />
+    <Project Path="src/BuildingBlocks/Shared/Shared.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Matching/">
+    <Project Path="src/Services/Matching/Matching.API/Matching.API.csproj" />
+    <Project Path="src/Services/Matching/Matching.Application/Matching.Application.csproj" Id="0057e79a-e289-47cb-a477-b517e0727b8e" />
+    <Project Path="src/Services/Matching/Matching.Domain/Matching.Domain.csproj" Id="93053d3e-6c2b-405d-a3e6-fbcfdc0ec101" />
+    <Project Path="src/Services/Matching/Matching.Infrastructure/Matching.Infrastructure.csproj" Id="1190fb9b-5947-4e7f-932d-bce439ffa6ba" />
+  </Folder>
+  <Folder Name="/src/Services/Payment/">
+    <Project Path="src/Services/Payment/Payment.API/Payment.API.csproj" />
+    <Project Path="src/Services/Payment/Payment.Application/Payment.Application.csproj" Id="0065da2e-1a89-48dc-8fae-5aa9ba8a0f84" />
+    <Project Path="src/Services/Payment/Payment.Domain/Payment.Domain.csproj" Id="c7161080-82c6-4d2f-bbd2-aa9014c63cc3" />
+    <Project Path="src/Services/Payment/Payment.Infrastructure/Payment.Infrastructure.csproj" Id="511dae21-ed6c-411b-80ba-c843bd707e88" />
+  </Folder>
+  <Folder Name="/src/Services/Trip/">
+    <Project Path="src/Services/Trip/Trip.API/Trip.API.csproj" />
+    <Project Path="src/Services/Trip/Trip.Application/Trip.Application.csproj" Id="2e776c5e-46f7-4f37-933d-502aa7e8c31e" />
+    <Project Path="src/Services/Trip/Trip.Domain/Trip.Domain.csproj" Id="9bff4060-479f-4826-9304-5900fa2f6958" />
+    <Project Path="src/Services/Trip/Trip.Infrastructure/Trip.Infrastructure.csproj" Id="4ae35e88-7617-49ec-972f-3a310c0d628e" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+</Solution>

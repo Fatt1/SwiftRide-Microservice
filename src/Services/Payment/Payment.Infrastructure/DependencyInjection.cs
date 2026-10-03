@@ -1,0 +1,27 @@
+using Infrastructure.Extensions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Payment.Infrastructure.Persistence;
+
+namespace Payment.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddPaymentInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? "Host=localhost;Port=5433;Database=swiftridedb;Username=postgres;Password=Password@123;";
+
+        services.AddDbContext<PaymentDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql =>
+            {
+                npgsql.MigrationsAssembly(typeof(PaymentDbContext).Assembly.FullName);
+            }));
+
+        // Register MassTransit + RabbitMQ + Transactional Outbox for PostgreSQL
+        services.AddCustomMassTransitWithPostgresOutbox<PaymentDbContext>(configuration);
+
+        return services;
+    }
+}

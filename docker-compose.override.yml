@@ -1,0 +1,72 @@
+services:
+  #database section
+  tripdb:
+    container_name: tripdb
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Password@123
+    ports:
+      - "1435:1433"
+    volumes:
+      - tripdb_data:/var/opt/mssql
+
+  paymentdb:
+    container_name: paymentdb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Password@123
+      - POSTGRES_DB=swiftridedb
+    ports:
+      - "5433:5432"
+    volumes:
+      - paymentdb_data:/var/lib/postgresql
+
+  matchingdb:
+    container_name: matchingdb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=Password@123
+    ports:
+      - "27017:27017"
+    volumes:
+      - matchingdb_data:/data/db
+
+  #database ui section
+  pgadmin:
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@swiftride.com
+      - PGADMIN_DEFAULT_PASSWORD=Password@123
+    ports:
+      - "5051:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  mongo-express:
+    container_name: mongo-express
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://root:Password%40123@matchingdb:27017/?authSource=admin
+      - ME_CONFIG_BASICAUTH=false
+    ports:
+      - "8081:8081"
+
+  #infrastructure section
+  rabbitmq:
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  portainer:
+    container_name: portainer
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data

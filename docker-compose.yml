@@ -1,0 +1,65 @@
+
+services:
+  #database section
+  tripdb:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    networks:
+      - swiftride-network
+
+  paymentdb:
+    image: postgres:latest
+    networks:
+      - swiftride-network
+
+  matchingdb:
+    image: mongo:latest
+    networks:
+      - swiftride-network
+
+  #database ui section
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    networks:
+      - swiftride-network
+
+  mongo-express:
+    image: mongo-express:latest
+    networks:
+      - swiftride-network
+
+  #infrastructure section
+  rabbitmq:
+    image: rabbitmq:3-management
+    networks:
+      - swiftride-network
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    networks:
+      - swiftride-network
+
+  #observability section
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: swiftride-jaeger
+    restart: always
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"   # Jaeger Web UI
+      - "4317:4317"     # OTLP gRPC receiver (dùng cho Matching.API / OpenTelemetry)
+      - "4318:4318"     # OTLP HTTP receiver
+    networks:
+      - swiftride-network
+
+networks:
+  swiftride-network:
+    driver: bridge
+
+volumes:
+  tripdb_data:
+  paymentdb_data:
+  matchingdb_data:
+  pgadmin_data:
+  rabbitmq_data:
+  portainer_data:
