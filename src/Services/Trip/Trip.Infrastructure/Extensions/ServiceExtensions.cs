@@ -4,9 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Trip.Infrastructure.Persistence;
 
-namespace Trip.Infrastructure;
+namespace Trip.Infrastructure.Extensions;
 
-public static class DependencyInjection
+public static class ServiceExtensions
 {
     public static IServiceCollection AddTripInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {

@@ -1,5 +1,4 @@
 using Matching.Domain.Entities;
-using Matching.Domain.Enums;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -21,7 +20,7 @@ public class MongoDbInitializer : IHostedService
     {
         try
         {
-            _logger.LogInformation("Initializing MongoDB collections, indexes, and seed data...");
+            _logger.LogInformation("Initializing MongoDB collections and indexes...");
 
             // 1. DriverLocation indexes
             var driverLocations = _database.GetCollection<DriverLocation>("driver_locations");
@@ -40,45 +39,6 @@ public class MongoDbInitializer : IHostedService
                 Builders<MatchSession>.IndexKeys.Ascending(x => x.TripId),
                 new CreateIndexOptions { Name = "IX_MatchSession_TripId" });
             await matchSessions.Indexes.CreateOneAsync(tripIdIndex, cancellationToken: cancellationToken);
-
-            // 3. Seed PricingConfig if empty
-            var pricingConfigs = _database.GetCollection<PricingConfig>("pricing_configs");
-            var hasConfig = await pricingConfigs.Find(_ => true).AnyAsync(cancellationToken);
-            if (!hasConfig)
-            {
-                var defaultConfig = new PricingConfig
-                {
-                    Id = Guid.CreateVersion7(),
-                    BaseFare = 15000,
-                    PerKmRate = 8000,
-                    PerMinRate = 500,
-                    TaxRate = 0.10m,
-                    SurgeApplyMode = SurgeApplyMode.Multiply,
-                    SurgeRules =
-                    [
-                        new SurgeRule
-                        {
-                            RuleId = Guid.NewGuid(),
-                            Type = SurgeType.Time,
-                            Name = "Peak Hour (Morning)",
-                            Multiplier = 1.3m,
-                            Condition = new SurgeCondition { FromHour = 7, ToHour = 9 }
-                        },
-                        new SurgeRule
-                        {
-                            RuleId = Guid.NewGuid(),
-                            Type = SurgeType.Time,
-                            Name = "Peak Hour (Evening)",
-                            Multiplier = 1.3m,
-                            Condition = new SurgeCondition { FromHour = 17, ToHour = 19 }
-                        }
-                    ],
-                    CreatedAt = DateTimeOffset.UtcNow
-                };
-
-                await pricingConfigs.InsertOneAsync(defaultConfig, cancellationToken: cancellationToken);
-                _logger.LogInformation("Seeded default PricingConfig successfully.");
-            }
 
             _logger.LogInformation("MongoDB initialization completed successfully.");
         }

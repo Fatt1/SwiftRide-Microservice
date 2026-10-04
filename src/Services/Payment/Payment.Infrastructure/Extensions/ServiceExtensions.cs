@@ -4,9 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Payment.Infrastructure.Persistence;
 
-namespace Payment.Infrastructure;
+namespace Payment.Infrastructure.Extensions;
 
-public static class DependencyInjection
+public static class ServiceExtensions
 {
     public static IServiceCollection AddPaymentInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {

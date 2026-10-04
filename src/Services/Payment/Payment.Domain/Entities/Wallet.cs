@@ -1,4 +1,5 @@
 using Contracts.Domain;
+using Shared.Exceptions;
 
 namespace Payment.Domain.Entities;
 
@@ -40,10 +41,10 @@ public class Wallet : EntityAuditableBase<Guid>
     public void Debit(decimal amount)
     {
         if (amount <= 0)
-            throw new ArgumentException("Amount to debit must be greater than zero", nameof(amount));
+            throw new DomainException("Amount to debit must be greater than zero");
 
         if (Balance < amount)
-            throw new InvalidOperationException($"Insufficient balance in wallet {Id}. Current balance: {Balance}, requested: {amount}");
+            throw new DomainException($"Insufficient balance in wallet {Id}. Current balance: {Balance}, requested: {amount}");
 
         Balance -= amount;
         LastModifiedAt = DateTimeOffset.UtcNow;

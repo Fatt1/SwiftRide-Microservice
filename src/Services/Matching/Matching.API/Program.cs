@@ -2,6 +2,7 @@
 using Common.Logging;
 using Matching.Infrastructure;
 using Serilog;
+using Shared.Exceptions;
 using Shared.Extensions;
 
 namespace Matching.API;
@@ -21,7 +22,15 @@ public class Program
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+            builder.Services.AddOpenApi("v1");
+
+
+            // Register the global exception handler (IExceptionHandler implementation).
+            builder.Services.AddExceptionHandler<GlobalExceptionHandlerMiddleware>();
+
+            // Required companion for UseExceptionHandler() when using IExceptionHandler.
+            builder.Services.AddProblemDetails();
+
 
             var serviceName = builder.Configuration["OpenTelemetry:ServiceName"] ?? builder.Environment.ApplicationName;
             var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317";
@@ -30,13 +39,15 @@ public class Program
             var app = builder.Build();
 
             Log.Information("Starting up: Matching API");
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
                 app.MapCustomScalarApiReference();
             }
-
+            // Must be placed before all other middleware so exceptions from any handler are caught.
+            app.UseExceptionHandler();
             // app.UseHttpsRedirection();
 
             app.UseAuthorization();

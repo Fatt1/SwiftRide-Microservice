@@ -85,11 +85,6 @@ public class Trip : EntityAuditableBase<Guid>
         Status = TripStatus.DroppedOff;
     }
 
-    public void MarkPaymentPending()
-       => Status = TripStatus.PaymentPending;
-
-    public void MarkPaid()
-        => Status = TripStatus.Paid;
 
     public void Cancel()
        => Status = TripStatus.Cancelled;

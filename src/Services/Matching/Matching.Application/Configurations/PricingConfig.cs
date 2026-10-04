@@ -1,24 +1,23 @@
-using Contracts.Domain;
 using Matching.Domain.Enums;
 
-namespace Matching.Domain.Entities;
+namespace Matching.Application.Configurations;
 
-public class PricingConfig : EntityBase<Guid>
+public class PricingConfig
 {
-    public decimal BaseFare { get; set; } = 10000;
-    public decimal PerKmRate { get; set; } = 5000;
+    public const string SectionName = "PricingConfig";
+
+    public decimal BaseFare { get; set; } = 15000;
+    public decimal PerKmRate { get; set; } = 8000;
     public decimal PerMinRate { get; set; } = 500;
     public decimal TaxRate { get; set; } = 0.10m;
     public SurgeApplyMode SurgeApplyMode { get; set; } = SurgeApplyMode.Multiply;
     public List<SurgeRule> SurgeRules { get; set; } = [];
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-
-    public PricingConfig() { }
+    public List<PromoCodeConfig> PromoCodes { get; set; } = [];
 }
 
 public class SurgeRule
 {
-    public Guid RuleId { get; set; } = Guid.NewGuid();
+    public string RuleId { get; set; } = Guid.NewGuid().ToString();
     public SurgeType Type { get; set; }
     public string Name { get; set; } = default!;
     public decimal Multiplier { get; set; } = 1.0m;
@@ -38,7 +37,7 @@ public class SurgeCondition
     public double? RadiusKm { get; set; }
 
     // Weather condition
-    public string? WeatherCondition { get; set; } // "rain", "storm"
+    public WeatherCondition? WeatherCondition { get; set; }
 }
 
 public class PromoCodeConfig

@@ -7,7 +7,6 @@ public enum TripStatus
     DriverAccepted,
     PickedUp,
     DroppedOff,
-    PaymentPending,
-    Paid,
+    Completed,
     Cancelled
 }

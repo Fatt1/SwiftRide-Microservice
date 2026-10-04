@@ -1,5 +1,6 @@
 using Contracts.Domain;
 using Payment.Domain.Enums;
+using Shared.Exceptions;
 
 namespace Payment.Domain.Entities;
 
@@ -20,7 +21,7 @@ public class Refund : EntityBase<Guid>
     public static Refund Create(Guid paymentId, decimal amount, string reason)
     {
         if (amount <= 0)
-            throw new ArgumentException("Refund amount must be greater than zero", nameof(amount));
+            throw new DomainException("Refund amount must be greater than zero");
 
         return new Refund
         {

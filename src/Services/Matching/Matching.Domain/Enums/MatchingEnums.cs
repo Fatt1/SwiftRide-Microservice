@@ -27,3 +27,9 @@ public enum SurgeApplyMode
     Multiply = 1,
     Highest = 2
 }
+
+public enum WeatherCondition
+{
+    Rain = 1,
+    Storm = 2
+}
