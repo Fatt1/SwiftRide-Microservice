@@ -10,4 +10,9 @@
     <ProjectReference Include="..\Matching.Domain\Matching.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Interfaces\" />
+    <Folder Include="Services\Implements\" />
+  </ItemGroup>
+
 </Project>

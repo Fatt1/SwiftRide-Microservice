@@ -86,6 +86,7 @@ public class Trip : EntityAuditableBase<Guid>
     }
 
 
+
     public void Cancel()
        => Status = TripStatus.Cancelled;
 
