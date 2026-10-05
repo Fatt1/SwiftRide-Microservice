@@ -1,5 +1,6 @@
 using Contracts.Domain;
 using Payment.Domain.Enums;
+using Shared.Enums.Payments;
 
 namespace Payment.Domain.Entities;
 

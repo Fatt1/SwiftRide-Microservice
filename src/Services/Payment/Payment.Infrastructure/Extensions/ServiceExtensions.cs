@@ -10,8 +10,13 @@ public static class ServiceExtensions
 {
     public static IServiceCollection AddPaymentInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Port=5433;Database=swiftridedb;Username=postgres;Password=Password@123;";
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        }
 
         services.AddDbContext<PaymentDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql =>

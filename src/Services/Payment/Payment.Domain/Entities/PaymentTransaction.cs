@@ -1,5 +1,6 @@
 using Contracts.Domain;
 using Payment.Domain.Enums;
+using Shared.Enums.Payments;
 
 namespace Payment.Domain.Entities;
 
@@ -15,6 +16,7 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
     public Guid IdempotencyKey { get; private set; }
     public string? GatewayToken { get; private set; }
     public string? GatewayResponse { get; private set; }
+    public string? FailureReason { get; private set; }
     public DateTimeOffset? ProcessedAt { get; private set; }
 
     // Navigation
@@ -64,7 +66,8 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
     public void MarkFailed(string reason, string? gatewayResponse = null)
     {
         Status = PaymentStatus.Failed;
-        GatewayResponse = gatewayResponse ?? reason;
+        FailureReason = reason;
+        GatewayResponse = gatewayResponse;
         ProcessedAt = DateTimeOffset.UtcNow;
         LastModifiedAt = DateTimeOffset.UtcNow;
     }

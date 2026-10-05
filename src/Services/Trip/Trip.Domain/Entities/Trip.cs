@@ -22,14 +22,14 @@ public class Trip : EntityAuditableBase<Guid>
     public decimal? FinalFare { get; private set; }
     public decimal? DistanceKm { get; private set; }
 
-    public int MatchAttempts { get; private set; }
+    /// <summary>Lý do thất bại khi thanh toán</summary>
+    public string? PaymentFailureReason { get; private set; }
 
     /// <summary>Reference to match_sessions in MongoDB</summary>
     public string? QuoteId { get; private set; }
 
     /// <summary>Saga / idempotency key</summary>
     public Guid CorrelationId { get; private set; }
-
 
     // EF Core
     private Trip() { }
@@ -54,7 +54,6 @@ public class Trip : EntityAuditableBase<Guid>
             PickupLng = pickupLng,
             DropoffLat = dropoffLat,
             DropoffLng = dropoffLng,
-            MatchAttempts = 0,
             CorrelationId = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,
             LastModifiedAt = DateTimeOffset.UtcNow,
@@ -69,31 +68,43 @@ public class Trip : EntityAuditableBase<Guid>
         LastModifiedAt = DateTimeOffset.UtcNow;
     }
 
-
     public void AcceptByDriver(Guid driverId)
     {
         DriverId = driverId;
         Status = TripStatus.DriverAccepted;
+        LastModifiedAt = DateTimeOffset.UtcNow;
     }
 
     public void MarkPickedUp()
-       => Status = TripStatus.PickedUp;
+    {
+        Status = TripStatus.PickedUp;
+        LastModifiedAt = DateTimeOffset.UtcNow;
+    }
 
     public void MarkDroppedOff(decimal finalFare)
     {
         FinalFare = finalFare;
         Status = TripStatus.DroppedOff;
-    }
-
-
-
-    public void Cancel()
-       => Status = TripStatus.Cancelled;
-
-    public void IncrementMatchAttempts()
-    {
-        MatchAttempts++;
         LastModifiedAt = DateTimeOffset.UtcNow;
     }
 
+    public void MarkCompleted()
+    {
+        Status = TripStatus.Completed;
+        PaymentFailureReason = null;
+        LastModifiedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkPaymentFailed(string reason)
+    {
+        Status = TripStatus.PaymentFailed;
+        PaymentFailureReason = reason;
+        LastModifiedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void Cancel()
+    {
+        Status = TripStatus.Cancelled;
+        LastModifiedAt = DateTimeOffset.UtcNow;
+    }
 }

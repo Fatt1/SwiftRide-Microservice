@@ -21,29 +21,7 @@ public class TripDbContext : DbContext
         modelBuilder.AddOutboxMessageEntity();
         modelBuilder.AddOutboxStateEntity();
 
-        // Trip configuration
-        modelBuilder.Entity<Trip.Domain.Entities.Trip>(entity =>
-        {
-            entity.HasKey(t => t.Id);
-
-            entity.Property(t => t.PickupAddress).HasMaxLength(500).IsRequired();
-            entity.Property(t => t.DropoffAddress).HasMaxLength(500).IsRequired();
-
-            entity.Property(t => t.PickupLat).HasPrecision(10, 7);
-            entity.Property(t => t.PickupLng).HasPrecision(10, 7);
-            entity.Property(t => t.DropoffLat).HasPrecision(10, 7);
-            entity.Property(t => t.DropoffLng).HasPrecision(10, 7);
-
-            entity.Property(t => t.EstimatedFare).HasPrecision(10, 2);
-            entity.Property(t => t.FinalFare).HasPrecision(10, 2);
-            entity.Property(t => t.DistanceKm).HasPrecision(8, 2);
-
-            entity.Property(t => t.Status)
-                  .HasConversion<string>()
-                  .HasMaxLength(30)
-                  .IsRequired();
-
-            entity.Property(t => t.QuoteId).HasMaxLength(50);
-        });
+        // Apply all configurations from assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(TripDbContext).Assembly);
     }
 }

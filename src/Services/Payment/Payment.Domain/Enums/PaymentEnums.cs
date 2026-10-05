@@ -8,11 +8,6 @@ public enum PaymentStatus
     Failed
 }
 
-public enum PaymentMethod
-{
-    Wallet,
-    Card
-}
 
 public enum EntryType
 {
