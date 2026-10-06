@@ -12,14 +12,7 @@ public enum MatchSessionStatus
 public enum SurgeType
 {
     Time = 1,
-    Zone = 2,
-    Weather = 3
-}
-
-public enum SurgeApplyMode
-{
-    Multiply = 1,
-    Highest = 2
+    Weather = 2
 }
 
 public enum WeatherCondition

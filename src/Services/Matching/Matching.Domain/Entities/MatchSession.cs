@@ -89,8 +89,6 @@ public class MatchSession
 
 public class PricingBreakdown
 {
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal BaseFare { get; set; }
 
     [BsonRepresentation(BsonType.Decimal128)]
     public decimal DistanceFare { get; set; }
@@ -98,27 +96,30 @@ public class PricingBreakdown
     [BsonRepresentation(BsonType.Decimal128)]
     public decimal TimeFare { get; set; }
 
+    public decimal TaxRate { get; set; } = 0.1m;
+
+    public decimal BaseFare { get; set; }
+
+    public decimal RetentionFactor { get; set; } = 1.0m;
+
+    public decimal FareAfterSurge { get; set; }
+
+    public decimal FareAfterDiscount { get; set; }
+
+
     [BsonRepresentation(BsonType.Decimal128)]
-    public decimal Subtotal { get; set; }
+    public decimal TollFee { get; set; }
 
     public List<AppliedSurge> AppliedSurges { get; set; } = [];
 
     [BsonRepresentation(BsonType.Decimal128)]
-    public decimal AfterSurge { get; set; }
-
-    public string? PromoCode { get; set; }
+    public decimal DiscountAmount { get; set; }
 
     [BsonRepresentation(BsonType.Decimal128)]
-    public decimal PromoFactor { get; set; } = 1.0m;
+    public decimal TaxAmount { get; set; }
 
     [BsonRepresentation(BsonType.Decimal128)]
-    public decimal AfterPromo { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal Tax { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal TotalFare { get; set; }
+    public decimal FinalTotal { get; set; }
 }
 
 public class AppliedSurge

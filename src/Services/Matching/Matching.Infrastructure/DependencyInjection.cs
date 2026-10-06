@@ -12,11 +12,12 @@ public static class DependencyInjection
 
     public static IServiceCollection AddMatchingInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<PricingConfig>(configuration.GetSection(PricingConfig.SectionName));
+
         // 1. Configure MongoDB Client & Database
         services.ConfigureMongoDbClient(configuration);
         // 2. Register MassTransit + RabbitMQ + MongoDB Transactional Outbox
         services.AddCustomMassTransitWithMongoOutbox(configuration);
-
 
 
         // 4. Register Pricing Configuration (Options Pattern)
