@@ -31,6 +31,12 @@ public class MongoDbInitializer : IHostedService
                 Builders<DriverLocation>.IndexKeys.Ascending(x => x.IsAvailable),
                 new CreateIndexOptions { Name = "IX_DriverLocation_IsAvailable" });
 
+            var indexKeys = Builders<DriverLocation>.IndexKeys.Geo2DSphere(x => x.Location);
+            await driverLocations.Indexes.CreateOneAsync(new CreateIndexModel<DriverLocation>(indexKeys, new CreateIndexOptions
+            {
+                Name = "ix_pickup_location_2dsphere"
+            }));
+
             await driverLocations.Indexes.CreateManyAsync([driverIdIndex, availabilityIndex], cancellationToken);
 
             // 2. MatchSession indexes

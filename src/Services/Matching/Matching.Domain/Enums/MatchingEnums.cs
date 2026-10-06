@@ -8,12 +8,6 @@ public enum MatchSessionStatus
     Expired = 4
 }
 
-public enum DriverResponse
-{
-    Accepted = 1,
-    Rejected = 2,
-    Timeout = 3
-}
 
 public enum SurgeType
 {

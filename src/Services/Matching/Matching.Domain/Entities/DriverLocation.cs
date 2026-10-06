@@ -1,14 +1,25 @@
-using Contracts.Domain;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver.GeoJsonObjectModel;
 
 namespace Matching.Domain.Entities;
 
-public class DriverLocation : EntityBase<Guid>
+public class DriverLocation
 {
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; } = default!;
+
+    [BsonRequired]
     public Guid DriverId { get; set; }
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
+
+    [BsonRequired]
+    public GeoJsonPoint<GeoJson2DGeographicCoordinates> Location { get; set; } = default!;
+
     public bool IsAvailable { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public DriverLocation() { }
 
@@ -16,25 +27,40 @@ public class DriverLocation : EntityBase<Guid>
     {
         return new DriverLocation
         {
-            Id = Guid.CreateVersion7(),
             DriverId = driverId,
-            Latitude = latitude,
-            Longitude = longitude,
             IsAvailable = isAvailable,
-            UpdatedAt = DateTimeOffset.UtcNow
+            Location = CreatePoint(latitude, longitude),
+            UpdatedAt = DateTime.UtcNow
         };
     }
 
     public void UpdateLocation(double latitude, double longitude)
     {
-        Latitude = latitude;
-        Longitude = longitude;
-        UpdatedAt = DateTimeOffset.UtcNow;
+        Location = CreatePoint(latitude, longitude);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateLocation(GeoJsonPoint<GeoJson2DGeographicCoordinates> location)
+    {
+        Location = location;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void SetAvailability(bool isAvailable)
     {
         IsAvailable = isAvailable;
-        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
     }
+
+    // Helper tạo nhanh từ Lat/Lng theo chuẩn GeoJSON [Longitude, Latitude]
+    public static GeoJsonPoint<GeoJson2DGeographicCoordinates> CreatePoint(double lat, double lng)
+    {
+        return GeoJson.Point(GeoJson.Geographic(lng, lat));
+    }
+
+    [BsonIgnore]
+    public double Latitude => Location?.Coordinates.Latitude ?? 0;
+
+    [BsonIgnore]
+    public double Longitude => Location?.Coordinates.Longitude ?? 0;
 }

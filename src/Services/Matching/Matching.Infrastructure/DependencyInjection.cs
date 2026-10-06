@@ -1,30 +1,35 @@
 using Infrastructure.Extensions;
 using Matching.Application.Configurations;
+using Matching.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 
 namespace Matching.Infrastructure;
 
 public static class DependencyInjection
 {
-    static DependencyInjection()
-    {
-        try
-        {
-            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
-        }
-        catch (BsonSerializationException)
-        {
-            // Already registered
-        }
-    }
 
     public static IServiceCollection AddMatchingInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        // 1. Configure MongoDB Client & Database
+        services.ConfigureMongoDbClient(configuration);
+        // 2. Register MassTransit + RabbitMQ + MongoDB Transactional Outbox
+        services.AddCustomMassTransitWithMongoOutbox(configuration);
+
+
+
+        // 4. Register Pricing Configuration (Options Pattern)
+        services.Configure<PricingConfig>(configuration.GetSection(PricingConfig.SectionName));
+
+        return services;
+    }
+
+
+    private static void ConfigureMongoDbClient(this IServiceCollection services, IConfiguration configuration)
+    {
+        MongoDbConfigurator.ConfigureConventions();
+
         // 1. Configure MongoDB Client & Database
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? configuration["MongoDbSettings:ConnectionString"]
@@ -39,15 +44,11 @@ public static class DependencyInjection
             return client.GetDatabase(databaseName);
         });
 
-        // 2. Register MassTransit + RabbitMQ + MongoDB Transactional Outbox
-        services.AddCustomMassTransitWithMongoOutbox(configuration);
 
         // 3. Register MongoDb Initializer (Indexes)
         services.AddHostedService<Persistence.MongoDbInitializer>();
 
-        // 4. Register Pricing Configuration (Options Pattern)
-        services.Configure<PricingConfig>(configuration.GetSection(PricingConfig.SectionName));
 
-        return services;
+
     }
 }
