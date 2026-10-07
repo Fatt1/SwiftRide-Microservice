@@ -1,44 +1,93 @@
 ﻿using Matching.Domain.Entities;
 using Matching.Domain.Repositories;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Matching.Infrastructure.Repositories;
 
 public class MatchingRepository : IMatchingRepository
 {
-    private readonly IMongoClient _mongoClient;
+    private readonly IMongoCollection<MatchSession> _sessions;
 
-    public MatchingRepository(IMongoClient mongoClient)
+    public MatchingRepository(IMongoDatabase database)
     {
-        _mongoClient = mongoClient;
+        _sessions = database.GetCollection<MatchSession>("match_sessions");
     }
-    public Task AddDriverAttemptAsync(string sessionId, Guid driverId, CancellationToken ct = default)
+    public async Task AddDriverAttemptAsync(string sessionId, Guid driverId, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        if (!ObjectId.TryParse(sessionId, out _))
+            throw new ArgumentException("Invalid match session id.", nameof(sessionId));
+
+        if (driverId == Guid.Empty)
+            throw new ArgumentException("Driver id cannot be empty.", nameof(driverId));
+
+        var now = DateTime.UtcNow;
+        var filter = Builders<MatchSession>.Filter.Eq(x => x.Id, sessionId);
+        var update = Builders<MatchSession>.Update
+            .Push(x => x.DriverAttempts, new DriverAttempt
+            {
+                DriverId = driverId,
+                AttemptedAt = now
+            })
+            .Set(x => x.LastModifiedAt, now);
+
+        var result = await _sessions.UpdateOneAsync(
+            filter,
+            update,
+            cancellationToken: ct);
+
+        if (result.MatchedCount == 0)
+            throw new KeyNotFoundException(
+                $"Match session '{sessionId}' was not found.");
     }
 
-    public Task CreateAsync(MatchSession session, CancellationToken ct = default)
+    public async Task CreateAsync(MatchSession session, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(session);
+        await _sessions.InsertOneAsync(session, cancellationToken: ct);    }
+
+    public async Task<List<MatchSession>> GetAllMatchingSessionAsync(CancellationToken ct = default)
+    {
+        return await _sessions
+            .Find(Builders<MatchSession>.Filter.Empty)
+            .ToListAsync(ct);
     }
 
-    public Task<List<MatchSession>> GetAllMatchingSessionAsync(CancellationToken ct = default)
+    public async Task<MatchSession?> GetByIdAsync(string id, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+         // Id của MatchSession được lưu trong MongoDB dưới dạng ObjectId.
+        if (!ObjectId.TryParse(id, out _))
+            return null;
+
+        return await _sessions
+            .Find(x => x.Id == id)
+            .FirstOrDefaultAsync(ct);
     }
 
-    public Task<MatchSession?> GetByIdAsync(string id, CancellationToken ct = default)
+    public async Task<MatchSession> GetByTripIdAsync(Guid tripId, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        var session = await _sessions
+            .Find(x => x.TripId == tripId)
+            .FirstOrDefaultAsync(ct);
+
+        return session ?? throw new KeyNotFoundException(
+            $"Match session for trip '{tripId}' was not found.");
     }
 
-    public Task<MatchSession> GetByTripIdAsync(Guid tripId, CancellationToken ct = default)
+    public async Task UpdateAsync(MatchSession session, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
-    }
+        ArgumentNullException.ThrowIfNull(session);
 
-    public Task UpdateAsync(MatchSession session, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
+        if (!ObjectId.TryParse(session.Id, out _))
+            throw new ArgumentException("Invalid match session id.", nameof(session));
+
+        var result = await _sessions.ReplaceOneAsync(
+            x => x.Id == session.Id,
+            session,
+            cancellationToken: ct);
+
+        if (result.MatchedCount == 0)
+            throw new KeyNotFoundException(
+                $"Match session '{session.Id}' was not found.");
     }
 }
