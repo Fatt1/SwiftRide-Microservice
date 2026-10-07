@@ -31,7 +31,7 @@ public class WeatherSurgePricing : IPricingStrategy
 
         if (matchedRule != null)
         {
-            breakdown.FareAfterSurge *= matchedRule.Multiplier;
+            breakdown.FinalTotal *= matchedRule.Multiplier;
 
             breakdown.AppliedSurges.Add(new AppliedSurge
             {
@@ -41,7 +41,8 @@ public class WeatherSurgePricing : IPricingStrategy
             });
 
 
-            breakdown.FinalTotal = breakdown.FareAfterSurge;
+
+            breakdown.FareAfterSurge = breakdown.FinalTotal;
         }
 
         return breakdown;

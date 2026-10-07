@@ -1,4 +1,4 @@
-﻿using Matching.Application.Abstractions;
+using Matching.Application.Abstractions;
 using Matching.Application.Configurations;
 using Matching.Application.Dtos;
 using Matching.Domain.Entities;
@@ -17,9 +17,19 @@ public class PromotionPricing : IPricingStrategy
     public PricingBreakdown GetPrice(PricingContext context)
     {
         var breakdown = _inner.GetPrice(context);
-        breakdown.RetentionFactor = _config.RetentionFactor;
-        breakdown.DiscountAmount = breakdown.FinalTotal * (1 - _config.RetentionFactor);
-        breakdown.FinalTotal *= _config.RetentionFactor;
+        if (!string.IsNullOrWhiteSpace(context.PromoCode))
+        {
+            var promo = _config.PromoCodes
+                .FirstOrDefault(p => string.Equals(p.Code, context.PromoCode, StringComparison.OrdinalIgnoreCase));
+
+            if (promo != null)
+            {
+                breakdown.RetentionFactor = promo.Factor;
+                breakdown.DiscountAmount = breakdown.FinalTotal * (1 - promo.Factor);
+                breakdown.FinalTotal *= promo.Factor;
+            }
+        }
+
         breakdown.FareAfterDiscount = breakdown.FinalTotal;
         return breakdown;
 

@@ -30,7 +30,7 @@ public class TimeSurgePricing : IPricingStrategy
         // 3. Áp dụng rule nếu tìm được
         if (matchedRule != null)
         {
-            breakdown.FareAfterSurge *= matchedRule.Multiplier;
+            breakdown.FinalTotal *= matchedRule.Multiplier;
             breakdown.AppliedSurges.Add(new AppliedSurge
             {
                 Type = SurgeType.Time,
@@ -38,7 +38,7 @@ public class TimeSurgePricing : IPricingStrategy
                 Multiplier = matchedRule.Multiplier
             });
 
-            breakdown.FinalTotal = breakdown.FareAfterSurge;
+            breakdown.FareAfterSurge = breakdown.FinalTotal;
         }
         return breakdown;
     }

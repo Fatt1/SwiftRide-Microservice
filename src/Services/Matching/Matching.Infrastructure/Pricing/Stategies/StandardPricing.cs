@@ -23,9 +23,6 @@ public class StandardPricing : IPricingStrategy
             DistanceFare = distanceFare,
             TimeFare = timeFare,
             BaseFare = price,
-            FareAfterSurge = price,
-            DiscountAmount = 0m,
-            TaxAmount = 0m,
             FinalTotal = price
         };
 
