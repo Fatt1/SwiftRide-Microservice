@@ -1,9 +1,12 @@
 using Infrastructure.Extensions;
 using Matching.Application.Configurations;
+using Matching.Domain.Repositories;
 using Matching.Infrastructure.Persistence;
+using Matching.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using Shared.CQRS.Behaviors;
 
 namespace Matching.Infrastructure;
 
@@ -23,9 +26,26 @@ public static class DependencyInjection
         // 4. Register Pricing Configuration (Options Pattern)
         services.Configure<PricingConfig>(configuration.GetSection(PricingConfig.SectionName));
 
+
+        services.AddScoped<IMatchingRepository, MatchingRepository>();
+        services.AddScoped<IDriverLocationRepository, DriverLocationRepository>();
+
+        services.ConfigureMeditR();
         return services;
     }
 
+
+    public static void ConfigureMeditR(this IServiceCollection services)
+    {
+        // Register MediatR
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblies(
+                typeof(DependencyInjection).Assembly,
+                typeof(PricingConfig).Assembly);
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
+    }
 
     private static void ConfigureMongoDbClient(this IServiceCollection services, IConfiguration configuration)
     {

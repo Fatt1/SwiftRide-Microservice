@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Contracts\Contracts.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\EventBus.Messages\EventBus.Messages.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
     <ProjectReference Include="..\Matching.Domain\Matching.Domain.csproj" />
     <ProjectReference Include="..\Matching.Application\Matching.Application.csproj" />
   </ItemGroup>

@@ -18,8 +18,7 @@ public class MatchingRepository : IMatchingRepository
         if (!ObjectId.TryParse(sessionId, out _))
             throw new ArgumentException("Invalid match session id.", nameof(sessionId));
 
-        if (driverId == Guid.Empty)
-            throw new ArgumentException("Driver id cannot be empty.", nameof(driverId));
+
 
         var now = DateTime.UtcNow;
         var filter = Builders<MatchSession>.Filter.Eq(x => x.Id, sessionId);
@@ -43,8 +42,8 @@ public class MatchingRepository : IMatchingRepository
 
     public async Task CreateAsync(MatchSession session, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(session);
-        await _sessions.InsertOneAsync(session, cancellationToken: ct);    }
+        await _sessions.InsertOneAsync(session, cancellationToken: ct);
+    }
 
     public async Task<List<MatchSession>> GetAllMatchingSessionAsync(CancellationToken ct = default)
     {
@@ -55,7 +54,7 @@ public class MatchingRepository : IMatchingRepository
 
     public async Task<MatchSession?> GetByIdAsync(string id, CancellationToken ct = default)
     {
-         // Id của MatchSession được lưu trong MongoDB dưới dạng ObjectId.
+        // Id của MatchSession được lưu trong MongoDB dưới dạng ObjectId.
         if (!ObjectId.TryParse(id, out _))
             return null;
 
@@ -64,30 +63,25 @@ public class MatchingRepository : IMatchingRepository
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<MatchSession> GetByTripIdAsync(Guid tripId, CancellationToken ct = default)
+    public async Task<MatchSession?> GetByTripIdAsync(Guid tripId, CancellationToken ct = default)
     {
         var session = await _sessions
             .Find(x => x.TripId == tripId)
             .FirstOrDefaultAsync(ct);
 
-        return session ?? throw new KeyNotFoundException(
-            $"Match session for trip '{tripId}' was not found.");
+        return session;
     }
 
     public async Task UpdateAsync(MatchSession session, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(session);
 
         if (!ObjectId.TryParse(session.Id, out _))
             throw new ArgumentException("Invalid match session id.", nameof(session));
 
-        var result = await _sessions.ReplaceOneAsync(
-            x => x.Id == session.Id,
-            session,
-            cancellationToken: ct);
+        await _sessions.ReplaceOneAsync(
+           x => x.Id == session.Id,
+           session,
+           cancellationToken: ct);
 
-        if (result.MatchedCount == 0)
-            throw new KeyNotFoundException(
-                $"Match session '{session.Id}' was not found.");
     }
 }

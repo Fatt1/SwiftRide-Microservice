@@ -26,8 +26,4 @@
         <PackageReference Include="Serilog.Sinks.Debug" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="NewFolder\" />
-    </ItemGroup>
-
 </Project>

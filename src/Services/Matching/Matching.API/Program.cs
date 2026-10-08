@@ -1,5 +1,6 @@
 
 using Common.Logging;
+using Matching.API.Endpoints;
 using Matching.Infrastructure;
 using Serilog;
 using Shared.Exceptions;
@@ -23,8 +24,6 @@ public class Program
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi("v1");
-
-
             // Register the global exception handler (IExceptionHandler implementation).
             builder.Services.AddExceptionHandler<GlobalExceptionHandlerMiddleware>();
 
@@ -36,6 +35,7 @@ public class Program
             var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317";
             builder.Services.AddCustomOpenTelemetry(serviceName, otlpEndpoint);
 
+            builder.AddSwiftRideApiVersioning();
             var app = builder.Build();
 
             Log.Information("Starting up: Matching API");
@@ -52,7 +52,7 @@ public class Program
 
             app.UseAuthorization();
 
-
+            app.MapMatchingEndpoints();
             app.MapControllers();
 
             await app.RunAsync();

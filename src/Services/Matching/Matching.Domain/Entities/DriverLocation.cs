@@ -14,6 +14,9 @@ public class DriverLocation
     public Guid DriverId { get; set; }
 
     [BsonRequired]
+    public string FullName { get; set; } = default!;
+
+    [BsonRequired]
     public GeoJsonPoint<GeoJson2DGeographicCoordinates> Location { get; set; } = default!;
 
     public bool IsAvailable { get; set; }
@@ -23,14 +26,16 @@ public class DriverLocation
 
     public DriverLocation() { }
 
-    public static DriverLocation Create(Guid driverId, double latitude, double longitude, bool isAvailable = true)
+    public static DriverLocation Create(Guid driverId, string fullName, double latitude, double longitude, bool isAvailable = true)
     {
         return new DriverLocation
         {
             DriverId = driverId,
             IsAvailable = isAvailable,
             Location = CreatePoint(latitude, longitude),
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            FullName = fullName
+
         };
     }
 

@@ -12,5 +12,5 @@ public interface IMatchingRepository
 
     Task UpdateAsync(MatchSession session, CancellationToken ct = default);
 
-    Task<MatchSession> GetByTripIdAsync(Guid tripId, CancellationToken ct = default);
+    Task<MatchSession?> GetByTripIdAsync(Guid tripId, CancellationToken ct = default);
 }

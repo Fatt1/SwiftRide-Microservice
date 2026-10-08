@@ -23,6 +23,10 @@ public class TripAcceptedConsumer : IConsumer<TripAcceptedEvent>
 
     public async Task Consume(ConsumeContext<TripAcceptedEvent> context)
     {
+        _logger.LogInformation(
+            "Received TripAcceptedEvent for trip {TripId} and driver {DriverId}.",
+            context.Message.TripId,
+            context.Message.DriverId);
         var message = context.Message;
         var ct = context.CancellationToken;
 
