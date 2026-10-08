@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace Payment.Infrastructure.Persistence;
 
@@ -21,7 +22,10 @@ public static class DatabaseMigrationExtensions
             logger.LogInformation("Database migrations applied successfully.");
 
             var seederLogger = services.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DatabaseSeeder));
-            await DatabaseSeeder.SeedAsync(context, seederLogger);
+            var environment = services.GetRequiredService<IHostEnvironment>();
+            var configuration = services.GetRequiredService<IConfiguration>();
+            if (environment.IsDevelopment() && configuration.GetValue<bool>("PaymentDemo:Seed"))
+                await DatabaseSeeder.SeedAsync(context, seederLogger);
         }
         catch (Exception ex)
         {

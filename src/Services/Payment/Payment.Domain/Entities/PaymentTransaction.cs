@@ -21,7 +21,8 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
 
     // Navigation
     public ICollection<LedgerEntry> LedgerEntries { get; private set; } = [];
-    public ICollection<Refund> Refunds { get; private set; } = [];
+    private readonly List<Refund> _refunds = [];
+    public IReadOnlyCollection<Refund> Refunds => _refunds.AsReadOnly();
 
     private PaymentTransaction() { }
 
@@ -35,8 +36,17 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
         string? gatewayToken = null,
         string currency = "VND")
     {
-        if (amount <= 0)
-            throw new ArgumentException("Amount must be greater than zero", nameof(amount));
+        PaymentRules.Id(tripId);
+        PaymentRules.Id(riderId);
+        PaymentRules.Id(driverId);
+        PaymentRules.Id(idempotencyKey);
+        PaymentRules.Amount(amount);
+        PaymentRules.Currency(currency);
+        PaymentRules.Require(riderId != driverId, "Rider and driver must be different.");
+        PaymentRules.Require(Enum.IsDefined(paymentMethod), "Invalid payment method.");
+        PaymentRules.Require(paymentMethod == PaymentMethod.Card
+            ? !string.IsNullOrWhiteSpace(gatewayToken)
+            : gatewayToken is null, "Card requires a token; Wallet must not include a token.");
 
         return new PaymentTransaction
         {
@@ -57,6 +67,7 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
 
     public void MarkCompleted(string? gatewayResponse = null)
     {
+        PaymentRules.Require(Status == PaymentStatus.Pending, "Only pending payments can complete.");
         Status = PaymentStatus.Completed;
         GatewayResponse = gatewayResponse;
         ProcessedAt = DateTimeOffset.UtcNow;
@@ -65,6 +76,9 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
 
     public void MarkFailed(string reason, string? gatewayResponse = null)
     {
+        PaymentRules.Require(Status == PaymentStatus.Pending, "Only pending payments can fail.");
+        PaymentRules.Require(!string.IsNullOrWhiteSpace(reason) && reason.Length <= 500,
+            "Failure reason is required and must not exceed 500 characters.");
         Status = PaymentStatus.Failed;
         FailureReason = reason;
         GatewayResponse = gatewayResponse;
@@ -74,7 +88,21 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
 
     public void MarkRefunded()
     {
+        PaymentRules.Require(Status == PaymentStatus.Completed, "Only completed payments can be refunded.");
+        PaymentRules.Require(Refunds.Count(r => r.Status == RefundStatus.Completed) == 1,
+            "A completed full refund is required.");
         Status = PaymentStatus.Refunded;
         LastModifiedAt = DateTimeOffset.UtcNow;
     }
+
+    public Refund RequestRefund(string reason)
+    {
+        PaymentRules.Require(Status == PaymentStatus.Completed, "Only completed payments can be refunded.");
+        PaymentRules.Require(!Refunds.Any(r => r.Status is RefundStatus.Pending or RefundStatus.Completed),
+            "A refund is already pending or completed.");
+        var refund = Refund.Create(this, reason);
+        _refunds.Add(refund);
+        return refund;
+    }
+
 }

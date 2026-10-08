@@ -1,0 +1,19 @@
+services:
+  payment-api:
+    build:
+      context: .
+      dockerfile: src/Services/Payment/Payment.API/Dockerfile
+    ports:
+      - "5054:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=paymentdb;Port=5432;Database=swiftridedb;Username=postgres;Password=Password@123;"
+      EventBusSettings__HostAddress: rabbitmq
+      OpenTelemetry__OtlpEndpoint: http://jaeger:4317
+      PaymentDemo__Seed: ${PAYMENT_DEMO_SEED:-false}
+    depends_on:
+      - paymentdb
+      - rabbitmq
+    restart: on-failure
+    networks:
+      - swiftride-network

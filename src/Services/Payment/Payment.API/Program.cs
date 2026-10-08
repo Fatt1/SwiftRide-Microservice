@@ -4,6 +4,10 @@ using Payment.Infrastructure.Persistence;
 using Serilog;
 using Shared.Exceptions;
 using Shared.Extensions;
+using Payment.Application;
+using Payment.Application.Payments;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace Payment.API;
 
@@ -18,6 +22,7 @@ public class Program
 
             // Add services to the container.
             builder.Services.AddPaymentInfrastructure(builder.Configuration);
+            builder.Services.AddPaymentApplication();
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi("v1");
@@ -33,6 +38,9 @@ public class Program
             var serviceName = builder.Configuration["OpenTelemetry:ServiceName"] ?? builder.Environment.ApplicationName;
             var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317";
             builder.Services.AddCustomOpenTelemetry(serviceName, otlpEndpoint);
+            builder.Services.AddOpenTelemetry()
+                .WithTracing(t => t.AddSource(PaymentTelemetry.Name))
+                .WithMetrics(m => m.AddMeter(PaymentTelemetry.Name));
 
             var app = builder.Build();
 
@@ -52,7 +60,6 @@ public class Program
             app.UseExceptionHandler();
             // app.UseHttpsRedirection();
 
-            app.UseAuthorization();
 
             app.MapControllers();
 
@@ -61,6 +68,7 @@ public class Program
         catch (Exception ex)
         {
             Log.Fatal(ex, "Application terminated unexpectedly");
+            throw;
         }
         finally
         {

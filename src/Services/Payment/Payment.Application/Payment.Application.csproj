@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../Payment.Domain/Payment.Domain.csproj" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <Folder Include="Usecases\Payments\Commands\" />
     <Folder Include="Usecases\Payments\Events\" />
     <Folder Include="Usecases\Payments\Queries\" />

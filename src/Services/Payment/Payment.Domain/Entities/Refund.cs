@@ -1,6 +1,5 @@
 using Contracts.Domain;
 using Payment.Domain.Enums;
-using Shared.Exceptions;
 
 namespace Payment.Domain.Entities;
 
@@ -18,16 +17,16 @@ public class Refund : EntityBase<Guid>
 
     private Refund() { }
 
-    public static Refund Create(Guid paymentId, decimal amount, string reason)
+    internal static Refund Create(PaymentTransaction payment, string reason)
     {
-        if (amount <= 0)
-            throw new DomainException("Refund amount must be greater than zero");
+        PaymentRules.Require(!string.IsNullOrWhiteSpace(reason), "Refund reason is required.");
 
         return new Refund
         {
             Id = Guid.CreateVersion7(),
-            PaymentId = paymentId,
-            Amount = amount,
+            PaymentId = payment.Id,
+            Payment = payment,
+            Amount = payment.Amount,
             Reason = reason,
             Status = RefundStatus.Pending,
             CreatedAt = DateTimeOffset.UtcNow
@@ -36,13 +35,17 @@ public class Refund : EntityBase<Guid>
 
     public void MarkCompleted()
     {
+        PaymentRules.Require(Status == RefundStatus.Pending, "Only pending refunds can complete.");
+        PaymentRules.Require(Payment.Status == PaymentStatus.Completed, "Payment must be completed.");
         Status = RefundStatus.Completed;
         ProcessedAt = DateTimeOffset.UtcNow;
     }
 
     public void MarkFailed()
     {
+        PaymentRules.Require(Status == RefundStatus.Pending, "Only pending refunds can fail.");
         Status = RefundStatus.Failed;
         ProcessedAt = DateTimeOffset.UtcNow;
     }
+
 }

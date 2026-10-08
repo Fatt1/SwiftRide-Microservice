@@ -8,8 +8,7 @@ public class LedgerEntry : EntityBase<Guid>
 {
     public Guid PaymentId { get; private set; }
     /// <summary>
-    /// Nullable: NULL when debiting directly from an external card via mock gateway.
-    /// Non-null when debiting from a wallet or crediting to any wallet.
+    /// Null for an external Card account, including a refund credit.
     /// </summary>
     public Guid? WalletId { get; private set; }
     public PaymentMethod PaymentMethod { get; private set; }
@@ -32,16 +31,12 @@ public class LedgerEntry : EntityBase<Guid>
         decimal amount,
         string? description = null)
     {
-        if (amount <= 0)
-            throw new ArgumentException("Amount must be greater than zero", nameof(amount));
-
-        // Validation rule: Debit with wallet method MUST have walletId
-        if (entryType == EntryType.Debit && paymentMethod == PaymentMethod.Wallet && !walletId.HasValue)
-            throw new ArgumentException("WalletId cannot be null when debiting from a wallet", nameof(walletId));
-
-        // Credit to driver ALWAYS requires walletId
-        if (entryType == EntryType.Credit && !walletId.HasValue)
-            throw new ArgumentException("WalletId cannot be null for credit entries", nameof(walletId));
+        PaymentRules.Id(paymentId);
+        PaymentRules.Amount(amount);
+        PaymentRules.Require(Enum.IsDefined(paymentMethod) && Enum.IsDefined(entryType), "Invalid ledger type.");
+        if (walletId.HasValue) PaymentRules.Id(walletId.Value);
+        PaymentRules.Require(paymentMethod != PaymentMethod.Wallet || walletId.HasValue,
+            "Wallet entries require a wallet id.");
 
         return new LedgerEntry
         {

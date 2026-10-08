@@ -17,6 +17,12 @@ public class Wallet : EntityAuditableBase<Guid>
 
     public static Wallet Create(Guid userId, string userRole, decimal initialBalance = 0, string currency = "VND")
     {
+        PaymentRules.Id(userId);
+        PaymentRules.Currency(currency);
+        PaymentRules.Amount(initialBalance, allowZero: true);
+        PaymentRules.Require(!string.IsNullOrWhiteSpace(userRole), "Wallet role is required.");
+        userRole = userRole.Trim().ToLowerInvariant();
+        PaymentRules.Require(userRole is "rider" or "driver", "Invalid wallet role.");
         return new Wallet
         {
             Id = Guid.CreateVersion7(),
@@ -31,8 +37,7 @@ public class Wallet : EntityAuditableBase<Guid>
 
     public void Credit(decimal amount)
     {
-        if (amount <= 0)
-            throw new ArgumentException("Amount to credit must be greater than zero", nameof(amount));
+        PaymentRules.Amount(amount);
 
         Balance += amount;
         LastModifiedAt = DateTimeOffset.UtcNow;
@@ -40,8 +45,7 @@ public class Wallet : EntityAuditableBase<Guid>
 
     public void Debit(decimal amount)
     {
-        if (amount <= 0)
-            throw new DomainException("Amount to debit must be greater than zero");
+        PaymentRules.Amount(amount);
 
         if (Balance < amount)
             throw new DomainException($"Insufficient balance in wallet {Id}. Current balance: {Balance}, requested: {amount}");
@@ -49,4 +53,5 @@ public class Wallet : EntityAuditableBase<Guid>
         Balance -= amount;
         LastModifiedAt = DateTimeOffset.UtcNow;
     }
+
 }

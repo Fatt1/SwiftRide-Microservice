@@ -34,7 +34,7 @@
     <Project Path="src/Services/Trip/Trip.Domain/Trip.Domain.csproj" Id="9bff4060-479f-4826-9304-5900fa2f6958" />
     <Project Path="src/Services/Trip/Trip.Infrastructure/Trip.Infrastructure.csproj" Id="4ae35e88-7617-49ec-972f-3a310c0d628e" />
   </Folder>
-  <Folder Name="/tests/" />
+    <Folder Name="/tests/" />
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
