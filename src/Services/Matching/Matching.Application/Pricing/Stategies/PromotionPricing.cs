@@ -3,7 +3,7 @@ using Matching.Application.Configurations;
 using Matching.Application.Dtos;
 using Matching.Domain.Entities;
 
-namespace Matching.Infrastructure.Pricing.Stategies;
+namespace Matching.Application.Pricing.Stategies;
 
 public class PromotionPricing : IPricingStrategy
 {

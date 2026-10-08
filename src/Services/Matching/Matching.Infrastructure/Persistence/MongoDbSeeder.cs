@@ -142,17 +142,17 @@ public static class MongoDbSeeder
             LastModifiedAt = now.AddMinutes(-1),
             PricingBreakdown = new PricingBreakdown
             {
-                BaseFare = 12000m,
-                DistanceFare = 45000m,
-                TimeFare = 14000m,
-                RetentionFactor = 1.0m,
-                FareAfterSurge = 71000m,
-                FareAfterDiscount = 61000m,
-                TollFee = 0m,
-                DiscountAmount = 10000m,
-                TaxRate = 0.1m,
-                TaxAmount = 6100m,
-                FinalTotal = 67100m,
+                BaseFare = 12000,
+                DistanceFare = 45000,
+                TimeFare = 14000,
+                RetentionFactor = 1.0,
+                FareAfterSurge = 71000,
+                FareAfterDiscount = 61000,
+                TollFee = 0,
+                DiscountAmount = 10000,
+                TaxRate = 0.1,
+                TaxAmount = 6100,
+                FinalTotal = 67100,
                 AppliedSurges = []
             },
             DriverAttempts =
@@ -179,24 +179,24 @@ public static class MongoDbSeeder
             LastModifiedAt = now.AddMinutes(-8),
             PricingBreakdown = new PricingBreakdown
             {
-                BaseFare = 12000m,
-                DistanceFare = 70000m,
-                TimeFare = 22000m,
-                RetentionFactor = 1.0m,
-                FareAfterSurge = 124800m,
-                FareAfterDiscount = 124800m,
-                TollFee = 10000m,
-                DiscountAmount = 0m,
-                TaxRate = 0.1m,
-                TaxAmount = 13480m,
-                FinalTotal = 148280m,
+                BaseFare = 12000,
+                DistanceFare = 70000,
+                TimeFare = 22000,
+                RetentionFactor = 1.0,
+                FareAfterSurge = 124800,
+                FareAfterDiscount = 124800,
+                TollFee = 10000,
+                DiscountAmount = 0,
+                TaxRate = 0.1,
+                TaxAmount = 13480,
+                FinalTotal = 148280,
                 AppliedSurges =
                 [
                     new AppliedSurge
                     {
                         Type = SurgeType.Time,
                         Name = "Peak Hour Surge",
-                        Multiplier = 1.2m
+                        Multiplier = 1.2
                     }
                 ]
             },

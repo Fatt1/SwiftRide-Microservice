@@ -3,7 +3,7 @@ using Matching.Application.Configurations;
 using Matching.Application.Dtos;
 using Matching.Domain.Entities;
 
-namespace Matching.Infrastructure.Pricing.Stategies;
+namespace Matching.Application.Pricing.Stategies;
 
 public class TollPricing : IPricingStrategy
 {
@@ -19,7 +19,7 @@ public class TollPricing : IPricingStrategy
     {
         var breakdown = _inner.GetPrice(context);
 
-        var tollFee = context.HasToll ? _config.TollFee : 0m;
+        var tollFee = context.HasToll ? _config.TollFee : 0;
 
         breakdown.TollFee = tollFee;
         breakdown.FinalTotal += tollFee;

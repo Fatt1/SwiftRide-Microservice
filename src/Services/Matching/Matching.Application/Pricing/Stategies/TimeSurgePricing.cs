@@ -4,47 +4,42 @@ using Matching.Application.Dtos;
 using Matching.Domain.Entities;
 using Matching.Domain.Enums;
 
-namespace Matching.Infrastructure.Pricing.Stategies;
+namespace Matching.Application.Pricing.Stategies;
 
-public class WeatherSurgePricing : IPricingStrategy
+public class TimeSurgePricing : IPricingStrategy
 {
-    private readonly IPricingStrategy _inner;
     private readonly PricingConfig _config;
-    public WeatherSurgePricing(IPricingStrategy inner, PricingConfig config)
-    {
-        _inner = inner;
-        _config = config;
-    }
+    private readonly IPricingStrategy _inner;
 
+    public TimeSurgePricing(IPricingStrategy inner, PricingConfig config)
+    {
+        _config = config;
+        _inner = inner;
+    }
     public PricingBreakdown GetPrice(PricingContext context)
     {
+        // 1. Lấy kết quả từ lớp bên trong
         var breakdown = _inner.GetPrice(context);
 
-        if (!context.Weather.HasValue)
-        {
-            return breakdown;
-        }
-
+        // 2. Tìm rule giờ phù hợp trong cấu hình JSON
         var matchedRule = _config.SurgeRules.FirstOrDefault(r =>
-           r.Type == SurgeType.Weather &&
-           r.Condition.WeatherCondition == context.Weather.Value);
+            r.Type == SurgeType.Time &&
+            r.Condition.FromHour <= context.OrderTime.Hour &&
+            context.OrderTime.Hour <= r.Condition.ToHour);
 
+        // 3. Áp dụng rule nếu tìm được
         if (matchedRule != null)
         {
             breakdown.FinalTotal *= matchedRule.Multiplier;
-
             breakdown.AppliedSurges.Add(new AppliedSurge
             {
-                Type = SurgeType.Weather,
+                Type = SurgeType.Time,
                 Name = matchedRule.Name,
                 Multiplier = matchedRule.Multiplier
             });
 
-
-
             breakdown.FareAfterSurge = breakdown.FinalTotal;
         }
-
         return breakdown;
     }
 }

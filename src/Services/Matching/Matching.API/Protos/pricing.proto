@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option csharp_namespace = "Matching.API.Protos";
+
+
+service PricingService {
+  rpc GetPricing (GetPricingRequest) returns (PricingResponse);
+}
+
+message GetPricingRequest {
+  string trip_id = 1;
+  string rider_id = 2;
+  bool has_toll = 3;
+  double pickup_longitude = 4;
+  double pickup_latitude = 5;
+  double destination_longitude = 6;
+  double destination_latitude = 7;
+  string promo_code = 8;
+  bool is_raining = 9;
+}
+
+message PricingResponse {
+  double distance_fare = 1;
+  double time_fare = 2;
+  double tax_rate = 3;
+  double base_fare = 4;
+  double retention_factor = 5;
+  double fare_after_surge = 6;
+  double fare_after_discount = 7;
+  double toll_fee = 8;
+  repeated AppliedSurge applied_surges = 9;
+  double discount_amount = 10;
+  double tax_amount = 11;
+  double final_total = 12;
+}
+
+message AppliedSurge {
+  string type = 1;
+  string name = 2;
+  double multiplier = 3;
+}

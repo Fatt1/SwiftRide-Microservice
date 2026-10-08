@@ -15,8 +15,3 @@ public enum SurgeType
     Weather = 2
 }
 
-public enum WeatherCondition
-{
-    Rain = 1,
-    Storm = 2
-}

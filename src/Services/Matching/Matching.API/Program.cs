@@ -1,6 +1,7 @@
 
 using Common.Logging;
 using Matching.API.Endpoints;
+using Matching.API.Services;
 using Matching.Infrastructure;
 using Serilog;
 using Shared.Exceptions;
@@ -30,6 +31,9 @@ public class Program
             // Required companion for UseExceptionHandler() when using IExceptionHandler.
             builder.Services.AddProblemDetails();
 
+            builder.Services.AddGrpc();
+
+
 
             var serviceName = builder.Configuration["OpenTelemetry:ServiceName"] ?? builder.Environment.ApplicationName;
             var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317";
@@ -38,6 +42,7 @@ public class Program
             builder.AddSwiftRideApiVersioning();
             var app = builder.Build();
 
+            app.MapGrpcService<PricingGrpcService>();
             Log.Information("Starting up: Matching API");
 
             // Configure the HTTP request pipeline.

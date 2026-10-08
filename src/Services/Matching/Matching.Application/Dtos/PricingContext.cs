@@ -1,12 +1,10 @@
-﻿using Matching.Domain.Enums;
-
-namespace Matching.Application.Dtos;
+﻿namespace Matching.Application.Dtos;
 
 public record PricingContext(
-    decimal DistanceKm,
+    double DistanceKm,
     int EstimatedMinutes,
     DateTime OrderTime,
-    WeatherCondition? Weather = null,
+    bool IsRaining = false,
     string? PromoCode = null,
     bool HasToll = false
 );

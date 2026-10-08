@@ -44,7 +44,6 @@ public class MatchSession
     [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime LastModifiedAt { get; set; } = DateTime.UtcNow;
 
-    public MatchSession() { }
 
     public static GeoJsonPoint<GeoJson2DGeographicCoordinates> CreatePoint(double lat, double lng)
     {
@@ -89,37 +88,30 @@ public class MatchSession
 
 public class PricingBreakdown
 {
+    public double DistanceFare { get; set; }
 
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal DistanceFare { get; set; }
+    public double TimeFare { get; set; }
 
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal TimeFare { get; set; }
+    public double TaxRate { get; set; } = 0.1;
 
-    public decimal TaxRate { get; set; } = 0.1m;
+    public double BaseFare { get; set; }
 
-    public decimal BaseFare { get; set; }
+    public double RetentionFactor { get; set; } = 1.0;
 
-    public decimal RetentionFactor { get; set; } = 1.0m;
+    public double FareAfterSurge { get; set; }
 
-    public decimal FareAfterSurge { get; set; }
+    public double FareAfterDiscount { get; set; }
 
-    public decimal FareAfterDiscount { get; set; }
-
-
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal TollFee { get; set; }
+    public double TollFee { get; set; }
 
     public List<AppliedSurge> AppliedSurges { get; set; } = [];
 
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal DiscountAmount { get; set; }
+    public double DiscountAmount { get; set; }
 
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal TaxAmount { get; set; }
 
-    [BsonRepresentation(BsonType.Decimal128)]
-    public decimal FinalTotal { get; set; }
+    public double TaxAmount { get; set; }
+
+    public double FinalTotal { get; set; }
 }
 
 public class AppliedSurge
@@ -130,7 +122,7 @@ public class AppliedSurge
     public string Name { get; set; } = default!;
 
     [BsonRepresentation(BsonType.Decimal128)]
-    public decimal Multiplier { get; set; }
+    public double Multiplier { get; set; }
 }
 
 public class DriverAttempt
