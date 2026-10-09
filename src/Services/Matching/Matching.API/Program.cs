@@ -57,8 +57,10 @@ public class Program
 
             app.UseAuthorization();
 
+            app.MapGet("/", () => Results.Redirect("/scalar/v1"));
             app.MapMatchingEndpoints();
             app.MapControllers();
+
 
             await app.RunAsync();
         }

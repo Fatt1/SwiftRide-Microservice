@@ -70,3 +70,31 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+
+
+  #microservice section
+  matching.api:
+    container_name: matching.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Kestrel Endpoints (Port 5000: HTTP/1.1 REST, Port 5001: HTTP/2 gRPC)
+      - Kestrel__Endpoints__HttpRest__Url=http://+:5001
+      - Kestrel__Endpoints__GrpcEndpoint__Url=http://+:5002
+      # MongoDB Settings
+      - MongoDbSettings__ConnectionString=mongodb://root:Password%40123@matchingdb:27017/?authSource=admin
+      - MongoDbSettings__DatabaseName=matchingdb
+      # EventBus / RabbitMQ Settings
+      - EventBusSettings__HostAddress=rabbitmq
+      - EventBusSettings__Port=5672
+      - EventBusSettings__UserName=guest
+      - EventBusSettings__Password=guest
+      # OpenTelemetry / Jaeger Settings
+      - OpenTelemetry__ServiceName=Matching.API
+      - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+    ports:
+      - "6001:5001"
+      - "6002:5002"
+    depends_on:
+      - matchingdb
+      - rabbitmq
+      - jaeger
