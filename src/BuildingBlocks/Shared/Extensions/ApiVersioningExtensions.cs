@@ -16,7 +16,7 @@ namespace Shared.Extensions;
 // emits the Sunset / api-deprecated-versions response headers automatically.
 public static class ApiVersioningExtensions
 {
-    public static TBuilder AddCourtBookingApiVersioning<TBuilder>(this TBuilder builder)
+    public static TBuilder AddSwiftRideApiVersioning<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
         builder.Services

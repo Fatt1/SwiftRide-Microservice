@@ -31,6 +31,12 @@ public class MongoDbInitializer : IHostedService
                 Builders<DriverLocation>.IndexKeys.Ascending(x => x.IsAvailable),
                 new CreateIndexOptions { Name = "IX_DriverLocation_IsAvailable" });
 
+            var indexKeys = Builders<DriverLocation>.IndexKeys.Geo2DSphere(x => x.Location);
+            await driverLocations.Indexes.CreateOneAsync(new CreateIndexModel<DriverLocation>(indexKeys, new CreateIndexOptions
+            {
+                Name = "ix_pickup_location_2dsphere"
+            }), cancellationToken: cancellationToken);
+
             await driverLocations.Indexes.CreateManyAsync([driverIdIndex, availabilityIndex], cancellationToken);
 
             // 2. MatchSession indexes
@@ -39,6 +45,9 @@ public class MongoDbInitializer : IHostedService
                 Builders<MatchSession>.IndexKeys.Ascending(x => x.TripId),
                 new CreateIndexOptions { Name = "IX_MatchSession_TripId" });
             await matchSessions.Indexes.CreateOneAsync(tripIdIndex, cancellationToken: cancellationToken);
+
+            // 3. Seed initial data
+            await MongoDbSeeder.SeedAsync(_database, _logger, cancellationToken);
 
             _logger.LogInformation("MongoDB initialization completed successfully.");
         }

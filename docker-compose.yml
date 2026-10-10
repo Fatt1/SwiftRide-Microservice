@@ -52,6 +52,15 @@ services:
     networks:
       - swiftride-network
 
+  #microservice api section
+  matching.api:
+    image: ${DOCKER_REGISTRY-}matching-api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Matching/Matching.API/Dockerfile
+    networks:
+      - swiftride-network
+
 networks:
   swiftride-network:
     driver: bridge

@@ -1,5 +1,8 @@
 
 using Common.Logging;
+using Matching.API.Endpoints;
+using Matching.API.Services;
+using Matching.Application;
 using Matching.Infrastructure;
 using Serilog;
 using Shared.Exceptions;
@@ -18,26 +21,30 @@ public class Program
             builder.Host.UseSerilog(Serilogger.Configure);
 
             // Add services to the container.
+            builder.Services.AddMatchingApplication();
             builder.Services.AddMatchingInfrastructure(builder.Configuration);
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi("v1");
-
-
             // Register the global exception handler (IExceptionHandler implementation).
             builder.Services.AddExceptionHandler<GlobalExceptionHandlerMiddleware>();
 
             // Required companion for UseExceptionHandler() when using IExceptionHandler.
             builder.Services.AddProblemDetails();
 
+            builder.Services.AddGrpc();
+
+
 
             var serviceName = builder.Configuration["OpenTelemetry:ServiceName"] ?? builder.Environment.ApplicationName;
             var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317";
             builder.Services.AddCustomOpenTelemetry(serviceName, otlpEndpoint);
 
+            builder.AddSwiftRideApiVersioning();
             var app = builder.Build();
 
+            app.MapGrpcService<PricingGrpcService>();
             Log.Information("Starting up: Matching API");
 
             // Configure the HTTP request pipeline.
@@ -52,8 +59,10 @@ public class Program
 
             app.UseAuthorization();
 
-
+            app.MapGet("/", () => Results.Redirect("/scalar/v1"));
+            app.MapMatchingEndpoints();
             app.MapControllers();
+
 
             await app.RunAsync();
         }

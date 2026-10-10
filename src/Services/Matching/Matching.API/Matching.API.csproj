@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
   </ItemGroup>
@@ -25,5 +26,9 @@
         <PackageReference Include="Serilog.Enrichers.Environment" />
         <PackageReference Include="Serilog.Sinks.Debug" />
     </ItemGroup>
+
+	<ItemGroup>
+		<Protobuf Include="Protos\pricing.proto" GrpcServices="Server" />
+	</ItemGroup>
 
 </Project>

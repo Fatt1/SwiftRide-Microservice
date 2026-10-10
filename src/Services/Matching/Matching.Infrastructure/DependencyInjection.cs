@@ -1,53 +1,63 @@
 using Infrastructure.Extensions;
 using Matching.Application.Configurations;
+using Matching.Domain.Repositories;
+using Matching.Infrastructure.Configurations;
+using Matching.Infrastructure.Persistence;
+using Matching.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace Matching.Infrastructure;
 
 public static class DependencyInjection
 {
-    static DependencyInjection()
-    {
-        try
-        {
-            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
-        }
-        catch (BsonSerializationException)
-        {
-            // Already registered
-        }
-    }
-
     public static IServiceCollection AddMatchingInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // 1. Configure MongoDB Client & Database
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? configuration["MongoDbSettings:ConnectionString"]
-            ?? "mongodb://localhost:27017";
-
-        var databaseName = configuration["MongoDbSettings:DatabaseName"] ?? "MatchingDb";
-
-        services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
-        services.AddSingleton<IMongoDatabase>(sp =>
-        {
-            var client = sp.GetRequiredService<IMongoClient>();
-            return client.GetDatabase(databaseName);
-        });
+        services.ConfigureMongoDbClient(configuration);
 
         // 2. Register MassTransit + RabbitMQ + MongoDB Transactional Outbox
         services.AddCustomMassTransitWithMongoOutbox(configuration);
 
-        // 3. Register MongoDb Initializer (Indexes)
-        services.AddHostedService<Persistence.MongoDbInitializer>();
-
-        // 4. Register Pricing Configuration (Options Pattern)
+        // 3. Register Pricing Configuration (Options Pattern)
         services.Configure<PricingConfig>(configuration.GetSection(PricingConfig.SectionName));
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<PricingConfig>>().Value);
+
+        // 4. Register Repositories
+        services.AddScoped<IMatchingRepository, MatchingRepository>();
+        services.AddScoped<IDriverLocationRepository, DriverLocationRepository>();
 
         return services;
+    }
+
+    private static void ConfigureMongoDbClient(this IServiceCollection services, IConfiguration configuration)
+    {
+        MongoDbConfigurator.ConfigureConventions();
+
+        // 1. Đăng ký MongoDbSettings theo Options Pattern
+        services.Configure<MongoDbSettings>(configuration.GetSection(MongoDbSettings.SectionName));
+
+        // Đăng ký instance MongoDbSettings dạng Singleton từ IOptions để có thể inject trực tiếp nếu cần
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<MongoDbSettings>>().Value);
+
+        // 2. Đăng ký IMongoClient từ MongoDbSettings
+        services.AddSingleton<IMongoClient>(sp =>
+        {
+            var settings = sp.GetRequiredService<MongoDbSettings>();
+            return new MongoClient(settings.ConnectionString);
+        });
+
+        // 3. Đăng ký IMongoDatabase từ MongoDbSettings
+        services.AddSingleton<IMongoDatabase>(sp =>
+        {
+            var settings = sp.GetRequiredService<MongoDbSettings>();
+            var client = sp.GetRequiredService<IMongoClient>();
+            return client.GetDatabase(settings.DatabaseName);
+        });
+
+        // 4. Register MongoDb Initializer (Indexes & Seeding)
+        services.AddHostedService<MongoDbInitializer>();
     }
 }
