@@ -13,7 +13,6 @@ public class MatchSession
     public string Id { get; set; } = default!;
 
     public Guid TripId { get; set; }
-    public Guid RiderId { get; set; }
 
     [BsonRequired]
     public GeoJsonPoint<GeoJson2DGeographicCoordinates> PickupLocation { get; set; } = default!;

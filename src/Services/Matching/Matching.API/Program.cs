@@ -2,6 +2,7 @@
 using Common.Logging;
 using Matching.API.Endpoints;
 using Matching.API.Services;
+using Matching.Application;
 using Matching.Infrastructure;
 using Serilog;
 using Shared.Exceptions;
@@ -20,6 +21,7 @@ public class Program
             builder.Host.UseSerilog(Serilogger.Configure);
 
             // Add services to the container.
+            builder.Services.AddMatchingApplication();
             builder.Services.AddMatchingInfrastructure(builder.Configuration);
 
             builder.Services.AddControllers();

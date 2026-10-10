@@ -89,11 +89,12 @@ public static class GeoHelper
         }
 
         var duration = CalculateEstimatedTime(distanceKm, averageSpeedKmPerHour);
-        return Math.Max(1, (int)Math.Ceiling(duration.TotalMinutes));
+        return Math.Max(1, (int)Math.Round(duration.TotalMinutes, MidpointRounding.AwayFromZero));
     }
 
     /// <summary>
     /// Tính toán cả khoảng cách và thời gian di chuyển ước tính giữa hai tọa độ.
+    /// Khoảng cách được làm tròn đến 1 chữ số thập phân, thời gian làm tròn đến phút gần nhất.
     /// </summary>
     /// <param name="originLat">Vĩ độ điểm đón / điểm đi.</param>
     /// <param name="originLon">Kinh độ điểm đón / điểm đi.</param>
@@ -108,9 +109,10 @@ public static class GeoHelper
         double destLon,
         double averageSpeedKmPerHour = DefaultAverageSpeedKmH)
     {
-        var distanceKm = CalculateDistanceInKm(originLat, originLon, destLat, destLon);
+        var rawDistance = CalculateDistanceInKm(originLat, originLon, destLat, destLon);
+        var distanceKm = Math.Round(rawDistance, 1, MidpointRounding.AwayFromZero);
         var duration = CalculateEstimatedTime(distanceKm, averageSpeedKmPerHour);
-        var estimatedMinutes = distanceKm <= 0 ? 0 : Math.Max(1, (int)Math.Ceiling(duration.TotalMinutes));
+        var estimatedMinutes = distanceKm <= 0 ? 0 : Math.Max(1, (int)Math.Round(duration.TotalMinutes, MidpointRounding.AwayFromZero));
 
         return (distanceKm, estimatedMinutes, duration);
     }

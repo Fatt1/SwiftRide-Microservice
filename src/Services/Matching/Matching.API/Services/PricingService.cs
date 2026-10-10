@@ -27,29 +27,30 @@ public class PricingGrpcService : PricingService.PricingServiceBase
             request.PickupLatitude,
             request.DestinationLongitude,
             request.DestinationLatitude,
-            Guid.Parse(request.RiderId),
             Guid.Parse(request.TripId)
             );
         var result = await _meditor.Send(command);
 
         if (result.IsSuccess)
         {
-            var pricingBreakdown = result.Value;
+            var pricing = result.Value;
             var response = new PricingResponse
             {
-                DistanceFare = pricingBreakdown.DistanceFare,
-                TimeFare = pricingBreakdown.TimeFare,
-                TaxRate = pricingBreakdown.TaxRate,
-                BaseFare = pricingBreakdown.BaseFare,
-                RetentionFactor = pricingBreakdown.RetentionFactor,
-                FareAfterSurge = pricingBreakdown.FareAfterSurge,
-                FareAfterDiscount = pricingBreakdown.FareAfterDiscount,
-                TollFee = pricingBreakdown.TollFee,
-                DiscountAmount = pricingBreakdown.DiscountAmount,
-                TaxAmount = pricingBreakdown.TaxAmount,
-                FinalTotal = pricingBreakdown.FinalTotal
+                DistanceFare = pricing.DistanceFare,
+                TimeFare = pricing.TimeFare,
+                TaxRate = pricing.TaxRate,
+                BaseFare = pricing.BaseFare,
+                RetentionFactor = pricing.RetentionFactor,
+                FareAfterSurge = pricing.FareAfterSurge,
+                FareAfterDiscount = pricing.FareAfterDiscount,
+                TollFee = pricing.TollFee,
+                DiscountAmount = pricing.DiscountAmount,
+                TaxAmount = pricing.TaxAmount,
+                FinalTotal = pricing.FinalTotal,
+                DistanceKm = pricing.DistanceKm,
+                EstimatedMinutes = pricing.EstimatedMinutes
             };
-            foreach (var appliedSurge in pricingBreakdown.AppliedSurges)
+            foreach (var appliedSurge in pricing.AppliedSurges)
             {
                 response.AppliedSurges.Add(new AppliedSurge
                 {

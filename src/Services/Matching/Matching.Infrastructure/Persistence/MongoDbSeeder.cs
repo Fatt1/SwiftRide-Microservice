@@ -132,7 +132,6 @@ public static class MongoDbSeeder
         var session1 = new MatchSession
         {
             TripId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-000000000001"),
-            RiderId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-000000000001"),
             PickupLocation = MatchSession.CreatePoint(10.795220, 106.721830), // Landmark 81
             DistanceKm = 5.2,
             EstimatedMinutes = 14,
@@ -169,7 +168,6 @@ public static class MongoDbSeeder
         var session2 = new MatchSession
         {
             TripId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-000000000002"),
-            RiderId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-000000000002"),
             PickupLocation = MatchSession.CreatePoint(10.779788, 106.699018), // Nhà thờ Đức Bà
             DistanceKm = 7.8,
             EstimatedMinutes = 22,

@@ -9,14 +9,13 @@ service PricingService {
 
 message GetPricingRequest {
   string trip_id = 1;
-  string rider_id = 2;
-  bool has_toll = 3;
-  double pickup_longitude = 4;
-  double pickup_latitude = 5;
-  double destination_longitude = 6;
-  double destination_latitude = 7;
-  string promo_code = 8;
-  bool is_raining = 9;
+  bool has_toll = 2;
+  double pickup_longitude = 3;
+  double pickup_latitude = 4;
+  double destination_longitude = 5;
+  double destination_latitude = 6;
+  string promo_code = 7;
+  bool is_raining = 8;
 }
 
 message PricingResponse {
@@ -32,6 +31,8 @@ message PricingResponse {
   double discount_amount = 10;
   double tax_amount = 11;
   double final_total = 12;
+  double distance_km = 13;
+  int32 estimated_minutes = 14;
 }
 
 message AppliedSurge {

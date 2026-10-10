@@ -1,4 +1,4 @@
-﻿using Matching.Application.Abstractions;
+using Matching.Application.Abstractions;
 using Matching.Application.Configurations;
 using Matching.Application.Dtos;
 using Matching.Application.Helpers;
@@ -13,12 +13,12 @@ using Shared.CQRS;
 namespace Matching.Application.Features.Matching.Commands.CalculatePrice;
 
 public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository, ILogger<CalculatePriceCommandHandler> logger, IOptions<PricingConfig> config)
-    : ICommandHandler<CalculatePriceCommand, PricingBreakdown>
+    : ICommandHandler<CalculatePriceCommand, CalculatePriceDto>
 {
 
-    public async Task<Result<PricingBreakdown>> Handle(CalculatePriceCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CalculatePriceDto>> Handle(CalculatePriceCommand request, CancellationToken cancellationToken)
     {
-        logger.LogInformation("BEGIN: Calculating price for trip {TripId} and rider {RiderId}", request.TripId, request.RiderId);
+        logger.LogInformation("BEGIN: Calculating price for trip {TripId}", request.TripId);
 
         var (distance, estimatedTime, duration) = GeoHelper.CalculateTravelEstimate(request.PickupLatitude, request.PickupLongitude, request.DestinationLatitude, request.DestinationLongitude);
 
@@ -39,18 +39,26 @@ public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository
         var promoPricing = new PromotionPricing(tollPricing, config.Value);
 
         var pricingBreakdown = promoPricing.GetPrice(pricingContext);
-        var taxAmount = pricingBreakdown.FinalTotal * config.Value.TaxRate;
+        var taxAmount = Math.Round(pricingBreakdown.FinalTotal * config.Value.TaxRate, 2);
 
-        // Tính thuế và cập nhật giá trị cuối cùng
-        pricingBreakdown.FinalTotal = Math.Round(pricingBreakdown.FinalTotal + taxAmount, 2);
+        
+        pricingBreakdown.DistanceFare = Math.Round(pricingBreakdown.DistanceFare, 2);
+        pricingBreakdown.TimeFare = Math.Round(pricingBreakdown.TimeFare, 2);
+        pricingBreakdown.BaseFare = Math.Round(pricingBreakdown.BaseFare, 2);
+        pricingBreakdown.FareAfterSurge = Math.Round(pricingBreakdown.FareAfterSurge, 2);
+        pricingBreakdown.FareAfterDiscount = Math.Round(pricingBreakdown.FareAfterDiscount, 2);
+        pricingBreakdown.DiscountAmount = Math.Round(pricingBreakdown.DiscountAmount, 2);
+        pricingBreakdown.TollFee = Math.Round(pricingBreakdown.TollFee, 2);
         pricingBreakdown.TaxAmount = taxAmount;
         pricingBreakdown.TaxRate = config.Value.TaxRate;
+
+        // Chỉ làm tròn duy nhất FinalTotal theo tiền VND (ví dụ: 67.891đ -> 68.000đ)
+        pricingBreakdown.FinalTotal = CurrencyHelper.RoundVnd(pricingBreakdown.FinalTotal + taxAmount);
 
         await matchingRepository.CreateAsync(
             new MatchSession
             {
                 TripId = request.TripId,
-                RiderId = request.RiderId,
                 PickupLocation = MatchSession.CreatePoint(request.PickupLatitude, request.PickupLongitude),
                 DistanceKm = distance,
                 EstimatedMinutes = estimatedTime,
@@ -61,9 +69,27 @@ public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository
             }, cancellationToken
             );
 
-        logger.LogInformation("END: Calculating price for trip {TripId} and rider {RiderId}. Final price: {FinalPrice}", request.TripId, request.RiderId, pricingBreakdown.FinalTotal);
+        logger.LogInformation("END: Calculating price for trip {TripId}. Final price: {FinalPrice}", request.TripId, pricingBreakdown.FinalTotal);
 
-        return Result<PricingBreakdown>.Success(pricingBreakdown);
+        var responseDto = new CalculatePriceDto
+        {
+            DistanceKm = distance,
+            EstimatedMinutes = estimatedTime,
+            DistanceFare = pricingBreakdown.DistanceFare,
+            TimeFare = pricingBreakdown.TimeFare,
+            TaxRate = pricingBreakdown.TaxRate,
+            BaseFare = pricingBreakdown.BaseFare,
+            RetentionFactor = pricingBreakdown.RetentionFactor,
+            FareAfterSurge = pricingBreakdown.FareAfterSurge,
+            FareAfterDiscount = pricingBreakdown.FareAfterDiscount,
+            TollFee = pricingBreakdown.TollFee,
+            AppliedSurges = pricingBreakdown.AppliedSurges,
+            DiscountAmount = pricingBreakdown.DiscountAmount,
+            TaxAmount = pricingBreakdown.TaxAmount,
+            FinalTotal = pricingBreakdown.FinalTotal
+        };
+
+        return Result<CalculatePriceDto>.Success(responseDto);
 
     }
 }

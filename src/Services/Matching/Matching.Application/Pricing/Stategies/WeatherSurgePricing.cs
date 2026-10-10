@@ -1,4 +1,4 @@
-﻿using Matching.Application.Abstractions;
+using Matching.Application.Abstractions;
 using Matching.Application.Configurations;
 using Matching.Application.Dtos;
 using Matching.Domain.Entities;
@@ -39,8 +39,6 @@ public class WeatherSurgePricing : IPricingStrategy
                 Name = matchedRule.Name,
                 Multiplier = matchedRule.Multiplier
             });
-
-
 
             breakdown.FareAfterSurge = breakdown.FinalTotal;
         }

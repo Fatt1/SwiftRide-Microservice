@@ -8,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using Shared.CQRS.Behaviors;
 
 namespace Matching.Infrastructure;
 
@@ -30,19 +29,7 @@ public static class DependencyInjection
         services.AddScoped<IMatchingRepository, MatchingRepository>();
         services.AddScoped<IDriverLocationRepository, DriverLocationRepository>();
 
-        services.ConfigureMeditR();
         return services;
-    }
-
-
-    public static void ConfigureMeditR(this IServiceCollection services)
-    {
-        // Register MediatR
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssemblies(typeof(DependencyInjection).Assembly);
-            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
-        });
     }
 
     private static void ConfigureMongoDbClient(this IServiceCollection services, IConfiguration configuration)
