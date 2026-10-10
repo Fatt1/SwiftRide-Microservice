@@ -8,10 +8,10 @@ public sealed class MockPaymentGateway : IPaymentGateway
     private sealed record Operation(decimal Amount, string Scenario, GatewayResult Result);
     private readonly ConcurrentDictionary<Guid, Operation> charges = new();
 
-    public Task<GatewayResult?> LookupAsync(Guid key, bool refund, CancellationToken ct)
+    public Task<GatewayResult?> LookupAsync(Guid key, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        return Task.FromResult<GatewayResult?>(!refund && charges.TryGetValue(key, out var operation)
+        return Task.FromResult<GatewayResult?>(charges.TryGetValue(key, out var operation)
             ? operation.Result : null);
     }
 
@@ -28,6 +28,4 @@ public sealed class MockPaymentGateway : IPaymentGateway
         return Task.FromResult(operation.Result);
     }
 
-    public Task<GatewayResult> RefundAsync(Guid key, string chargeReference, decimal amount, CancellationToken ct)
-        => throw new NotSupportedException("Card refunds require durable fund reservation and are deferred.");
 }

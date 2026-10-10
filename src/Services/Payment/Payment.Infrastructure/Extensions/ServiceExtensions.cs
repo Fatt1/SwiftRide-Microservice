@@ -38,7 +38,6 @@ public static class ServiceExtensions
             bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(
                 configuration["EventBusSettings:EndpointPrefix"] ?? "payment", false));
             bus.AddConsumer<TripDropOffConsumer, TripDropOffConsumerDefinition>();
-            bus.AddConsumer<RefundRequestedConsumer, RefundRequestedConsumerDefinition>();
         });
 
         return services;

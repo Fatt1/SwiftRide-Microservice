@@ -16,8 +16,4 @@ public sealed class PaymentEvents(IPublishEndpoint publisher) : IPaymentEvents
             : publisher.Publish(new PaymentFailedEvent { TripId = p.TripId, RiderId = p.RiderId,
                 Amount = p.Amount, Reason = p.FailureReason!, CorrelationId = p.IdempotencyKey }, ct);
 
-    public Task RefundFinishedAsync(PaymentTransaction p, Refund r, CancellationToken ct)
-        => publisher.Publish(new PaymentRefundedEvent { PaymentId = p.Id, RefundId = r.Id,
-            TripId = p.TripId, Amount = r.Amount, Succeeded = r.Status == RefundStatus.Completed,
-            CorrelationId = p.IdempotencyKey }, ct);
 }

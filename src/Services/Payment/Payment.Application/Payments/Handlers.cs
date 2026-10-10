@@ -87,8 +87,7 @@ public sealed class CreatePaymentHandler(IPaymentRepository repository, PaymentP
             && p.Currency == r.Currency && p.PaymentMethod == r.PaymentMethod && p.GatewayToken == r.GatewayToken;
 }
 
-public sealed class RefundPaymentHandler(IPaymentRepository repository,
-    IPaymentEvents events) : ICommandHandler<RefundPaymentCommand, RefundView>
+public sealed class RefundPaymentHandler(IPaymentRepository repository) : ICommandHandler<RefundPaymentCommand, RefundView>
 {
     public async Task<Result<RefundView>> Handle(RefundPaymentCommand request, CancellationToken ct)
     {
@@ -105,6 +104,7 @@ public sealed class RefundPaymentHandler(IPaymentRepository repository,
         if (refund?.Status == RefundStatus.Completed) return Result.Success(RefundView.From(refund));
         if (payment.Status != PaymentStatus.Completed)
             return Result.Failure<RefundView>(new ConflictError("Payment is not eligible for a refund."));
+
         var created = refund is null;
         await using var tx = await repository.BeginAsync(ct);
         var wallets = await repository.LockWalletsAsync(new[] { payment.RiderId, payment.DriverId }, ct);
@@ -114,25 +114,20 @@ public sealed class RefundPaymentHandler(IPaymentRepository repository,
             return Result.Failure<RefundView>(new ConflictError("Required wallet is missing or invalid."));
         if (driver.Balance < payment.Amount)
             return Result.Failure<RefundView>(new ConflictError("Driver has insufficient balance; manual compensation required."));
+
         refund ??= payment.RequestRefund(request.Reason);
         if (created) repository.AddRefund(refund);
         driver.Debit(refund.Amount);
         rider.Credit(refund.Amount);
-        await CompleteAsync(payment, refund, driver.Id, rider.Id, ct);
+        repository.AddLedger(LedgerEntry.Create(payment.Id, driver.Id, payment.PaymentMethod,
+            EntryType.Debit, refund.Amount, "Refund"));
+        repository.AddLedger(LedgerEntry.Create(payment.Id, rider.Id, payment.PaymentMethod,
+            EntryType.Credit, refund.Amount, "Refund"));
+        refund.MarkCompleted();
+        payment.MarkRefunded();
         await repository.CommitAsync(ct);
         PaymentTelemetry.Record("refund", refund.Status.ToString());
         return Result.Success(RefundView.From(refund, created));
-    }
-
-    private async Task CompleteAsync(PaymentTransaction payment, Refund refund, Guid debit, Guid? credit, CancellationToken ct)
-    {
-        repository.AddLedger(LedgerEntry.Create(payment.Id, debit, payment.PaymentMethod, EntryType.Debit,
-            refund.Amount, "Refund"));
-        repository.AddLedger(LedgerEntry.Create(payment.Id, credit, payment.PaymentMethod, EntryType.Credit,
-            refund.Amount, "Refund", refund.Id));
-        refund.MarkCompleted();
-        payment.MarkRefunded();
-        await events.RefundFinishedAsync(payment, refund, ct);
     }
 }
 
