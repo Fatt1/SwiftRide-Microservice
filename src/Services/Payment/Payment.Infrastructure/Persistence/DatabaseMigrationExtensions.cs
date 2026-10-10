@@ -16,16 +16,16 @@ public static class DatabaseMigrationExtensions
 
         try
         {
-            logger.LogInformation("Checking and applying pending database migrations...");
+            logger.LogInformation("Đang kiểm tra và áp dụng migration cơ sở dữ liệu còn chờ...");
             await context.Database.MigrateAsync();
-            logger.LogInformation("Database migrations applied successfully.");
+            logger.LogInformation("Đã áp dụng migration cơ sở dữ liệu thành công.");
 
             var seederLogger = services.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DatabaseSeeder));
             await DatabaseSeeder.SeedAsync(context, seederLogger);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+            logger.LogError(ex, "Có lỗi khi chạy migration hoặc khởi tạo dữ liệu cơ sở dữ liệu.");
             throw new InvalidOperationException("Database migration or seeding failed.", ex);
         }
     }

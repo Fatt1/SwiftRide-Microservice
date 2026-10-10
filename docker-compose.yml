@@ -53,6 +53,14 @@ services:
       - swiftride-network
 
   #microservice api section
+  payment.api:
+    image: ${DOCKER_REGISTRY-}payment-api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Payment/Payment.API/Dockerfile
+    networks:
+      - swiftride-network
+
   matching.api:
     image: ${DOCKER_REGISTRY-}matching-api:${PLATFORM:-linux}-${TAG:-latest}
     build:
