@@ -12,13 +12,16 @@ using Shared.CQRS;
 namespace Payment.Application.Features.Payments.Commands.RefundPayment;
 
 public sealed class RefundPaymentCommandHandler(
-    IPaymentRepository payments, IRefundRepository refunds, IPaymentStrategyFactory strategies,
-    IPaymentUnitOfWork unitOfWork, ILogger<RefundPaymentCommandHandler> logger)
+    IPaymentRepository payments, IPaymentTransaction transactions, IRefundRepository refunds, IPaymentStrategyFactory strategies,
+    ILogger<RefundPaymentCommandHandler> logger)
     : ICommandHandler<RefundPaymentCommand, RefundDto>
 {
-    public Task<Result<RefundDto>> Handle(RefundPaymentCommand request, CancellationToken cancellationToken) =>
-        unitOfWork.ExecuteAsync([request.PaymentId], async ct =>
+    public async Task<Result<RefundDto>> Handle(RefundPaymentCommand request, CancellationToken ct)
+    {
+        await using var transaction = await transactions.BeginOwnedTransactionAsync();
+        try
         {
+            await transactions.LockPaymentsAsync([request.PaymentId], ct);
             logger.LogInformation("Bắt đầu hoàn tiền cho thanh toán {PaymentId}", request.PaymentId);
             var payment = await payments.GetByIdAsync(request.PaymentId, ct);
             if (payment is null)
@@ -38,7 +41,7 @@ public sealed class RefundPaymentCommandHandler(
                 return Result.Failure<RefundDto>(new ConflictError("Only a completed payment can be refunded."));
             }
 
-            await unitOfWork.LockWalletsAsync([payment.RiderId, payment.DriverId], ct);
+            await transactions.LockWalletsAsync([payment.RiderId, payment.DriverId], ct);
             var context = new RefundExecutionContext(payment);
             logger.LogInformation("Đang hoàn tiền bằng {PaymentMethod} cho thanh toán {PaymentId}", payment.PaymentMethod, payment.Id);
             var outcome = await strategies.GetStrategy(payment.PaymentMethod).RefundAsync(context, ct);
@@ -59,6 +62,24 @@ public sealed class RefundPaymentCommandHandler(
             payment.MarkRefunded();
             logger.LogInformation("Khoản hoàn tiền {RefundId} của thanh toán {PaymentId} đã sẵn sàng để lưu. TraceId={TraceId} SpanId={SpanId}",
                 refund.Id, payment.Id, Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString());
+            if (transaction is not null)
+            {
+                await transactions.EndTransactionAsync();
+                logger.LogInformation("Đã lưu dữ liệu và commit transaction");
+            }
+            else
+            {
+                await transactions.SaveChangesAsync();
+                logger.LogInformation("Đã lưu dữ liệu; đang chờ consumer commit transaction");
+            }
             return Result.Success(RefundDto.From(refund));
-        }, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Lỗi xử lý hoàn tiền");
+            if (transaction is not null)
+                await transactions.RollBackTransactionAsync();
+            throw;
+        }
+    }
 }

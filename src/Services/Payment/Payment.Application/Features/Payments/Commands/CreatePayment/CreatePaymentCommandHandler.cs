@@ -14,13 +14,16 @@ using Shared.CQRS;
 namespace Payment.Application.Features.Payments.Commands.CreatePayment;
 
 public sealed class CreatePaymentCommandHandler(
-    IPaymentRepository payments, IPaymentStrategyFactory strategies, IPaymentUnitOfWork unitOfWork,
+    IPaymentRepository payments, IPaymentTransaction transactions, IPaymentStrategyFactory strategies,
     IPublishEndpoint publisher, ILogger<CreatePaymentCommandHandler> logger)
     : ICommandHandler<CreatePaymentCommand, PaymentDto>
 {
-    public Task<Result<PaymentDto>> Handle(CreatePaymentCommand request, CancellationToken cancellationToken) =>
-        unitOfWork.ExecuteAsync([request.TripId, request.IdempotencyKey], async ct =>
+    public async Task<Result<PaymentDto>> Handle(CreatePaymentCommand request, CancellationToken ct)
+    {
+        await using var transaction = await transactions.BeginOwnedTransactionAsync();
+        try
         {
+            await transactions.LockPaymentsAsync([request.TripId, request.IdempotencyKey], ct);
             logger.LogInformation("Bắt đầu thanh toán cho chuyến {TripId}, phương thức {PaymentMethod}, khóa chống xử lý trùng {IdempotencyKey}",
                 request.TripId, request.PaymentMethod, request.IdempotencyKey);
            
@@ -30,10 +33,7 @@ public sealed class CreatePaymentCommandHandler(
             if (existing is not null)
             {
                 if ((byTrip is not null && byKey is not null && byTrip.Id != byKey.Id) ||
-                    existing.TripId != request.TripId || existing.RiderId != request.RiderId ||
-                    existing.DriverId != request.DriverId || existing.Amount != request.Amount ||
-                    existing.PaymentMethod != request.PaymentMethod || existing.Currency != request.Currency ||
-                    existing.GatewayToken != request.GatewayToken)
+                    existing.TripId != request.TripId)
                 {
                     logger.LogWarning("Yêu cầu thanh toán xung đột với thanh toán {PaymentId} của chuyến {TripId}", existing.Id, request.TripId);
                     return Result.Failure<PaymentDto>(new ConflictError("The trip or idempotency key belongs to a different payment request."));
@@ -42,7 +42,7 @@ public sealed class CreatePaymentCommandHandler(
                 return Result.Success(PaymentDto.From(existing));
             }
 
-            await unitOfWork.LockWalletsAsync([request.RiderId, request.DriverId], ct);
+            await transactions.LockWalletsAsync([request.RiderId, request.DriverId], ct);
             var payment = PaymentTransaction.Create(request.TripId, request.RiderId, request.DriverId,
                 request.Amount, request.PaymentMethod, request.IdempotencyKey, request.GatewayToken, request.Currency);
             var context = new PaymentExecutionContext(payment);
@@ -78,6 +78,24 @@ public sealed class CreatePaymentCommandHandler(
             }
             logger.LogInformation("Thanh toán {PaymentId} cho chuyến {TripId} đã sẵn sàng để lưu, trạng thái {Status}. TraceId={TraceId} SpanId={SpanId}",
                 payment.Id, payment.TripId, payment.Status, Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString());
+            if (transaction is not null)
+            {
+                await transactions.EndTransactionAsync();
+                logger.LogInformation("Đã lưu dữ liệu và commit transaction");
+            }
+            else
+            {
+                await transactions.SaveChangesAsync();
+                logger.LogInformation("Đã lưu dữ liệu; đang chờ consumer commit transaction");
+            }
             return Result.Success(PaymentDto.From(payment));
-        }, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Lỗi xử lý thanh toán");
+            if (transaction is not null)
+                await transactions.RollBackTransactionAsync();
+            throw;
+        }
+    }
 }

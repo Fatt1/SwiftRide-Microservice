@@ -37,10 +37,11 @@ public static class ServiceExtensions
             }));
 
         // Register MassTransit + RabbitMQ + Transactional Outbox for PostgreSQL
-        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<PaymentRepository>();
+        services.AddScoped<IPaymentRepository>(provider => provider.GetRequiredService<PaymentRepository>());
+        services.AddScoped<IPaymentTransaction>(provider => provider.GetRequiredService<PaymentRepository>());
         services.AddScoped<IWalletRepository, WalletRepository>();
         services.AddScoped<IRefundRepository, RefundRepository>();
-        services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
         services.AddScoped<IPaymentStrategy, WalletPaymentStrategy>();
         services.AddScoped<IPaymentStrategy, CardPaymentStrategy>();
         services.AddScoped<IPaymentStrategyFactory, PaymentStrategyFactory>();
