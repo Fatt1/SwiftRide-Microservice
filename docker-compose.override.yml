@@ -73,6 +73,26 @@ services:
 
 
   #microservice section
+  payment.api:
+    container_name: payment.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5000
+      - ConnectionStrings__DefaultConnection=Host=paymentdb;Port=5432;Database=swiftridedb;Username=postgres;Password=Password@123
+      - EventBusSettings__HostAddress=rabbitmq
+      - EventBusSettings__Port=5672
+      - EventBusSettings__UserName=guest
+      - EventBusSettings__Password=guest
+      - OpenTelemetry__ServiceName=Payment.API
+      - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+    ports:
+      - "6003:5000"
+    restart: on-failure
+    depends_on:
+      - paymentdb
+      - rabbitmq
+      - jaeger
+
   matching.api:
     container_name: matching.api
     environment:

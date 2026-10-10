@@ -7,9 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Usecases\Payments\Commands\" />
-    <Folder Include="Usecases\Payments\Events\" />
-    <Folder Include="Usecases\Payments\Queries\" />
+    <ProjectReference Include="..\Payment.Domain\Payment.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\EventBus.Messages\EventBus.Messages.csproj" />
+    <PackageReference Include="MassTransit" />
   </ItemGroup>
 
 </Project>

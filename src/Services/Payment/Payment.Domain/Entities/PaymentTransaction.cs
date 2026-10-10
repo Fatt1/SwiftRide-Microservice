@@ -1,6 +1,7 @@
 using Contracts.Domain;
 using Payment.Domain.Enums;
 using Shared.Enums.Payments;
+using Shared.Exceptions;
 
 namespace Payment.Domain.Entities;
 
@@ -37,6 +38,10 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
     {
         if (amount <= 0)
             throw new ArgumentException("Amount must be greater than zero", nameof(amount));
+        if (tripId == Guid.Empty || riderId == Guid.Empty || driverId == Guid.Empty || idempotencyKey == Guid.Empty)
+            throw new DomainException("Payment identifiers cannot be empty.");
+        if (riderId == driverId || !Enum.IsDefined(paymentMethod) || currency != "VND")
+            throw new DomainException("Invalid participants, payment method or currency.");
 
         return new PaymentTransaction
         {
@@ -57,6 +62,7 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
 
     public void MarkCompleted(string? gatewayResponse = null)
     {
+        EnsureStatus(PaymentStatus.Pending);
         Status = PaymentStatus.Completed;
         GatewayResponse = gatewayResponse;
         ProcessedAt = DateTimeOffset.UtcNow;
@@ -65,6 +71,7 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
 
     public void MarkFailed(string reason, string? gatewayResponse = null)
     {
+        EnsureStatus(PaymentStatus.Pending);
         Status = PaymentStatus.Failed;
         FailureReason = reason;
         GatewayResponse = gatewayResponse;
@@ -74,7 +81,14 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
 
     public void MarkRefunded()
     {
+        EnsureStatus(PaymentStatus.Completed);
         Status = PaymentStatus.Refunded;
         LastModifiedAt = DateTimeOffset.UtcNow;
+    }
+
+    private void EnsureStatus(PaymentStatus expected)
+    {
+        if (Status != expected)
+            throw new DomainException($"Payment must be {expected}; current status is {Status}.");
     }
 }

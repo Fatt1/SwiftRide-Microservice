@@ -3,6 +3,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Payment.Infrastructure.Persistence;
+using Payment.Application.Abstractions;
+using Payment.Domain.Repositories;
+using Payment.Infrastructure.Repositories;
+using Payment.Infrastructure.Strategies;
+using Payment.Infrastructure.Factories;
+using Payment.Infrastructure.Payments;
+using Payment.Infrastructure.Messaging;
+using MassTransit;
+using MassTransit.Logging;
+using OpenTelemetry.Trace;
+using System.Data;
+using MassTransit.EntityFrameworkCoreIntegration;
 
 namespace Payment.Infrastructure.Extensions;
 
@@ -25,7 +37,19 @@ public static class ServiceExtensions
             }));
 
         // Register MassTransit + RabbitMQ + Transactional Outbox for PostgreSQL
-        services.AddCustomMassTransitWithPostgresOutbox<PaymentDbContext>(configuration);
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IWalletRepository, WalletRepository>();
+        services.AddScoped<IRefundRepository, RefundRepository>();
+        services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
+        services.AddScoped<IPaymentStrategy, WalletPaymentStrategy>();
+        services.AddScoped<IPaymentStrategy, CardPaymentStrategy>();
+        services.AddScoped<IPaymentStrategyFactory, PaymentStrategyFactory>();
+        services.AddScoped<ICardPaymentProcessor, MockCardPaymentProcessor>();
+        services.AddCustomMassTransitWithPostgresOutbox<PaymentDbContext>(configuration, bus =>
+            bus.AddConsumer<TripDropOffConsumer, TripDropOffConsumerDefinition>());
+        services.PostConfigure<EntityFrameworkOutboxOptions>(options =>
+            options.IsolationLevel = IsolationLevel.ReadCommitted);
+        services.AddOpenTelemetry().WithTracing(tracing => tracing.AddSource(DiagnosticHeaders.DefaultListenerName));
 
         return services;
     }
