@@ -16,6 +16,9 @@
     <Project Path="src/BuildingBlocks/Shared/Shared.csproj" />
   </Folder>
   <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Identity/">
+    <Project Path="src/Services/Identity/Identity.API/Identity.API.csproj" Id="16524d5c-34dd-4d12-906b-3002a5d0828c" />
+  </Folder>
   <Folder Name="/src/Services/Matching/">
     <Project Path="src/Services/Matching/Matching.API/Matching.API.csproj" />
     <Project Path="src/Services/Matching/Matching.Application/Matching.Application.csproj" Id="0057e79a-e289-47cb-a477-b517e0727b8e" />
