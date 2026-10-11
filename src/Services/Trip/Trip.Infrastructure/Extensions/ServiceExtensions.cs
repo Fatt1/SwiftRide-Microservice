@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Trip.Infrastructure.Persistence;
+using Trip.Domain.Repositories;
+using Trip.Infrastructure.Repositories;
+
 
 namespace Trip.Infrastructure.Extensions;
 
@@ -21,6 +24,9 @@ public static class ServiceExtensions
 
         // Register MassTransit + RabbitMQ + Transactional Outbox for SQL Server
         services.AddCustomMassTransitWithSqlOutbox<TripDbContext>(configuration);
+
+        // Đăng ký TripRepository
+        services.AddScoped<ITripRepository, TripRepository>();
 
         return services;
     }
