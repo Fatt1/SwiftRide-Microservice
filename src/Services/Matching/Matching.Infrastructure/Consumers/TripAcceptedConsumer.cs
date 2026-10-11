@@ -4,7 +4,7 @@ using Matching.Domain.Enums;
 using Matching.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 
-namespace Matching.Application.Features.Matching.Events;
+namespace Matching.Infrastructure.Consumers;
 
 public class TripAcceptedConsumer : IConsumer<TripAcceptedEvent>
 {

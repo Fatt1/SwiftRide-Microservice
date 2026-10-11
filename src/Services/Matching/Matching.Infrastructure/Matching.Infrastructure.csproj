@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <Folder Include="Configurations\" />
-    <Folder Include="Pricing\" />
   </ItemGroup>
 
 </Project>
