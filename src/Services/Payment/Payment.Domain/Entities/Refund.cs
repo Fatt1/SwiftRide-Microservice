@@ -22,6 +22,8 @@ public class Refund : EntityBase<Guid>
     {
         if (amount <= 0)
             throw new DomainException("Refund amount must be greater than zero");
+        if (paymentId == Guid.Empty || string.IsNullOrWhiteSpace(reason))
+            throw new DomainException("A payment and refund reason are required.");
 
         return new Refund
         {
@@ -36,13 +38,21 @@ public class Refund : EntityBase<Guid>
 
     public void MarkCompleted()
     {
+        EnsurePending();
         Status = RefundStatus.Completed;
         ProcessedAt = DateTimeOffset.UtcNow;
     }
 
     public void MarkFailed()
     {
+        EnsurePending();
         Status = RefundStatus.Failed;
         ProcessedAt = DateTimeOffset.UtcNow;
+    }
+
+    private void EnsurePending()
+    {
+        if (Status != RefundStatus.Pending)
+            throw new DomainException("Refund has already been processed.");
     }
 }

@@ -8,8 +8,7 @@ public class LedgerEntry : EntityBase<Guid>
 {
     public Guid PaymentId { get; private set; }
     /// <summary>
-    /// Nullable: NULL when debiting directly from an external card via mock gateway.
-    /// Non-null when debiting from a wallet or crediting to any wallet.
+    /// Null for external card charges and refunds; required for wallet movements.
     /// </summary>
     public Guid? WalletId { get; private set; }
     public PaymentMethod PaymentMethod { get; private set; }
@@ -35,12 +34,8 @@ public class LedgerEntry : EntityBase<Guid>
         if (amount <= 0)
             throw new ArgumentException("Amount must be greater than zero", nameof(amount));
 
-        // Validation rule: Debit with wallet method MUST have walletId
-        if (entryType == EntryType.Debit && paymentMethod == PaymentMethod.Wallet && !walletId.HasValue)
-            throw new ArgumentException("WalletId cannot be null when debiting from a wallet", nameof(walletId));
-
-        // Credit to driver ALWAYS requires walletId
-        if (entryType == EntryType.Credit && !walletId.HasValue)
+        // External card refunds have no wallet; wallet entries always require one.
+        if (paymentMethod == PaymentMethod.Wallet && !walletId.HasValue)
             throw new ArgumentException("WalletId cannot be null for credit entries", nameof(walletId));
 
         return new LedgerEntry

@@ -17,6 +17,9 @@ public class Wallet : EntityAuditableBase<Guid>
 
     public static Wallet Create(Guid userId, string userRole, decimal initialBalance = 0, string currency = "VND")
     {
+        if (userId == Guid.Empty || string.IsNullOrWhiteSpace(userRole) ||
+            userRole.ToLowerInvariant() is not ("rider" or "driver") || initialBalance < 0 || currency != "VND")
+            throw new DomainException("Invalid wallet owner, role, initial balance or currency.");
         return new Wallet
         {
             Id = Guid.CreateVersion7(),
