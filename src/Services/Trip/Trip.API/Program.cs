@@ -1,11 +1,13 @@
 using Common.Logging;
+using Matching.API.Protos;
 using Serilog;
 using Shared.Exceptions;
 using Shared.Extensions;
+using Trip.API.GrpcServices;
+using Trip.Application.Common.Interfaces;
+using Trip.Application.Extensions;
 using Trip.Infrastructure.Extensions;
 using Trip.Infrastructure.Persistence;
-using Trip.Application.Extensions;
-
 
 namespace Trip.API;
 
@@ -18,10 +20,17 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.UseSerilog(Serilogger.Configure);
 
-
             // Add services to the container.
             builder.Services.AddTripApplication();
             builder.Services.AddTripInfrastructure(builder.Configuration);
+
+            // Register gRPC Client for Matching Service
+            var matchingGrpcUrl = builder.Configuration["GrpcSettings:MatchingUrl"] ?? "http://localhost:5001";
+            builder.Services.AddGrpcClient<PricingService.PricingServiceClient>(options =>
+            {
+                options.Address = new Uri(matchingGrpcUrl);
+            });
+            builder.Services.AddScoped<IPricingGrpcService, PricingGrpcService>();
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
