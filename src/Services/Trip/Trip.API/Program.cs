@@ -4,6 +4,8 @@ using Shared.Exceptions;
 using Shared.Extensions;
 using Trip.Infrastructure.Extensions;
 using Trip.Infrastructure.Persistence;
+using Trip.Application.Extensions;
+
 
 namespace Trip.API;
 
@@ -16,7 +18,9 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.UseSerilog(Serilogger.Configure);
 
+
             // Add services to the container.
+            builder.Services.AddTripApplication();
             builder.Services.AddTripInfrastructure(builder.Configuration);
 
             builder.Services.AddControllers();
