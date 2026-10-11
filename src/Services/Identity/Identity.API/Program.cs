@@ -4,6 +4,7 @@ using Identity.API.Data;
 using Identity.API.Endpoints;
 using Identity.API.Entities;
 using Identity.API.Services;
+using Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,9 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 })
 .AddEntityFrameworkStores<IdentityDbContext>()
 .AddDefaultTokenProviders();
+
+// MassTransit with RabbitMQ EventBus
+builder.Services.AddCustomMassTransit(builder.Configuration);
 
 // JWT Settings & Authentication
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));

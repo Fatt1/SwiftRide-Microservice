@@ -10,13 +10,13 @@ public static class AuthEndpoints
     {
         var group = endpoints.MapApiV1Group("auth").WithTags("Auth");
 
-        group.MapPost("/register", async (RegisterRequestDto request, IIdentityService identityService) =>
+        group.MapPost("/register", async (RegisterRequestDto request, IIdentityService identityService, CancellationToken ct) =>
         {
-            var result = await identityService.RegisterAsync(request);
+            var result = await identityService.RegisterAsync(request, ct);
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
         .WithName("Register")
-        .WithSummary("Đăng ký tài khoản mới")
+        .WithSummary("Đăng ký tài khoản mới và phát sự kiện UserCreated")
         .Produces<RegisterResponseDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict);

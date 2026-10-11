@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -29,7 +28,9 @@ public static class OpenTelemetryExtensions
             {
                 tracing
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation()
+                    .AddSource("MassTransit");
+                ;
 
                 if (!string.IsNullOrWhiteSpace(otlpEndpoint))
                 {

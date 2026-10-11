@@ -1,5 +1,7 @@
+using EventBus.Messages.Events;
 using Identity.API.DTOs;
 using Identity.API.Entities;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Shared;
 
@@ -9,19 +11,22 @@ public class IdentityService : IIdentityService
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly IJwtService _jwtService;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly ILogger<IdentityService> _logger;
 
     public IdentityService(
         UserManager<AppUser> userManager,
         IJwtService jwtService,
+        IPublishEndpoint publishEndpoint,
         ILogger<IdentityService> logger)
     {
         _userManager = userManager;
         _jwtService = jwtService;
+        _publishEndpoint = publishEndpoint;
         _logger = logger;
     }
 
-    public async Task<Result<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
+    public async Task<Result<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
     {
         var existingUserByName = await _userManager.FindByNameAsync(request.UserName);
         if (existingUserByName != null)
@@ -53,6 +58,17 @@ public class IdentityService : IIdentityService
         }
 
         _logger.LogInformation("Đăng ký tài khoản thành công cho user: {UserName} (ID: {UserId})", user.UserName, user.Id);
+
+        // Bắn sự kiện UserCreated qua MassTransit RabbitMQ
+        await _publishEndpoint.Publish<UserCreated>(new UserCreated
+        {
+            Id = Guid.TryParse(user.Id, out var parsedGuid) ? parsedGuid : Guid.NewGuid(),
+            UserId = user.Id,
+            Email = user.Email ?? string.Empty,
+            FullName = user.FullName
+        }, cancellationToken);
+
+        _logger.LogInformation("Đã publish sự kiện UserCreated cho user: {UserId}", user.Id);
 
         return Result.Success(new RegisterResponseDto
         {
