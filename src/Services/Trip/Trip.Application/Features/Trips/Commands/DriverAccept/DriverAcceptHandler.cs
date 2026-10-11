@@ -1,3 +1,5 @@
+using EventBus.Messages.Events;
+using MassTransit;
 using Shared;
 using Shared.CQRS;
 using Trip.Domain.Enums;
@@ -5,7 +7,9 @@ using Trip.Domain.Repositories;
 
 namespace Trip.Application.Features.Trips.Commands.DriverAccept;
 
-internal sealed class DriverAcceptHandler(ITripRepository tripRepository) 
+internal sealed class DriverAcceptHandler(
+    ITripRepository tripRepository,
+    IPublishEndpoint publishEndpoint) 
     : ICommandHandler<DriverAcceptCommand>
 {
     public async Task<Result> Handle(DriverAcceptCommand request, CancellationToken cancellationToken)
@@ -25,6 +29,13 @@ internal sealed class DriverAcceptHandler(ITripRepository tripRepository)
 
         await tripRepository.Update(trip);
         await tripRepository.SaveChangesAsync();
+
+        //Bắn sự kiện TripAcceptedEvent sang Matching Service quaa RabbitMQ (MassTransit)
+        await publishEndpoint.Publish(new TripAcceptedEvent
+        {
+            TripId = trip.Id,
+            DriverId = request.DriverId
+        }, cancellationToken);
 
         return Result.Success();
     }
