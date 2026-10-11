@@ -15,8 +15,8 @@ public sealed class CardPaymentStrategy(IWalletRepository wallets, ICardPaymentP
     {
         var payment = context.Payment;
         var driver = await wallets.GetByUserIdAsync(payment.DriverId, ct);
-        if (driver is not null && (driver.UserRole != "driver" || driver.Currency != payment.Currency))
-            return Result.Failure(new ConflictError("Driver wallet role or currency does not match."));
+        if (driver is not null && (driver.Currency != payment.Currency))
+            return Result.Failure(new ConflictError("Driver wallet currency does not match."));
 
         var result = await processor.ChargeAsync(payment.Amount, payment.GatewayToken!, payment.IdempotencyKey, ct);
         context.ProcessorResponse = result.Response;
@@ -24,7 +24,7 @@ public sealed class CardPaymentStrategy(IWalletRepository wallets, ICardPaymentP
             return Result.Failure(new ConflictError(result.FailureReason!));
         if (driver is null)
         {
-            driver = Wallet.Create(payment.DriverId, "driver", currency: payment.Currency);
+            driver = Wallet.Create(payment.DriverId, currency: payment.Currency);
             wallets.Add(driver);
         }
         driver.Credit(payment.Amount);
@@ -36,7 +36,7 @@ public sealed class CardPaymentStrategy(IWalletRepository wallets, ICardPaymentP
     {
         var payment = context.Payment;
         var driver = await wallets.GetByUserIdAsync(payment.DriverId, ct);
-        if (driver is null || driver.UserRole != "driver" || driver.Currency != payment.Currency ||
+        if (driver is null || driver.Currency != payment.Currency ||
             driver.Balance < payment.Amount)
             return Result.Failure(new ConflictError("Driver wallet is missing, incompatible or has insufficient balance."));
 
