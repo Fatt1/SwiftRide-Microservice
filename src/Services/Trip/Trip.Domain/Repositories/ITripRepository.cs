@@ -1,11 +1,8 @@
+using Contracts.Common.Interfaces;
 using Trip.Domain.Entities;
 
 namespace Trip.Domain.Repositories;
 
-public interface ITripRepository 
+public interface ITripRepository : IRepositoryBase<Entities.Trip, Guid>
 {
-    Task<Entities.Trip?> FindByIdAsync(Guid id);
-    Task<Guid> CreateAsync(Entities.Trip trip);
-    Task Update(Entities.Trip trip);
-    Task<int> SaveChangesAsync();
 }
