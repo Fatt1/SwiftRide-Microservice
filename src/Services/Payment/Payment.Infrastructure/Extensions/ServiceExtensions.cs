@@ -41,6 +41,7 @@ public static class ServiceExtensions
         services.AddScoped<IPaymentRepository>(provider => provider.GetRequiredService<PaymentRepository>());
         services.AddScoped<IPaymentTransaction>(provider => provider.GetRequiredService<PaymentRepository>());
         services.AddScoped<IWalletRepository, WalletRepository>();
+        services.AddScoped<ILedgerRepository, LedgerRepository>();
         services.AddScoped<IRefundRepository, RefundRepository>();
         services.AddScoped<IPaymentStrategy, WalletPaymentStrategy>();
         services.AddScoped<IPaymentStrategy, CardPaymentStrategy>();

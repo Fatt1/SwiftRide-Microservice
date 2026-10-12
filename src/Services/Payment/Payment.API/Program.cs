@@ -73,6 +73,8 @@ public class Program
 
             app.MapControllers();
             app.MapPaymentEndpoints();
+            app.MapWalletEndpoints();
+            app.MapPaymentHistoryEndpoints();
 
             await app.RunAsync();
         }

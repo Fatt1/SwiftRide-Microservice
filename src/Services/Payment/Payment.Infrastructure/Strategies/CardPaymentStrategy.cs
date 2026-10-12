@@ -1,6 +1,5 @@
 using Payment.Application.Abstractions;
 using Payment.Application.Payments.Contexts;
-using Payment.Domain.Entities;
 using Payment.Domain.Repositories;
 using Shared;
 using Shared.Enums.Payments;
@@ -15,18 +14,15 @@ public sealed class CardPaymentStrategy(IWalletRepository wallets, ICardPaymentP
     {
         var payment = context.Payment;
         var driver = await wallets.GetByUserIdAsync(payment.DriverId, ct);
-        if (driver is not null && (driver.Currency != payment.Currency))
+        if (driver is null)
+            return Result.Failure(new ConflictError("A driver wallet is required."));
+        if (driver.Currency != payment.Currency)
             return Result.Failure(new ConflictError("Driver wallet currency does not match."));
 
         var result = await processor.ChargeAsync(payment.Amount, payment.GatewayToken!, payment.IdempotencyKey, ct);
         context.ProcessorResponse = result.Response;
         if (!result.IsSuccess)
             return Result.Failure(new ConflictError(result.FailureReason!));
-        if (driver is null)
-        {
-            driver = Wallet.Create(payment.DriverId, currency: payment.Currency);
-            wallets.Add(driver);
-        }
         driver.Credit(payment.Amount);
         context.CreditWalletId = driver.Id;
         return Result.Success();

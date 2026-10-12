@@ -211,7 +211,7 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<Guid>("PaymentId")
+                    b.Property<Guid?>("PaymentId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("PaymentMethod")
@@ -383,8 +383,7 @@ namespace Payment.Infrastructure.Persistence.Migrations
                     b.HasOne("Payment.Domain.Entities.PaymentTransaction", "Payment")
                         .WithMany("LedgerEntries")
                         .HasForeignKey("PaymentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Payment.Domain.Entities.Wallet", "Wallet")
                         .WithMany("LedgerEntries")

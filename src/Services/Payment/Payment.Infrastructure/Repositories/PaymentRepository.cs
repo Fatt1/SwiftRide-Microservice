@@ -27,6 +27,8 @@ public sealed class PaymentRepository(PaymentDbContext context)
 
     public Task<PaymentTransaction?> GetByIdAsync(Guid id, CancellationToken ct) =>
         FindByCondition(x => x.Id == id, trackChanges: true).SingleOrDefaultAsync(ct);
+    public async Task<IReadOnlyList<PaymentTransaction>> GetAllAsync(CancellationToken ct) =>
+        await context.Payments.AsNoTracking().OrderByDescending(p => p.CreatedAt).ToListAsync(ct);
     public Task<PaymentTransaction?> GetByTripIdAsync(Guid tripId, CancellationToken ct) =>
         FindByCondition(x => x.TripId == tripId, trackChanges: true).SingleOrDefaultAsync(ct);
     public Task<PaymentTransaction?> GetByIdempotencyKeyAsync(Guid key, CancellationToken ct) =>

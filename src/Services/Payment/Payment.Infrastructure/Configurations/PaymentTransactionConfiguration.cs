@@ -32,7 +32,8 @@ public class PaymentTransactionConfiguration : IEntityTypeConfiguration<PaymentT
         builder.HasMany(p => p.LedgerEntries)
               .WithOne(l => l.Payment)
               .HasForeignKey(l => l.PaymentId)
-              .OnDelete(DeleteBehavior.Cascade);
+              .OnDelete(DeleteBehavior.Cascade)
+              .IsRequired(false);
 
         builder.HasMany(p => p.Refunds)
               .WithOne(r => r.Payment)

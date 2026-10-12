@@ -6,7 +6,7 @@ namespace Payment.Domain.Entities;
 
 public class LedgerEntry : EntityBase<Guid>
 {
-    public Guid PaymentId { get; private set; }
+    public Guid? PaymentId { get; private set; }
     /// <summary>
     /// Null for external card charges and refunds; required for wallet movements.
     /// </summary>
@@ -18,7 +18,7 @@ public class LedgerEntry : EntityBase<Guid>
     public DateTimeOffset CreatedAt { get; private set; }
 
     // Navigation
-    public PaymentTransaction Payment { get; private set; } = default!;
+    public PaymentTransaction? Payment { get; private set; }
     public Wallet? Wallet { get; private set; }
 
     private LedgerEntry() { }
@@ -47,6 +47,23 @@ public class LedgerEntry : EntityBase<Guid>
             EntryType = entryType,
             Amount = amount,
             Description = description,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    public static LedgerEntry CreateTopUp(Guid requestId, Guid walletId, decimal amount)
+    {
+        if (requestId == Guid.Empty || walletId == Guid.Empty || amount <= 0)
+            throw new ArgumentException("Valid request, wallet and positive amount are required.");
+
+        return new LedgerEntry
+        {
+            Id = requestId,
+            WalletId = walletId,
+            PaymentMethod = PaymentMethod.Wallet,
+            EntryType = EntryType.Credit,
+            Amount = amount,
+            Description = "Wallet top-up",
             CreatedAt = DateTimeOffset.UtcNow
         };
     }
