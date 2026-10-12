@@ -83,6 +83,28 @@ services:
 
 
   #microservice section
+  trip.api:
+    container_name: trip.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5000
+      - ConnectionStrings__DefaultConnection=Server=tripdb,1433;Database=tripdb;User Id=sa;Password=Password@123;TrustServerCertificate=True;
+      - EventBusSettings__HostAddress=rabbitmq
+      - EventBusSettings__Port=5672
+      - EventBusSettings__UserName=guest
+      - EventBusSettings__Password=guest
+      - GrpcSettings__MatchingUrl=http://matching.api:5002
+      - OpenTelemetry__ServiceName=Trip.API
+      - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+    ports:
+      - "6004:5000"
+    restart: on-failure
+    depends_on:
+      - tripdb
+      - rabbitmq
+      - jaeger
+      - matching.api
+
   payment.api:
     container_name: payment.api
     environment:

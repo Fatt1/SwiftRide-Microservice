@@ -1,6 +1,36 @@
 @Trip.API_HostAddress = http://localhost:5251
+@tripId = 00000000-0000-0000-0000-000000000000
+@driverId = 11111111-1111-1111-1111-111111111111
 
-GET {{Trip.API_HostAddress}}/weatherforecast/
+### 1. Đặt chuyến xe mới (POST /api/v1/trips)
+POST {{Trip.API_HostAddress}}/api/v1/trips
+Content-Type: application/json
+
+{
+  "riderId": "22222222-2222-2222-2222-222222222222",
+  "pickupAddress": "227 Nguyen Van Cu, Quan 5, TP.HCM",
+  "dropoffAddress": "Ben Thanh Market, Quan 1, TP.HCM",
+  "pickupLat": 10.762622,
+  "pickupLng": 106.682373,
+  "dropoffLat": 10.772545,
+  "dropoffLng": 106.698032
+}
+
+### 2. Xem chi tiết chuyến xe theo ID (GET /api/v1/trips/{id})
+GET {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}
 Accept: application/json
 
-###
+### 3. Tài xế nhận cuốc (POST /api/v1/trips/{id}/driver-accept)
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/driver-accept?driverId={{driverId}}
+
+### 4. Tài xế từ chối cuốc (POST /api/v1/trips/{id}/driver-reject)
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/driver-reject?driverId={{driverId}}
+
+### 5. Tài xế đón khách (POST /api/v1/trips/{id}/pickup)
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/pickup
+
+### 6. Tài xế trả khách (POST /api/v1/trips/{id}/dropoff - finalFare là tùy chọn, tự lấy giá ước tính nếu để trống)
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/dropoff
+
+### 7. Hủy chuyến đi (POST /api/v1/trips/{id}/cancel)
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/cancel

@@ -4,6 +4,7 @@ public enum TripStatus
 {
     Requested,
     DriverAccepted,
+    DriverRejected,
     PickedUp,
     DroppedOff,
     Completed,
