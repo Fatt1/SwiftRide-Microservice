@@ -6,6 +6,11 @@ services:
     networks:
       - swiftride-network
 
+  identitydb:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    networks:
+      - swiftride-network
+
   paymentdb:
     image: postgres:latest
     networks:
@@ -75,6 +80,7 @@ networks:
 
 volumes:
   tripdb_data:
+  identitydb_data:
   paymentdb_data:
   matchingdb_data:
   pgadmin_data:

@@ -1,0 +1,24 @@
+@Identity.API_HostAddress = http://localhost:5030
+
+### 1. Đăng ký tài khoản mới (Register)
+POST {{Identity.API_HostAddress}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "userName": "swiftride_user",
+  "email": "user@swiftride.com",
+  "password": "Password@123",
+  "fullName": "Nguyen Van A"
+}
+
+### 2. Đăng nhập bằng UserName hoặc Email (Login)
+POST {{Identity.API_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "userNameOrEmail": "user@swiftride.com",
+  "password": "Password@123"
+}
+
+### 3. Xem Scalar API Documentation
+# Mở trình duyệt tại: http://localhost:5030/scalar/v1
