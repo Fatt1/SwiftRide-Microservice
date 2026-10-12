@@ -2,7 +2,7 @@ using Trip.Domain.Entities;
 
 namespace Trip.Domain.Repositories;
 
-public interface ITripRepository
+public interface ITripRepository 
 {
     Task<Entities.Trip?> FindByIdAsync(Guid id);
     Task<Guid> CreateAsync(Entities.Trip trip);
