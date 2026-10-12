@@ -6,7 +6,6 @@ namespace Payment.Domain.Entities;
 public class Wallet : EntityAuditableBase<Guid>
 {
     public Guid UserId { get; private set; }
-    public string UserRole { get; private set; } = default!; // 'rider' | 'driver'
     public decimal Balance { get; private set; }
     public string Currency { get; private set; } = "VND";
 
@@ -15,16 +14,14 @@ public class Wallet : EntityAuditableBase<Guid>
 
     private Wallet() { }
 
-    public static Wallet Create(Guid userId, string userRole, decimal initialBalance = 0, string currency = "VND")
+    public static Wallet Create(Guid userId, decimal initialBalance = 0, string currency = "VND")
     {
-        if (userId == Guid.Empty || string.IsNullOrWhiteSpace(userRole) ||
-            userRole.ToLowerInvariant() is not ("rider" or "driver") || initialBalance < 0 || currency != "VND")
-            throw new DomainException("Invalid wallet owner, role, initial balance or currency.");
+        if (userId == Guid.Empty || initialBalance < 0 || currency != "VND")
+            throw new DomainException("Invalid wallet owner, initial balance or currency.");
         return new Wallet
         {
             Id = Guid.CreateVersion7(),
             UserId = userId,
-            UserRole = userRole.ToLowerInvariant(),
             Balance = initialBalance,
             Currency = currency,
             CreatedAt = DateTimeOffset.UtcNow,

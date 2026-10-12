@@ -10,6 +10,16 @@ services:
     volumes:
       - tripdb_data:/var/opt/mssql
 
+  identitydb:
+    container_name: identitydb
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Password@123
+    ports:
+      - "1436:1433"
+    volumes:
+      - identitydb_data:/var/opt/mssql
+
   paymentdb:
     container_name: paymentdb
     environment:
