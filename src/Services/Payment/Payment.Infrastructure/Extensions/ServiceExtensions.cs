@@ -47,7 +47,10 @@ public static class ServiceExtensions
         services.AddScoped<IPaymentStrategyFactory, PaymentStrategyFactory>();
         services.AddScoped<ICardPaymentProcessor, MockCardPaymentProcessor>();
         services.AddCustomMassTransitWithPostgresOutbox<PaymentDbContext>(configuration, bus =>
-            bus.AddConsumer<TripDropOffConsumer, TripDropOffConsumerDefinition>());
+        {
+            bus.AddConsumer<TripDropOffConsumer, TripDropOffConsumerDefinition>();
+            bus.AddConsumer<UserCreatedConsumer, UserCreatedConsumerDefinition>();
+        });
         services.PostConfigure<EntityFrameworkOutboxOptions>(options =>
             options.IsolationLevel = IsolationLevel.ReadCommitted);
         services.AddOpenTelemetry().WithTracing(tracing => tracing.AddSource(DiagnosticHeaders.DefaultListenerName));
