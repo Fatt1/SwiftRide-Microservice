@@ -33,7 +33,8 @@ public class Program
             });
             builder.Services.AddScoped<IPricingGrpcService, PricingGrpcService>();
 
-            builder.Services.AddOpenApi();
+            builder.Services.AddAuthorization();
+            builder.Services.AddOpenApi("v1");
 
 
             // Register the global exception handler (IExceptionHandler implementation).

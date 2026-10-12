@@ -53,6 +53,14 @@ services:
       - swiftride-network
 
   #microservice api section
+  trip.api:
+    image: ${DOCKER_REGISTRY-}trip-api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Trip/Trip.API/Dockerfile
+    networks:
+      - swiftride-network
+
   payment.api:
     image: ${DOCKER_REGISTRY-}payment-api:${PLATFORM:-linux}-${TAG:-latest}
     build:
