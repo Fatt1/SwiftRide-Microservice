@@ -24,8 +24,9 @@ public sealed class CreatePaymentCommandHandler(
         try
         {
             await transactions.LockPaymentsAsync([request.TripId, request.IdempotencyKey], ct);
-            logger.LogInformation("Bắt đầu thanh toán cho chuyến {TripId}, phương thức {PaymentMethod}, khóa chống xử lý trùng {IdempotencyKey}",
-                request.TripId, request.PaymentMethod, request.IdempotencyKey);
+            logger.LogInformation("Bắt đầu xử lý thanh toán: TripId={TripId}, RiderId={RiderId}, DriverId={DriverId}, Amount={Amount} {Currency}, PaymentMethod={PaymentMethod}, IdempotencyKey={IdempotencyKey}",
+                request.TripId, request.RiderId, request.DriverId, request.Amount, request.Currency,
+                request.PaymentMethod, request.IdempotencyKey);
            
             var byTrip = await payments.GetByTripIdAsync(request.TripId, ct);
             var byKey = await payments.GetByIdempotencyKeyAsync(request.IdempotencyKey, ct);
@@ -38,7 +39,8 @@ public sealed class CreatePaymentCommandHandler(
                     logger.LogWarning("Yêu cầu thanh toán xung đột với thanh toán {PaymentId} của chuyến {TripId}", existing.Id, request.TripId);
                     return Result.Failure<PaymentDto>(new ConflictError("The trip or idempotency key belongs to a different payment request."));
                 }
-                logger.LogInformation("Trả về thanh toán đã có {PaymentId}, trạng thái {Status}; không thu tiền lại", existing.Id, existing.Status);
+                logger.LogInformation("Thanh toán trùng: TripId={TripId}, PaymentId={PaymentId}, Status={Status}, IdempotencyKey={IdempotencyKey}; trả kết quả cũ, không thu tiền lần nữa",
+                    request.TripId, existing.Id, existing.Status, request.IdempotencyKey);
                 return Result.Success(PaymentDto.From(existing));
             }
 
@@ -58,41 +60,46 @@ public sealed class CreatePaymentCommandHandler(
                     LedgerEntry.Create(payment.Id, context.CreditWalletId, payment.PaymentMethod,
                         EntryType.Credit, payment.Amount, "Driver earnings")]);
                 payment.MarkCompleted(context.ProcessorResponse);
-                logger.LogInformation("Đã chấp nhận thu tiền cho thanh toán {PaymentId}; chuẩn bị lưu sổ cái và sự kiện hoàn tất vào outbox", payment.Id);
                 await publisher.Publish(new PaymentCompletedEvent
                 {
                     CorrelationId = correlationId, PaymentId = payment.Id, TripId = payment.TripId,
                     RiderId = payment.RiderId, DriverId = payment.DriverId, Amount = payment.Amount,
                     PaymentMethod = payment.PaymentMethod
                 }, ct);
+                logger.LogInformation("Thu tiền thành công: TripId={TripId}, PaymentId={PaymentId}, Amount={Amount} {Currency}, Method={PaymentMethod}; đã tạo hai dòng ledger và đưa PaymentCompletedEvent vào outbox, chờ lưu transaction",
+                    payment.TripId, payment.Id, payment.Amount, payment.Currency, payment.PaymentMethod);
             }
             else
             {
                 payment.MarkFailed(outcome.Error!.Message, context.ProcessorResponse);
-                logger.LogWarning("Từ chối thu tiền cho thanh toán {PaymentId}: {Reason}; chuẩn bị lưu sự kiện thất bại vào outbox", payment.Id, payment.FailureReason);
                 await publisher.Publish(new PaymentFailedEvent
                 {
                     CorrelationId = correlationId, TripId = payment.TripId, RiderId = payment.RiderId,
                     Amount = payment.Amount, Reason = payment.FailureReason!
                 }, ct);
+                logger.LogWarning("Thu tiền thất bại: TripId={TripId}, PaymentId={PaymentId}, Method={PaymentMethod}, Reason={Reason}; PaymentStatus=Failed, không tạo ledger chuyển tiền, đã đưa PaymentFailedEvent vào outbox, chờ lưu transaction",
+                    payment.TripId, payment.Id, payment.PaymentMethod, payment.FailureReason);
             }
             logger.LogInformation("Thanh toán {PaymentId} cho chuyến {TripId} đã sẵn sàng để lưu, trạng thái {Status}. TraceId={TraceId} SpanId={SpanId}",
                 payment.Id, payment.TripId, payment.Status, Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString());
             if (transaction is not null)
             {
                 await transactions.EndTransactionAsync();
-                logger.LogInformation("Đã lưu dữ liệu và commit transaction");
+                logger.LogInformation("Đã commit payment transaction: TripId={TripId}, PaymentId={PaymentId}, Status={Status}; outbox sẽ chuyển event kết quả sang RabbitMQ",
+                    payment.TripId, payment.Id, payment.Status);
             }
             else
             {
                 await transactions.SaveChangesAsync();
-                logger.LogInformation("Đã lưu dữ liệu; đang chờ consumer commit transaction");
+                logger.LogInformation("Đã lưu payment và event vào transaction của consumer: TripId={TripId}, PaymentId={PaymentId}, Status={Status}; chờ consumer commit rồi outbox mới chuyển event sang RabbitMQ",
+                    payment.TripId, payment.Id, payment.Status);
             }
             return Result.Success(PaymentDto.From(payment));
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Lỗi xử lý thanh toán");
+            logger.LogError(exception, "Lỗi xử lý thanh toán: TripId={TripId}, IdempotencyKey={IdempotencyKey}, PaymentMethod={PaymentMethod}; transaction do handler sở hữu sẽ rollback nếu có",
+                request.TripId, request.IdempotencyKey, request.PaymentMethod);
             if (transaction is not null)
                 await transactions.RollBackTransactionAsync();
             throw;
