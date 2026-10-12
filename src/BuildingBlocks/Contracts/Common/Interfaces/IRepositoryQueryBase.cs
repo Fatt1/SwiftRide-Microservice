@@ -5,30 +5,24 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Contracts.Common.Interfaces;
 
-public interface IRepositoryQueryBase<T, K, TContext>
+public interface IRepositoryQueryBase<T, K>
     where T : EntityBase<K>
-    where TContext : DbContext
 {
-
     IQueryable<T> FindAll(bool trackChanges = false);
 
     IQueryable<T> FindAll(bool trackChanges = false, params Expression<Func<T, object>>[] includeProperties);
 
-
     IQueryable<T> FindByCondition(Expression<Func<T, bool>> expression, bool trackChanges = false);
 
     IQueryable<T> FindByCondition(Expression<Func<T, bool>> expression, bool trackChanges = false, params Expression<Func<T, object>>[] includeProperties);
-
 
     Task<T?> FindByIdAsync(K id);
 
     Task<T?> FindByIdAsync(K id, params Expression<Func<T, object>>[] includeProperties);
 }
 
-
-public interface IRepositoryBase<T, K, TContext> : IRepositoryQueryBase<T, K, TContext>
+public interface IRepositoryBase<T, K> : IRepositoryQueryBase<T, K>
     where T : EntityBase<K>
-    where TContext : DbContext
 {
     Task<K> CreateAsync(T entity);
     Task<IList<K>> CreateRangeAsync(IList<T> entities);
@@ -48,4 +42,16 @@ public interface IRepositoryBase<T, K, TContext> : IRepositoryQueryBase<T, K, TC
     Task EndTransactionAsync();
 
     Task RollBackTransactionAsync();
+}
+
+public interface IRepositoryQueryBase<T, K, TContext> : IRepositoryQueryBase<T, K>
+    where T : EntityBase<K>
+    where TContext : DbContext
+{
+}
+
+public interface IRepositoryBase<T, K, TContext> : IRepositoryBase<T, K>, IRepositoryQueryBase<T, K, TContext>
+    where T : EntityBase<K>
+    where TContext : DbContext
+{
 }

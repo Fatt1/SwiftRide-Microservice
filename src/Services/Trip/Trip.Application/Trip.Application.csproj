@@ -6,4 +6,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Trip.Domain\Trip.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\EventBus.Messages\EventBus.Messages.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit" />
+  </ItemGroup>
+
 </Project>
