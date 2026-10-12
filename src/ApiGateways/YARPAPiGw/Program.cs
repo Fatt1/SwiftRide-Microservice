@@ -1,34 +1,130 @@
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Yarp.ReverseProxy.Transforms;
+using YARPAPiGw.Configurations;
 
-namespace YARPAPiGw
+var builder = WebApplication.CreateBuilder(args);
+
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+
+// CORS configuration (allow requests from frontend / mobile clients)
+builder.Services.AddCors(options =>
 {
-    public class Program
+    options.AddPolicy("CorsPolicy", policy =>
     {
-        public static void Main(string[] args)
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// JWT Settings & Authentication (identical to Identity.API)
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
+var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidateAudience = true,
+        ValidAudience = jwtSettings.Audience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// Authorization policy used by YARP routes (requires valid JWT token)
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("authenticated", policy => policy.RequireAuthenticatedUser());
+});
+
+// Reverse Proxy (YARP) with user claim propagation headers
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddTransforms(builderContext =>
+    {
+        builderContext.AddRequestTransform(transformContext =>
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            var user = transformContext.HttpContext.User;
+            if (user.Identity is { IsAuthenticated: true })
             {
-                app.MapOpenApi();
+                var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    ?? user.FindFirst("sub")?.Value;
+
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    transformContext.ProxyRequest.Headers.Remove("X-User-Id");
+                    transformContext.ProxyRequest.Headers.Add("X-User-Id", userId);
+                }
+
+                var email = user.FindFirst(ClaimTypes.Email)?.Value
+                    ?? user.FindFirst("email")?.Value;
+
+                if (!string.IsNullOrEmpty(email))
+                {
+                    transformContext.ProxyRequest.Headers.Remove("X-User-Email");
+                    transformContext.ProxyRequest.Headers.Add("X-User-Email", email);
+                }
+
+                var userName = user.FindFirst(ClaimTypes.Name)?.Value
+                    ?? user.FindFirst("unique_name")?.Value;
+
+                if (!string.IsNullOrEmpty(userName))
+                {
+                    transformContext.ProxyRequest.Headers.Remove("X-User-Name");
+                    transformContext.ProxyRequest.Headers.Add("X-User-Name", userName);
+                }
             }
 
-            app.UseHttpsRedirection();
+            return ValueTask.CompletedTask;
+        });
+    });
 
-            app.UseAuthorization();
+var app = builder.Build();
 
-
-            app.MapControllers();
-
-            app.Run();
-        }
-    }
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
 }
+
+app.UseCors("CorsPolicy");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Root Gateway info endpoint
+app.MapGet("/", () => Results.Ok(new
+{
+    Service = "SwiftRide API Gateway (YARP)",
+    Status = "Healthy",
+    Version = "1.0",
+    Timestamp = DateTime.UtcNow,
+    Endpoints = new
+    {
+        Auth = "/api/v1/auth (Identity.API)",
+        Matching = "/api/v1/matching (Matching.API - Protected)",
+        Payment = "/api/v1/payments (Payment.API - Protected)",
+        Trip = "/api/v1/trips (Trip.API - Protected)"
+    }
+}));
+
+// Map YARP Reverse Proxy
+app.MapReverseProxy();
+
+await app.RunAsync();
