@@ -66,15 +66,14 @@ public static class TripEndpoints
                 : result.ToProblemDetails();
         });
 
-        // 6. Tài xế trả khách (kích hoạt thanh toán - finalFare tùy chọn, nếu để trống tự lấy giá ước tính)
+        // 6. Tài xế trả khách (kích hoạt thanh toán - tự động lấy giá cước ước tính đã chốt lúc tạo chuyến)
         group.MapPost("/{id:guid}/dropoff", async (
             Guid id, 
-            [FromQuery] decimal? finalFare = null, 
             [FromQuery] PaymentMethod paymentMethod = PaymentMethod.Wallet, 
             ISender sender = default!, 
             CancellationToken ct = default) =>
         {
-            var result = await sender.Send(new DropOffCommand(id, finalFare, paymentMethod), ct);
+            var result = await sender.Send(new DropOffCommand(id, paymentMethod), ct);
             return result.IsSuccess 
                 ? Results.Ok(new { message = "Đã trả khách và gửi yêu cầu thanh toán" }) 
                 : result.ToProblemDetails();
