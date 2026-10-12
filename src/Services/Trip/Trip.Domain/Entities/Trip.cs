@@ -102,6 +102,13 @@ public class Trip : EntityAuditableBase<Guid>
         LastModifiedAt = DateTimeOffset.UtcNow;
     }
 
+    public void RejectByDriver()
+    {
+        Status = TripStatus.DriverRejected;
+        LastModifiedAt = DateTimeOffset.UtcNow;
+    }
+
+
     public void Cancel()
     {
         Status = TripStatus.Cancelled;

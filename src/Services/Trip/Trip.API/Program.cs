@@ -1,7 +1,12 @@
 using Common.Logging;
+using Matching.API.Protos;
 using Serilog;
 using Shared.Exceptions;
 using Shared.Extensions;
+using Trip.API.Endpoints;
+using Trip.API.GrpcServices;
+using Trip.Application.Common.Interfaces;
+using Trip.Application.Extensions;
 using Trip.Infrastructure.Extensions;
 using Trip.Infrastructure.Persistence;
 
@@ -17,9 +22,17 @@ public class Program
             builder.Host.UseSerilog(Serilogger.Configure);
 
             // Add services to the container.
+            builder.Services.AddTripApplication();
             builder.Services.AddTripInfrastructure(builder.Configuration);
 
-            builder.Services.AddControllers();
+            // Register gRPC Client for Matching Service
+            var matchingGrpcUrl = builder.Configuration["GrpcSettings:MatchingUrl"] ?? "http://localhost:5001";
+            builder.Services.AddGrpcClient<PricingService.PricingServiceClient>(options =>
+            {
+                options.Address = new Uri(matchingGrpcUrl);
+            });
+            builder.Services.AddScoped<IPricingGrpcService, PricingGrpcService>();
+
             builder.Services.AddOpenApi();
 
 
@@ -33,6 +46,8 @@ public class Program
             var serviceName = builder.Configuration["OpenTelemetry:ServiceName"] ?? builder.Environment.ApplicationName;
             var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317";
             builder.Services.AddCustomOpenTelemetry(serviceName, otlpEndpoint);
+
+            builder.AddSwiftRideApiVersioning();
 
             var app = builder.Build();
 
@@ -53,7 +68,8 @@ public class Program
 
             app.UseAuthorization();
 
-            app.MapControllers();
+            app.MapGet("/", () => Results.Redirect("/scalar/v1"));
+            app.MapTripEndpoints();
 
             await app.RunAsync();
         }
