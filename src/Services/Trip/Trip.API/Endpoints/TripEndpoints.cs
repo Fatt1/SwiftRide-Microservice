@@ -21,12 +21,12 @@ public static class TripEndpoints
     {
         var group = endpoints.MapApiV1Group("trips");
 
-        // 1. Đặt chuyến xe mới
+        // 1. Đặt chuyến xe mới (trả về đầy đủ thông tin chuyến xe kèm giá cước ước tính cho khách)
         group.MapPost("/", async ([FromBody] CreateTripCommand command, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(command, ct);
             return result.IsSuccess 
-                ? Results.Ok(new { TripId = result.Value }) 
+                ? Results.Created($"/api/v1/trips/{result.Value.TripId}", result.Value) 
                 : result.ToProblemDetails();
         });
 
@@ -66,10 +66,10 @@ public static class TripEndpoints
                 : result.ToProblemDetails();
         });
 
-        // 6. Tài xế trả khách (kích hoạt thanh toán)
+        // 6. Tài xế trả khách (kích hoạt thanh toán - finalFare tùy chọn, nếu để trống tự lấy giá ước tính)
         group.MapPost("/{id:guid}/dropoff", async (
             Guid id, 
-            [FromQuery] decimal finalFare, 
+            [FromQuery] decimal? finalFare = null, 
             [FromQuery] PaymentMethod paymentMethod = PaymentMethod.Wallet, 
             ISender sender = default!, 
             CancellationToken ct = default) =>

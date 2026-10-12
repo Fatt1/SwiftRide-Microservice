@@ -1,4 +1,5 @@
 using Shared.CQRS;
+using Trip.Application.DTOs;
 
 namespace Trip.Application.Features.Trips.Commands.CreateTrip;
 
@@ -10,4 +11,4 @@ public sealed record CreateTripCommand(
     double PickupLng,
     double DropoffLat,
     double DropoffLng
-) : ICommand<Guid>;
+) : ICommand<CreateTripResponse>;

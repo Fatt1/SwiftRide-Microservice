@@ -18,6 +18,8 @@ public class Program
     {
         try
         {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.UseSerilog(Serilogger.Configure);
 
@@ -48,6 +50,7 @@ public class Program
             builder.Services.AddCustomOpenTelemetry(serviceName, otlpEndpoint);
 
             builder.AddSwiftRideApiVersioning();
+            builder.Services.AddAuthorization();
 
             var app = builder.Build();
 

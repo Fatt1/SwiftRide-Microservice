@@ -29,8 +29,8 @@ POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/driver-reject?driverId={{d
 ### 5. Tài xế đón khách (POST /api/v1/trips/{id}/pickup)
 POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/pickup
 
-### 6. Tài xế trả khách (POST /api/v1/trips/{id}/dropoff)
-POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/dropoff?finalFare=45000&paymentMethod=Wallet
+### 6. Tài xế trả khách (POST /api/v1/trips/{id}/dropoff - finalFare là tùy chọn, tự lấy giá ước tính nếu để trống)
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/dropoff
 
 ### 7. Hủy chuyến đi (POST /api/v1/trips/{id}/cancel)
 POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/cancel

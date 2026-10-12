@@ -28,14 +28,15 @@ internal sealed class DriverAcceptHandler(
         trip.AcceptByDriver(request.DriverId);
 
         await tripRepository.Update(trip);
-        await tripRepository.SaveChangesAsync();
 
-        //Bắn sự kiện TripAcceptedEvent sang Matching Service quaa RabbitMQ (MassTransit)
+        // Bắn sự kiện TripAcceptedEvent sang Matching Service qua RabbitMQ (MassTransit)
         await publishEndpoint.Publish(new TripAcceptedEvent
         {
             TripId = trip.Id,
             DriverId = request.DriverId
         }, cancellationToken);
+
+        await tripRepository.SaveChangesAsync();
 
         return Result.Success();
     }

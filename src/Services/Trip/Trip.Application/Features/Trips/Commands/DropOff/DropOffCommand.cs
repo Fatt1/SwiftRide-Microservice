@@ -5,6 +5,6 @@ namespace Trip.Application.Features.Trips.Commands.DropOff;
 
 public sealed record DropOffCommand(
     Guid TripId,
-    decimal FinalFare,
+    decimal? FinalFare = null,
     PaymentMethod PaymentMethod = PaymentMethod.Wallet
 ) : ICommand;
