@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Trip.Application.Common.Interfaces;
 using Trip.Application.DTOs;
 
-namespace Trip.API.GrpcServices;
+namespace Trip.Infrastructure.GrpcServices;
 
 public class PricingGrpcService : IPricingGrpcService
 {

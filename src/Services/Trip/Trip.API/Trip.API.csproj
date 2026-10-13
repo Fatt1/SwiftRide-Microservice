@@ -13,14 +13,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Grpc.AspNetCore" />
-    <PackageReference Include="Grpc.Net.ClientFactory" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Protobuf Include="Protos\pricing.proto" GrpcServices="Client">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Protobuf>
   </ItemGroup>
 
   <ItemGroup>
