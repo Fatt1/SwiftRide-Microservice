@@ -19,6 +19,12 @@ public class PricingGrpcService : PricingService.PricingServiceBase
     {
         _logger.LogInformation("BEGIN: Getting pricing for request {Request}", request);
 
+        if (!Guid.TryParse(request.TripId?.Trim(), out var tripId))
+        {
+            _logger.LogError("ERROR: Invalid TripId '{TripId}' in GetPricing request", request.TripId);
+            throw new RpcException(new Status(StatusCode.InvalidArgument, $"Invalid TripId format: '{request.TripId}'. TripId must be a valid GUID."));
+        }
+
         var command = new CalculatePriceCommand(
             request.IsRaining,
             request.PromoCode,
@@ -27,7 +33,7 @@ public class PricingGrpcService : PricingService.PricingServiceBase
             request.PickupLatitude,
             request.DestinationLongitude,
             request.DestinationLatitude,
-            Guid.Parse(request.TripId)
+            tripId
             );
         var result = await _meditor.Send(command);
 
