@@ -10,5 +10,7 @@ public sealed class WalletRepository(PaymentDbContext context)
 {
     public Task<Wallet?> GetByUserIdAsync(Guid userId, CancellationToken ct) =>
         FindByCondition(x => x.UserId == userId, trackChanges: true).SingleOrDefaultAsync(ct);
+    public async Task<IReadOnlyList<Wallet>> GetAllAsync(CancellationToken ct) =>
+        await context.Wallets.AsNoTracking().OrderBy(w => w.UserId).ToListAsync(ct);
     public void Add(Wallet wallet) => Stage(wallet);
 }

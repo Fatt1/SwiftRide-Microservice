@@ -1,6 +1,5 @@
 using Payment.Application.Abstractions;
 using Payment.Application.Payments.Contexts;
-using Payment.Domain.Entities;
 using Payment.Domain.Repositories;
 using Shared;
 using Shared.Enums.Payments;
@@ -20,13 +19,10 @@ public sealed class WalletPaymentStrategy(IWalletRepository wallets) : IPaymentS
             return Result.Failure(new ConflictError("A rider wallet with matching currency is required."));
         if (rider.Balance < payment.Amount)
             return Result.Failure(new ConflictError("Insufficient rider wallet balance."));
-        if (driver is not null && (driver.Currency != payment.Currency))
-            return Result.Failure(new ConflictError("Driver wallet currency does not match."));
         if (driver is null)
-        {
-            driver = Wallet.Create(payment.DriverId, currency: payment.Currency);
-            wallets.Add(driver);
-        }
+            return Result.Failure(new ConflictError("A driver wallet is required."));
+        if (driver.Currency != payment.Currency)
+            return Result.Failure(new ConflictError("Driver wallet currency does not match."));
         rider.Debit(payment.Amount);
         driver.Credit(payment.Amount);
         context.DebitWalletId = rider.Id;

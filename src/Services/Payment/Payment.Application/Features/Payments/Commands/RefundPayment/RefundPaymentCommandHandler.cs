@@ -65,18 +65,21 @@ public sealed class RefundPaymentCommandHandler(
             if (transaction is not null)
             {
                 await transactions.EndTransactionAsync();
-                logger.LogInformation("Đã lưu dữ liệu và commit transaction");
+                logger.LogInformation("Đã commit hoàn tiền: RefundId={RefundId}, PaymentId={PaymentId}, TripId={TripId}, Amount={Amount} {Currency}, PaymentStatus={PaymentStatus}; ledger hoàn tiền đã lưu",
+                    refund.Id, payment.Id, payment.TripId, refund.Amount, payment.Currency, payment.Status);
             }
             else
             {
                 await transactions.SaveChangesAsync();
-                logger.LogInformation("Đã lưu dữ liệu; đang chờ consumer commit transaction");
+                logger.LogInformation("Đã lưu hoàn tiền trong transaction của consumer: RefundId={RefundId}, PaymentId={PaymentId}, TripId={TripId}; chờ consumer commit",
+                    refund.Id, payment.Id, payment.TripId);
             }
             return Result.Success(RefundDto.From(refund));
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Lỗi xử lý hoàn tiền");
+            logger.LogError(exception, "Lỗi xử lý hoàn tiền: PaymentId={PaymentId}; transaction do handler sở hữu sẽ rollback nếu có",
+                request.PaymentId);
             if (transaction is not null)
                 await transactions.RollBackTransactionAsync();
             throw;

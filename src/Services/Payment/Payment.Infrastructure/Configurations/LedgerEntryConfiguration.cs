@@ -9,6 +9,7 @@ public class LedgerEntryConfiguration : IEntityTypeConfiguration<LedgerEntry>
     public void Configure(EntityTypeBuilder<LedgerEntry> builder)
     {
         builder.HasKey(l => l.Id);
+        builder.Property(l => l.PaymentId).IsRequired(false);
 
         builder.Property(l => l.PaymentMethod)
               .HasConversion<string>()

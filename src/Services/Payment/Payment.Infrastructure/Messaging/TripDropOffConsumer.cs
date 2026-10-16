@@ -12,8 +12,9 @@ public sealed class TripDropOffConsumer(ISender sender, ILogger<TripDropOffConsu
     public async Task Consume(ConsumeContext<TripDropOffEvent> context)
     {
         var message = context.Message;
-        logger.LogInformation("Đã nhận message TripDropOff {MessageId} cho chuyến {TripId}, phương thức {PaymentMethod}, lần thử lại {RetryAttempt}",
-            context.MessageId, message.TripId, message.PaymentMethod, context.GetRetryAttempt());
+        logger.LogInformation("Nhận TripDropOffEvent: MessageId={MessageId}, TripId={TripId}, RiderId={RiderId}, DriverId={DriverId}, Amount={Amount} {Currency}, PaymentMethod={PaymentMethod}, RetryAttempt={RetryAttempt}",
+            context.MessageId, message.TripId, message.RiderId, message.DriverId, message.Amount,
+            message.Currency, message.PaymentMethod, context.GetRetryAttempt());
         var result = await sender.Send(new CreatePaymentCommand
         {
             TripId = message.TripId,
@@ -28,10 +29,12 @@ public sealed class TripDropOffConsumer(ISender sender, ILogger<TripDropOffConsu
         }, context.CancellationToken);
         if (result.IsFailure)
         {
-            logger.LogWarning("Từ chối xử lý kết thúc chuyến {TripId}: {Reason}. TraceId={TraceId} SpanId={SpanId}",
-                message.TripId, result.Error!.Message, Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString());
+            logger.LogWarning("Không xử lý được TripDropOffEvent: MessageId={MessageId}, TripId={TripId}, Reason={Reason}. Consumer sẽ ném lỗi; kiểm tra queue lỗi nếu hết retry. TraceId={TraceId} SpanId={SpanId}",
+                context.MessageId, message.TripId, result.Error!.Message,
+                Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString());
             throw new ArgumentException(result.Error.Message);
         }
-        logger.LogInformation("Đã xử lý TripDropOff cho chuyến {TripId}; thay đổi thanh toán đã sẵn sàng, đang chờ consumer commit transaction", message.TripId);
+        logger.LogInformation("Xử lý xong TripDropOffEvent: MessageId={MessageId}, TripId={TripId}, PaymentId={PaymentId}, PaymentStatus={PaymentStatus}. Dữ liệu đã lưu; đang chờ transaction của consumer hoàn tất và outbox chuyển event kết quả sang RabbitMQ",
+            context.MessageId, message.TripId, result.Value.PaymentId, result.Value.Status);
     }
 }
