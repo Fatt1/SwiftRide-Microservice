@@ -26,10 +26,8 @@ internal sealed class DropOffHandler(
             return Result.Failure(new ConflictError($"Chỉ có thể trả khách khi chuyến ở trạng thái 'PickedUp', hiện tại là '{trip.Status}'."));
         }
 
-        // 1. Xác định giá cước cuối cùng: Ưu tiên giá tài xế nhập nếu có, nếu không thì lấy giá ước tính đã chốt lúc tạo chuyến
-        var finalFare = (request.FinalFare.HasValue && request.FinalFare.Value > 0)
-            ? request.FinalFare.Value
-            : (trip.EstimatedFare ?? 0m);
+        // 1. Xác định giá cước cuối cùng: Lấy trực tiếp từ giá ước tính đã chốt lúc tạo chuyến
+        var finalFare = trip.EstimatedFare ?? 0m;
 
         // 2. Cập nhật chuyến đi sang DroppedOff và lưu giá tiền
         trip.MarkDroppedOff(finalFare);

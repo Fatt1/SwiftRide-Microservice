@@ -8,5 +8,7 @@ public sealed record CreateTripResponse(
     string DropoffAddress,
     decimal? EstimatedFare,
     decimal? DistanceKm,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    PricingDetailsDto? Pricing = null
 );
+
