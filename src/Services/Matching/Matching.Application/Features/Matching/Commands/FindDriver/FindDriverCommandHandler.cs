@@ -1,4 +1,7 @@
-﻿using Matching.Domain.Repositories;
+using EventBus.Messages.Events;
+using MassTransit;
+using Matching.Domain.Enums;
+using Matching.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.CQRS;
@@ -10,15 +13,18 @@ public class FindDriverCommandHandler : ICommandHandler<FindDriverCommand, FindD
     private readonly IMatchingRepository _matchingRepository;
     private readonly ILogger<FindDriverCommandHandler> _logger;
     private readonly IDriverLocationRepository _driverRepository;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly int MaxDriverAttempts = 3; // Giới hạn số lần thử tìm tài xế
 
     public FindDriverCommandHandler(
         IMatchingRepository matchingRepository,
         IDriverLocationRepository driverRepository,
+        IPublishEndpoint publishEndpoint,
         ILogger<FindDriverCommandHandler> logger)
     {
         _matchingRepository = matchingRepository;
         _driverRepository = driverRepository;
+        _publishEndpoint = publishEndpoint;
         _logger = logger;
     }
 
@@ -38,6 +44,18 @@ public class FindDriverCommandHandler : ICommandHandler<FindDriverCommand, FindD
         if (excludedDriverIds.Count >= MaxDriverAttempts)
         {
             _logger.LogWarning("Maximum number of driver attempts reached for tripId: {TripId}", request.TripId);
+
+            if (matching.Status != MatchSessionStatus.NoDriver)
+            {
+                matching.MarkNoDriver();
+                await _matchingRepository.UpdateAsync(matching, cancellationToken);
+
+                await _publishEndpoint.Publish(new TripMatchingFailedEvent
+                {
+                    TripId = request.TripId
+                }, cancellationToken);
+            }
+
             return Result.Failure<FindDriverResult>(new BadError("Maximum number of driver attempts reached"));
         }
 

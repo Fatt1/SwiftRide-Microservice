@@ -1,4 +1,4 @@
-﻿using EventBus.Messages.Events;
+using EventBus.Messages.Events;
 using MassTransit;
 using Matching.Domain.Enums;
 using Matching.Domain.Repositories;
@@ -8,16 +8,17 @@ namespace Matching.Infrastructure.Consumers;
 
 public class TripAcceptedConsumer : IConsumer<TripAcceptedEvent>
 {
-    // Nhớ khi log
-    // Cập nhật trạng thái của chuyến đi và trạng thái của tài xế trong cơ sở dữ liệu
     private readonly IMatchingRepository _matchingRepository;
+    private readonly IDriverLocationRepository _driverLocationRepository;
     private readonly ILogger<TripAcceptedConsumer> _logger;
 
     public TripAcceptedConsumer(
         IMatchingRepository matchingRepository,
+        IDriverLocationRepository driverLocationRepository,
         ILogger<TripAcceptedConsumer> logger)
     {
         _matchingRepository = matchingRepository;
+        _driverLocationRepository = driverLocationRepository;
         _logger = logger;
     }
 
@@ -67,6 +68,15 @@ public class TripAcceptedConsumer : IConsumer<TripAcceptedEvent>
 
         session.MarkMatched(message.DriverId);
         await _matchingRepository.UpdateAsync(session, ct);
+
+        // Cập nhật trạng thái tài xế sang bận (đang thực hiện chuyến đi)
+        var driver = await _driverLocationRepository.GetByDriverIdAsync(message.DriverId, ct);
+        if (driver != null)
+        {
+            driver.SetAvailability(false);
+            await _driverLocationRepository.UpdateAsync(driver, ct);
+            _logger.LogInformation("Driver {DriverId} availability set to false (in trip).", message.DriverId);
+        }
 
         _logger.LogInformation(
             "Trip {TripId} matched with driver {DriverId}; session {SessionId}.",

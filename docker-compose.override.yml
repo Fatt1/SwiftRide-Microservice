@@ -83,6 +83,26 @@ services:
 
 
   #microservice section
+  identity.api:
+    container_name: identity.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5000
+      - ConnectionStrings__DefaultConnection=Server=identitydb,1433;Database=identitydb;User Id=sa;Password=Password@123;TrustServerCertificate=True;
+      - EventBusSettings__HostAddress=rabbitmq
+      - EventBusSettings__Port=5672
+      - EventBusSettings__UserName=guest
+      - EventBusSettings__Password=guest
+      - OpenTelemetry__ServiceName=Identity.API
+      - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+    ports:
+      - "6005:5000"
+    restart: on-failure
+    depends_on:
+      - identitydb
+      - rabbitmq
+      - jaeger
+
   trip.api:
     container_name: trip.api
     environment:

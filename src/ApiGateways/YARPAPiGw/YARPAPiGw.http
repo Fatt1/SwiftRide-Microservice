@@ -20,6 +20,20 @@ Content-Type: application/json
 
 ###
 
+### 2.1. Identity Service via Gateway - Đăng ký tài khoản Driver
+POST {{Gateway_HostAddress}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "driver01@swiftride.com",
+  "userName": "driver01",
+  "password": "Password123!",
+  "fullName": "Tran Van Driver",
+  "role": "Driver"
+}
+
+###
+
 ### 3. Identity Service via Gateway - Đăng nhập lấy JWT Token (Public - Không cần Token)
 # @name login
 POST {{Gateway_HostAddress}}/api/v1/auth/login

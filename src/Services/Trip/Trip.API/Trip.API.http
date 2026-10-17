@@ -16,7 +16,23 @@ Content-Type: application/json
   "dropoffLng": 106.698032
 }
 
-### 2. Xem chi tiết chuyến xe theo ID (GET /api/v1/trips/{id})
+### 2. Xem danh sách tất cả các chuyến đi (GET /api/v1/trips)
+GET {{Trip.API_HostAddress}}/api/v1/trips
+Accept: application/json
+
+### 2.1 Xem danh sách chuyến đi theo Rider (GET /api/v1/trips?riderId=...)
+GET {{Trip.API_HostAddress}}/api/v1/trips?riderId=22222222-2222-2222-2222-222222222222
+Accept: application/json
+
+### 2.2 Xem danh sách chuyến đi theo Driver (GET /api/v1/trips?driverId=...)
+GET {{Trip.API_HostAddress}}/api/v1/trips?driverId={{driverId}}
+Accept: application/json
+
+### 2.3 Xem danh sách chuyến đi theo trạng thái (GET /api/v1/trips?status=Requested)
+GET {{Trip.API_HostAddress}}/api/v1/trips?status=Requested
+Accept: application/json
+
+### 3. Xem chi tiết chuyến xe theo ID (GET /api/v1/trips/{id})
 GET {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}
 Accept: application/json
 

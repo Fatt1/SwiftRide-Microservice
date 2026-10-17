@@ -16,7 +16,7 @@ public static class AuthEndpoints
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
         .WithName("Register")
-        .WithSummary("Đăng ký tài khoản mới và phát sự kiện UserCreated")
+        .WithSummary("Đăng ký tài khoản mới (hỗ trợ role Rider hoặc Driver) và phát sự kiện tương ứng")
         .Produces<RegisterResponseDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status409Conflict);
@@ -30,6 +30,24 @@ public static class AuthEndpoints
         .WithSummary("Đăng nhập và nhận Access Token")
         .Produces<AuthResponseDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        group.MapGet("/riders", async (IIdentityService identityService, CancellationToken ct) =>
+        {
+            var result = await identityService.GetRidersAsync(ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithName("GetAuthRiders")
+        .WithSummary("Lấy danh sách người dùng có role Rider")
+        .Produces<IReadOnlyList<UserDto>>(StatusCodes.Status200OK);
+
+        group.MapGet("/drivers", async (IIdentityService identityService, CancellationToken ct) =>
+        {
+            var result = await identityService.GetDriversAsync(ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithName("GetAuthDrivers")
+        .WithSummary("Lấy danh sách người dùng có role Driver")
+        .Produces<IReadOnlyList<UserDto>>(StatusCodes.Status200OK);
 
         return endpoints;
     }

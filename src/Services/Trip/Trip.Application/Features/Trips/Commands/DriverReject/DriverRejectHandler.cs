@@ -21,11 +21,9 @@ internal sealed class DriverRejectHandler(ITripRepository tripRepository)
             return Result.Failure(new ConflictError($"Không thể từ chối chuyến ở trạng thái '{trip.Status}'."));
         }
 
-        // Gọi hàm của Domain mà bạn đã tự tay viết ở Bước 1
-        trip.RejectByDriver();
-
-        await tripRepository.Update(trip);
-        await tripRepository.SaveChangesAsync();
+        // Khi một tài xế từ chối nhận chuyến, chuyến đi vẫn giữ trạng thái Requested để hệ thống tiếp tục tìm tài xế khác.
+        // Chuyến đi CHỈ chuyển sang trạng thái DriverRejected khi Matching Service báo vượt quá số lần tìm kiếm
+        // và bắn sự kiện TripMatchingFailedEvent qua RabbitMQ (xử lý bởi TripMatchingFailedConsumer).
 
         return Result.Success();
     }

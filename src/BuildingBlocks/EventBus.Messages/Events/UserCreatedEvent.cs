@@ -12,3 +12,8 @@ public record UserCreatedEvent : IntegrationBaseEvent
     public string? FullName { get; init; }
 }
 
+public record UserCreated : UserCreatedEvent
+{
+}
+
+
