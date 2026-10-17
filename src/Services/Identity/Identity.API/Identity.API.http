@@ -1,24 +1,49 @@
 @Identity.API_HostAddress = http://localhost:5030
 
-### 1. Đăng ký tài khoản mới (Register)
+### 1. Đăng ký tài khoản Rider (Chỉ bắn UserCreated)
 POST {{Identity.API_HostAddress}}/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "userName": "swiftride_user",
-  "email": "user@swiftride.com",
+  "userName": "rider01",
+  "email": "rider01@swiftride.com",
   "password": "Password@123",
-  "fullName": "Nguyen Van A"
+  "fullName": "Nguyen Van Rider",
+  "role": "Rider"
 }
 
-### 2. Đăng nhập bằng UserName hoặc Email (Login)
+### 2. Đăng ký tài khoản Driver (Bắn UserCreated và DriverCreated)
+POST {{Identity.API_HostAddress}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "userName": "driver01",
+  "email": "driver01@swiftride.com",
+  "password": "Password@123",
+  "fullName": "Tran Van Driver",
+  "role": "Driver"
+}
+
+### 3. Đăng nhập bằng UserName hoặc Email (Login)
 POST {{Identity.API_HostAddress}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "userNameOrEmail": "user@swiftride.com",
+  "userNameOrEmail": "driver01@swiftride.com",
   "password": "Password@123"
 }
 
-### 3. Xem Scalar API Documentation
-# Mở trình duyệt tại: http://localhost:5030/scalar/v1
+### 4. Lấy danh sách Riders (vai trò Rider)
+GET {{Identity.API_HostAddress}}/api/v1/users/riders
+Accept: application/json
+
+### 5. Lấy danh sách Drivers (vai trò Driver)
+GET {{Identity.API_HostAddress}}/api/v1/users/drivers
+Accept: application/json
+
+### 6. Lấy tất cả Users (hoặc lọc theo query: ?role=Driver / ?role=Rider)
+GET {{Identity.API_HostAddress}}/api/v1/users
+Accept: application/json
+
+### 7. Xem Scalar API Documentation
+# Mở trình duyệt tại: http://localhost:5030/scalar/v1 (hoặc Docker: http://localhost:6005/scalar/v1)

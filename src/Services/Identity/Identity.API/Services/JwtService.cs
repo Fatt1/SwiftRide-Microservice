@@ -17,7 +17,7 @@ public class JwtService : IJwtService
         _jwtSettings = jwtOptions.Value;
     }
 
-    public (string Token, int ExpiresIn) GenerateToken(AppUser user)
+    public (string Token, int ExpiresIn) GenerateToken(AppUser user, IEnumerable<string>? roles = null)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -44,6 +44,15 @@ public class JwtService : IJwtService
         if (!string.IsNullOrEmpty(user.FullName))
         {
             claims.Add(new Claim("fullName", user.FullName));
+        }
+
+        if (roles != null)
+        {
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim("role", role));
+            }
         }
 
         var expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryMinutes);

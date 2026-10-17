@@ -17,9 +17,15 @@ public sealed class TripDropOffConsumer(ISender sender, ILogger<TripDropOffConsu
             message.Currency, message.PaymentMethod, context.GetRetryAttempt());
         var result = await sender.Send(new CreatePaymentCommand
         {
-            TripId = message.TripId, RiderId = message.RiderId, DriverId = message.DriverId,
-            Amount = message.Amount, Currency = message.Currency, PaymentMethod = message.PaymentMethod,
-            GatewayToken = message.GatewayToken, IdempotencyKey = message.Id, CorrelationId = message.CorrelationId
+            TripId = message.TripId,
+            RiderId = message.RiderId,
+            DriverId = message.DriverId,
+            Amount = message.Amount,
+            Currency = message.Currency,
+            PaymentMethod = message.PaymentMethod,
+            GatewayToken = message.GatewayToken,
+            IdempotencyKey = message.Id,
+            CorrelationId = message.CorrelationId
         }, context.CancellationToken);
         if (result.IsFailure)
         {

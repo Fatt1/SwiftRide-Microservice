@@ -11,6 +11,7 @@ using Trip.Application.Features.Trips.Commands.DriverAccept;
 using Trip.Application.Features.Trips.Commands.DriverReject;
 using Trip.Application.Features.Trips.Commands.DropOff;
 using Trip.Application.Features.Trips.Commands.PickUp;
+using Trip.Application.Features.Trips.Queries.GetAllTrips;
 using Trip.Application.Features.Trips.Queries.GetTripById;
 
 namespace Trip.API.Endpoints;
@@ -30,7 +31,21 @@ public static class TripEndpoints
                 : result.ToProblemDetails();
         });
 
-        // 2. Lấy thông tin chuyến đi theo ID
+        // 2. Lấy danh sách tất cả chuyến đi (có hỗ trợ lọc theo riderId, driverId, status tùy chọn)
+        group.MapGet("/", async (
+            [FromQuery] Guid? riderId,
+            [FromQuery] Guid? driverId,
+            [FromQuery] string? status,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetAllTripsQuery(riderId, driverId, status), ct);
+            return result.IsSuccess 
+                ? Results.Ok(result.Value) 
+                : result.ToProblemDetails();
+        });
+
+        // 3. Lấy thông tin chuyến đi theo ID
         group.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetTripByIdQuery(id), ct);

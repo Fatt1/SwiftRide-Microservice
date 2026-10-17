@@ -17,7 +17,10 @@ public class RegisterRequestDto
     public string Password { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Tên không được bỏ trống")]
-    public string FullName { get; set; }
+    public string FullName { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Vai trò (Role) không được để trống (chọn 'Rider' hoặc 'Driver')")]
+    public string Role { get; set; } = "Rider";
 }
 
 public class LoginRequestDto
@@ -38,6 +41,7 @@ public class AuthResponseDto
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? FullName { get; set; }
+    public IList<string> Roles { get; set; } = [];
 }
 
 public class RegisterResponseDto
@@ -45,5 +49,16 @@ public class RegisterResponseDto
     public string UserId { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
     public string Message { get; set; } = "Đăng ký thành công";
+}
+
+public class UserDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? FullName { get; set; }
+    public string Role { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
 }

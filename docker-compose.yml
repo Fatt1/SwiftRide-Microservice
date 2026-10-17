@@ -58,6 +58,14 @@ services:
       - swiftride-network
 
   #microservice api section
+  identity.api:
+    image: ${DOCKER_REGISTRY-}identity-api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Identity/Identity.API/Dockerfile
+    networks:
+      - swiftride-network
+
   trip.api:
     image: ${DOCKER_REGISTRY-}trip-api:${PLATFORM:-linux}-${TAG:-latest}
     build:

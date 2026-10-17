@@ -2,6 +2,7 @@ using Infrastructure.Extensions;
 using Matching.Application.Configurations;
 using Matching.Domain.Repositories;
 using Matching.Infrastructure.Configurations;
+using Matching.Infrastructure.Consumers;
 using Matching.Infrastructure.Persistence;
 using Matching.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +20,12 @@ public static class DependencyInjection
         services.ConfigureMongoDbClient(configuration);
 
         // 2. Register MassTransit + RabbitMQ + MongoDB Transactional Outbox
-        services.AddCustomMassTransitWithMongoOutbox(configuration);
+        services.AddCustomMassTransitWithMongoOutbox(configuration, busConfig =>
+        {
+            busConfig.AddConsumer<DriverCreatedConsumer>();
+            busConfig.AddConsumer<TripAcceptedConsumer>();
+            busConfig.AddConsumer<TripDropOffConsumer>();
+        });
 
         // 3. Register Pricing Configuration (Options Pattern)
         services.Configure<PricingConfig>(configuration.GetSection(PricingConfig.SectionName));

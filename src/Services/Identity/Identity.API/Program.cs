@@ -44,6 +44,7 @@ builder.Services.AddIdentityCore<AppUser>(options =>
     options.Password.RequiredLength = 6;
     options.User.RequireUniqueEmail = true;
 })
+.AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<IdentityDbContext>()
 .AddDefaultTokenProviders();
 
@@ -84,11 +85,12 @@ builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 var app = builder.Build();
 
-// Automatically apply pending database migrations
+// Automatically apply pending database migrations and seed default roles
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     try
     {
         var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
@@ -97,6 +99,15 @@ using (var scope = app.Services.CreateScope())
             logger.LogInformation("Đang áp dụng migration cho Identity database...");
             await dbContext.Database.MigrateAsync();
             logger.LogInformation("Áp dụng migration cho Identity database thành công.");
+        }
+
+        foreach (var role in AppRoles.All)
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+                logger.LogInformation("Đã khởi tạo role: {Role}", role);
+            }
         }
     }
     catch (Exception ex)
@@ -122,5 +133,6 @@ app.UseAuthorization();
 
 // Map Minimal API Endpoints
 app.MapAuthEndpoints();
+app.MapUserEndpoints();
 
 await app.RunAsync();

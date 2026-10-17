@@ -46,9 +46,6 @@ public class MongoDbInitializer : IHostedService
                 new CreateIndexOptions { Name = "IX_MatchSession_TripId" });
             await matchSessions.Indexes.CreateOneAsync(tripIdIndex, cancellationToken: cancellationToken);
 
-            // 3. Seed initial data
-            await MongoDbSeeder.SeedAsync(_database, _logger, cancellationToken);
-
             _logger.LogInformation("MongoDB initialization completed successfully.");
         }
         catch (Exception ex)

@@ -15,3 +15,5 @@ public record UserCreatedEvent : IntegrationBaseEvent
 public record UserCreated : UserCreatedEvent
 {
 }
+
+

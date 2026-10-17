@@ -27,6 +27,7 @@ public static class ServiceExtensions
         {
             busConfig.AddConsumer<PaymentCompletedConsumer>();
             busConfig.AddConsumer<PaymentFailedConsumer>();
+            busConfig.AddConsumer<TripMatchingFailedConsumer>();
         });
 
         // Đăng ký TripRepository
