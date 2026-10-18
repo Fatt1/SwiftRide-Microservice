@@ -51,14 +51,15 @@ public class LedgerEntry : EntityBase<Guid>
         };
     }
 
-    public static LedgerEntry CreateTopUp(Guid requestId, Guid walletId, decimal amount)
+    public static LedgerEntry CreateTopUp(Guid requestId, Guid paymentId, Guid walletId, decimal amount)
     {
-        if (requestId == Guid.Empty || walletId == Guid.Empty || amount <= 0)
+        if (requestId == Guid.Empty || paymentId == Guid.Empty || walletId == Guid.Empty || amount <= 0)
             throw new ArgumentException("Valid request, wallet and positive amount are required.");
 
         return new LedgerEntry
         {
             Id = requestId,
+            PaymentId = paymentId,
             WalletId = walletId,
             PaymentMethod = PaymentMethod.Wallet,
             EntryType = EntryType.Credit,

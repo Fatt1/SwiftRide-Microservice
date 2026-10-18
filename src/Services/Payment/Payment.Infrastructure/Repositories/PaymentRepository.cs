@@ -34,5 +34,4 @@ public sealed class PaymentRepository(PaymentDbContext context)
     public Task<PaymentTransaction?> GetByIdempotencyKeyAsync(Guid key, CancellationToken ct) =>
         FindByCondition(x => x.IdempotencyKey == key, trackChanges: true).SingleOrDefaultAsync(ct);
     public void Add(PaymentTransaction payment) => Stage(payment);
-    public void AddLedgerEntries(IEnumerable<LedgerEntry> entries) => context.LedgerEntries.AddRange(entries);
 }

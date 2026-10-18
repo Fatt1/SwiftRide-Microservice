@@ -9,5 +9,4 @@ public interface IPaymentRepository
     Task<PaymentTransaction?> GetByTripIdAsync(Guid tripId, CancellationToken ct);
     Task<PaymentTransaction?> GetByIdempotencyKeyAsync(Guid key, CancellationToken ct);
     void Add(PaymentTransaction payment);
-    void AddLedgerEntries(IEnumerable<LedgerEntry> entries);
 }
