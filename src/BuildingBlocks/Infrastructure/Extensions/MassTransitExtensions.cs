@@ -100,6 +100,9 @@ public static class MassTransitExtensions
                 outbox.DisableInboxCleanupService();
             });
 
+            busConfig.AddConfigureEndpointsCallback((context, _, endpoint) =>
+                endpoint.UseEntityFrameworkOutbox<TDbContext>(context));
+
             configure?.Invoke(busConfig);
 
             busConfig.UsingRabbitMq((context, rabbit) =>

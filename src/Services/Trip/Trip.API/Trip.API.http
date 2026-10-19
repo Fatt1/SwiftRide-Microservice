@@ -67,6 +67,17 @@ Content-Type: application/json
   "paymentMethod": "Wallet"
 }
 
+### 6.1. Test thẻ mất kết nối lần đầu; dùng một chuyến mới đang PickedUp và tài xế đã có ví
+# mock-fail: RetryAttempt=0 lỗi kết nối, RetryAttempt=1 thành công.
+# Đổi thành mock-success để thành công ngay hoặc mock-decline để bị từ chối, không retry.
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/dropoff
+Content-Type: application/json
+
+{
+  "paymentMethod": "Card",
+  "gatewayToken": "mock-fail"
+}
+
 ### 7. Hủy chuyến đi (POST /api/v1/trips/{id}/cancel)
 POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/cancel
 

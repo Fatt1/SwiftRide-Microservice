@@ -52,7 +52,7 @@ public sealed class CreatePaymentCommandHandler(
             await transactions.LockWalletsAsync([request.RiderId, request.DriverId], ct);
             var payment = PaymentTransaction.Create(request.TripId, request.RiderId, request.DriverId,
                 request.Amount, request.PaymentMethod, request.IdempotencyKey, request.GatewayToken, request.Currency);
-            var context = new PaymentExecutionContext(payment);
+            var context = new PaymentExecutionContext(payment) { RetryAttempt = request.RetryAttempt };
             logger.LogInformation("Đang thu tiền bằng {PaymentMethod} cho thanh toán {PaymentId}", payment.PaymentMethod, payment.Id);
             var outcome = await strategies.GetStrategy(request.PaymentMethod).ChargeAsync(context, ct);
             payments.Add(payment);
