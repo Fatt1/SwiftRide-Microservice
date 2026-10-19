@@ -133,6 +133,5 @@ app.UseAuthorization();
 
 // Map Minimal API Endpoints
 app.MapAuthEndpoints();
-app.MapUserEndpoints();
 
 await app.RunAsync();
