@@ -35,13 +35,13 @@ public sealed class RefundPaymentCommandHandler(
                 logger.LogInformation("Trả về khoản hoàn tiền đã có {RefundId} của thanh toán {PaymentId}; không hoàn tiền lại", existing.Id, payment.Id);
                 return Result.Success(RefundDto.From(existing));
             }
-            if (payment.Status != PaymentStatus.Completed)
+            if (payment.Type != PaymentType.TripPayment || payment.Status != PaymentStatus.Completed)
             {
                 logger.LogWarning("Từ chối hoàn tiền cho thanh toán {PaymentId}: trạng thái {Status} không hợp lệ", payment.Id, payment.Status);
                 return Result.Failure<RefundDto>(new ConflictError("Only a completed payment can be refunded."));
             }
 
-            await transactions.LockWalletsAsync([payment.RiderId, payment.DriverId], ct);
+            await transactions.LockWalletsAsync([payment.RiderId, payment.DriverId!.Value], ct);
             var context = new RefundExecutionContext(payment);
             logger.LogInformation("Đang hoàn tiền bằng {PaymentMethod} cho thanh toán {PaymentId}", payment.PaymentMethod, payment.Id);
             var outcome = await strategies.GetStrategy(payment.PaymentMethod).RefundAsync(context, ct);
@@ -52,11 +52,6 @@ public sealed class RefundPaymentCommandHandler(
             }
 
             var refund = Refund.Create(payment.Id, payment.Amount, request.Reason);
-            payments.AddLedgerEntries([
-                LedgerEntry.Create(payment.Id, context.DebitWalletId, payment.PaymentMethod,
-                    EntryType.Debit, payment.Amount, "Refund: reverse driver earnings"),
-                LedgerEntry.Create(payment.Id, context.CreditWalletId, payment.PaymentMethod,
-                    EntryType.Credit, payment.Amount, "Refund: return rider payment")]);
             refund.MarkCompleted();
             refunds.Add(refund);
             payment.MarkRefunded();

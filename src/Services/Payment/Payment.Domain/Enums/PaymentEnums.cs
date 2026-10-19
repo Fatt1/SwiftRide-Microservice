@@ -1,5 +1,11 @@
 namespace Payment.Domain.Enums;
 
+public enum PaymentType
+{
+    TripPayment,
+    WalletTopUp
+}
+
 public enum PaymentStatus
 {
     Pending,

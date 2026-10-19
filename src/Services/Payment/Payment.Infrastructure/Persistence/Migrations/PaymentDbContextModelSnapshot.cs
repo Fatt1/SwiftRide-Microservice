@@ -249,7 +249,7 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
-                    b.Property<Guid>("DriverId")
+                    b.Property<Guid?>("DriverId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("FailureReason")
@@ -284,8 +284,13 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<Guid>("TripId")
+                    b.Property<Guid?>("TripId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -293,7 +298,8 @@ namespace Payment.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.HasIndex("TripId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"TripId\" IS NOT NULL");
 
                     b.ToTable("Payments");
                 });
