@@ -7,7 +7,7 @@ public sealed class TopUpWalletCommandValidator : AbstractValidator<TopUpWalletC
     public TopUpWalletCommandValidator()
     {
         RuleFor(x => x.UserId).NotEmpty();
-        RuleFor(x => x.RequestId).NotEmpty();
+        RuleFor(x => x.IdempotencyKey).NotEmpty();
         RuleFor(x => x.Amount).GreaterThan(0).PrecisionScale(18, 2, true);
     }
 }

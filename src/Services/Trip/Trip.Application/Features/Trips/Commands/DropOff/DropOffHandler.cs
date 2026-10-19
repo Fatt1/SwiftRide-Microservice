@@ -2,6 +2,7 @@ using EventBus.Messages.Events;
 using MassTransit;
 using Shared;
 using Shared.CQRS;
+using Shared.Enums.Payments;
 using Trip.Domain.Enums;
 using Trip.Domain.Repositories;
 
@@ -14,6 +15,12 @@ internal sealed class DropOffHandler(
 {
     public async Task<Result> Handle(DropOffCommand request, CancellationToken cancellationToken)
     {
+        if (!Enum.IsDefined(request.PaymentMethod))
+            return Result.Failure(new BadError("Payment method is invalid."));
+        if (request.PaymentMethod == PaymentMethod.Card &&
+            (string.IsNullOrWhiteSpace(request.GatewayToken) || request.GatewayToken.Length > 128))
+            return Result.Failure(new BadError("GatewayToken is required for card payments (maximum 128 characters)."));
+
         var trip = await tripRepository.FindByIdAsync(request.TripId);
         if (trip is null)
         {
@@ -41,6 +48,7 @@ internal sealed class DropOffHandler(
             DriverId = trip.DriverId ?? Guid.Empty,
             Amount = finalFare,
             PaymentMethod = request.PaymentMethod,
+            GatewayToken = request.GatewayToken,
             Currency = "VND"
         }, cancellationToken);
 

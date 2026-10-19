@@ -85,10 +85,11 @@ public static class TripEndpoints
         group.MapPost("/{id:guid}/dropoff", async (
             Guid id, 
             [FromQuery] PaymentMethod paymentMethod = PaymentMethod.Wallet, 
+            [FromQuery] string? gatewayToken = null,
             ISender sender = default!, 
             CancellationToken ct = default) =>
         {
-            var result = await sender.Send(new DropOffCommand(id, paymentMethod), ct);
+            var result = await sender.Send(new DropOffCommand(id, paymentMethod, gatewayToken), ct);
             return result.IsSuccess 
                 ? Results.Ok(new { message = "Đã trả khách và gửi yêu cầu thanh toán" }) 
                 : result.ToProblemDetails();

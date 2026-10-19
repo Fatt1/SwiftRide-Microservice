@@ -14,5 +14,10 @@ public sealed class LedgerRepository(PaymentDbContext context) : ILedgerReposito
         await context.LedgerEntries.AsNoTracking()
             .OrderByDescending(e => e.CreatedAt).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<LedgerEntry>> GetByPaymentIdAsync(Guid paymentId, CancellationToken ct) =>
+        await context.LedgerEntries.AsNoTracking()
+            .Where(e => e.PaymentId == paymentId)
+            .OrderBy(e => e.CreatedAt).ThenBy(e => e.Id).ToListAsync(ct);
+
     public void Add(LedgerEntry entry) => context.LedgerEntries.Add(entry);
 }

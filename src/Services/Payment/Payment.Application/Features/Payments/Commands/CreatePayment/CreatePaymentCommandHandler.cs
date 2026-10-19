@@ -34,7 +34,12 @@ public sealed class CreatePaymentCommandHandler(
             if (existing is not null)
             {
                 if ((byTrip is not null && byKey is not null && byTrip.Id != byKey.Id) ||
-                    existing.TripId != request.TripId)
+                    existing.TripId != request.TripId ||
+                    existing.IdempotencyKey != request.IdempotencyKey ||
+                    existing.Type != Payment.Domain.Enums.PaymentType.TripPayment ||
+                    existing.RiderId != request.RiderId || existing.DriverId != request.DriverId ||
+                    existing.Amount != request.Amount || existing.Currency != request.Currency ||
+                    existing.PaymentMethod != request.PaymentMethod)
                 {
                     logger.LogWarning("Yêu cầu thanh toán xung đột với thanh toán {PaymentId} của chuyến {TripId}", existing.Id, request.TripId);
                     return Result.Failure<PaymentDto>(new ConflictError("The trip or idempotency key belongs to a different payment request."));
@@ -54,16 +59,11 @@ public sealed class CreatePaymentCommandHandler(
             var correlationId = request.CorrelationId == Guid.Empty ? request.IdempotencyKey : request.CorrelationId;
             if (outcome.IsSuccess)
             {
-                payments.AddLedgerEntries([
-                    LedgerEntry.Create(payment.Id, context.DebitWalletId, payment.PaymentMethod,
-                        EntryType.Debit, payment.Amount, "Payment charge"),
-                    LedgerEntry.Create(payment.Id, context.CreditWalletId, payment.PaymentMethod,
-                        EntryType.Credit, payment.Amount, "Driver earnings")]);
                 payment.MarkCompleted(context.ProcessorResponse);
                 await publisher.Publish(new PaymentCompletedEvent
                 {
-                    CorrelationId = correlationId, PaymentId = payment.Id, TripId = payment.TripId,
-                    RiderId = payment.RiderId, DriverId = payment.DriverId, Amount = payment.Amount,
+                    CorrelationId = correlationId, PaymentId = payment.Id, TripId = payment.TripId!.Value,
+                    RiderId = payment.RiderId, DriverId = payment.DriverId!.Value, Amount = payment.Amount,
                     PaymentMethod = payment.PaymentMethod
                 }, ct);
                 logger.LogInformation("Thu tiền thành công: TripId={TripId}, PaymentId={PaymentId}, Amount={Amount} {Currency}, Method={PaymentMethod}; đã tạo hai dòng ledger và đưa PaymentCompletedEvent vào outbox, chờ lưu transaction",
@@ -74,7 +74,7 @@ public sealed class CreatePaymentCommandHandler(
                 payment.MarkFailed(outcome.Error!.Message, context.ProcessorResponse);
                 await publisher.Publish(new PaymentFailedEvent
                 {
-                    CorrelationId = correlationId, TripId = payment.TripId, RiderId = payment.RiderId,
+                    CorrelationId = correlationId, TripId = payment.TripId!.Value, RiderId = payment.RiderId,
                     Amount = payment.Amount, Reason = payment.FailureReason!
                 }, ct);
                 logger.LogWarning("Thu tiền thất bại: TripId={TripId}, PaymentId={PaymentId}, Method={PaymentMethod}, Reason={Reason}; PaymentStatus=Failed, không tạo ledger chuyển tiền, đã đưa PaymentFailedEvent vào outbox, chờ lưu transaction",

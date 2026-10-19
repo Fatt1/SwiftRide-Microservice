@@ -7,9 +7,10 @@ namespace Payment.Domain.Entities;
 
 public class PaymentTransaction : EntityAuditableBase<Guid>
 {
-    public Guid TripId { get; private set; }
+    public Guid? TripId { get; private set; }
     public Guid RiderId { get; private set; }
-    public Guid DriverId { get; private set; }
+    public Guid? DriverId { get; private set; }
+    public PaymentType Type { get; private set; }
     public decimal Amount { get; private set; }
     public string Currency { get; private set; } = "VND";
     public PaymentStatus Status { get; private set; }
@@ -43,9 +44,10 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
         if (riderId == driverId || !Enum.IsDefined(paymentMethod) || currency != "VND")
             throw new DomainException("Invalid participants, payment method or currency.");
 
-        return new PaymentTransaction
+        var payment = new PaymentTransaction
         {
             Id = Guid.CreateVersion7(),
+            Type = PaymentType.TripPayment,
             TripId = tripId,
             RiderId = riderId,
             DriverId = driverId,
@@ -58,6 +60,27 @@ public class PaymentTransaction : EntityAuditableBase<Guid>
             CreatedAt = DateTimeOffset.UtcNow,
             LastModifiedAt = DateTimeOffset.UtcNow
         };
+        return payment;
+    }
+
+    public static PaymentTransaction CreateTopUp(Guid userId, Guid requestId, decimal amount)
+    {
+        if (userId == Guid.Empty || requestId == Guid.Empty || amount <= 0)
+            throw new DomainException("Valid user, request and positive amount are required.");
+
+        var payment = new PaymentTransaction
+        {
+            Id = Guid.CreateVersion7(),
+            Type = PaymentType.WalletTopUp,
+            RiderId = userId,
+            Amount = amount,
+            IdempotencyKey = requestId,
+            PaymentMethod = PaymentMethod.Wallet,
+            CreatedAt = DateTimeOffset.UtcNow,
+            LastModifiedAt = DateTimeOffset.UtcNow
+        };
+        payment.MarkCompleted();
+        return payment;
     }
 
     public void MarkCompleted(string? gatewayResponse = null)
