@@ -126,7 +126,7 @@ if (app.Environment.IsDevelopment())
     app.MapCustomScalarApiReference();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

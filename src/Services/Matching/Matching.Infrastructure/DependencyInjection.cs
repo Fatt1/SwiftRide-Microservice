@@ -20,8 +20,8 @@ public static class DependencyInjection
         // 1. Configure MongoDB Client & Database
         services.ConfigureMongoDbClient(configuration);
 
-        // 2. Register MassTransit + RabbitMQ + MongoDB Transactional Outbox
-        services.AddCustomMassTransitWithMongoOutbox(configuration, "matching", busConfig =>
+        // 2. Register MassTransit + RabbitMQ (Direct publish, no MongoDB replica set transactions needed)
+        services.AddCustomMassTransit(configuration, "matching", busConfig =>
         {
             busConfig.AddConsumer<DriverCreatedConsumer>();
             busConfig.AddConsumer<TripAcceptedConsumer>();

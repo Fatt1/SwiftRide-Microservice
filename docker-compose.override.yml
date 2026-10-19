@@ -41,24 +41,6 @@ services:
     volumes:
       - matchingdb_data:/data/db
 
-  #database ui section
-  pgadmin:
-    container_name: pgadmin
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@swiftride.com
-      - PGADMIN_DEFAULT_PASSWORD=Password@123
-    ports:
-      - "5051:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-
-  mongo-express:
-    container_name: mongo-express
-    environment:
-      - ME_CONFIG_MONGODB_URL=mongodb://root:Password%40123@matchingdb:27017/?authSource=admin
-      - ME_CONFIG_BASICAUTH=false
-    ports:
-      - "8081:8081"
 
   #infrastructure section
   rabbitmq:
@@ -72,14 +54,6 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
-  portainer:
-    container_name: portainer
-    ports:
-      - "9000:9000"
-      - "9443:9443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
 
 
   #microservice section
@@ -171,6 +145,22 @@ services:
       - rabbitmq
       - jaeger
 
+  notification.api:
+    container_name: notification.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5000
+      - EventBusSettings__HostAddress=rabbitmq
+      - EventBusSettings__Port=5672
+      - EventBusSettings__UserName=guest
+      - EventBusSettings__Password=guest
+    ports:
+      - "5006:5000"
+      - "6006:5000"
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+
   yarpapigw:
     container_name: yarpapigw
     environment:
@@ -180,7 +170,9 @@ services:
       - ReverseProxy__Clusters__trip-cluster__Destinations__destination1__Address=http://trip.api:5000
       - ReverseProxy__Clusters__matching-cluster__Destinations__destination1__Address=http://matching.api:5003
       - ReverseProxy__Clusters__payment-cluster__Destinations__destination1__Address=http://payment.api:5000
+      - ReverseProxy__Clusters__notification-cluster__Destinations__destination1__Address=http://notification.api:5000
     ports:
+      - "5000:5000"
       - "6000:5000"
     restart: on-failure
     depends_on:
@@ -188,3 +180,4 @@ services:
       - trip.api
       - matching.api
       - payment.api
+      - notification.api
