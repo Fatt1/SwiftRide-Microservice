@@ -13,7 +13,10 @@ Content-Type: application/json
   "pickupLat": 10.762622,
   "pickupLng": 106.682373,
   "dropoffLat": 10.772545,
-  "dropoffLng": 106.698032
+  "dropoffLng": 106.698032,
+  "hasToll": false,
+  "promoCode": "SWIFTRIDE10",
+  "isRaining": true
 }
 
 ### 2. Xem danh sách tất cả các chuyến đi (GET /api/v1/trips)
@@ -45,7 +48,7 @@ POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/driver-reject?driverId={{d
 ### 5. Tài xế đón khách (POST /api/v1/trips/{id}/pickup)
 POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/pickup
 
-### 6. Tài xế trả khách (POST /api/v1/trips/{id}/dropoff - finalFare là tùy chọn, tự lấy giá ước tính nếu để trống)
+### 6. Tài xế trả khách (POST /api/v1/trips/{id}/dropoff - tự động lấy giá cước ước tính đã chốt)
 POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/dropoff
 
 ### 7. Hủy chuyến đi (POST /api/v1/trips/{id}/cancel)

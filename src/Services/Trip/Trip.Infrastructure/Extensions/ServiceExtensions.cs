@@ -1,9 +1,12 @@
 using Infrastructure.Extensions;
+using Matching.API.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Trip.Application.Common.Interfaces;
 using Trip.Domain.Repositories;
 using Trip.Infrastructure.Consumers;
+using Trip.Infrastructure.GrpcServices;
 using Trip.Infrastructure.Persistence;
 using Trip.Infrastructure.Repositories;
 
@@ -32,6 +35,14 @@ public static class ServiceExtensions
 
         // Đăng ký TripRepository
         services.AddScoped<ITripRepository, TripRepository>();
+
+        // Register gRPC Client for Matching Service
+        var matchingGrpcUrl = configuration["GrpcSettings:MatchingUrl"] ?? "http://localhost:5001";
+        services.AddGrpcClient<PricingService.PricingServiceClient>(options =>
+        {
+            options.Address = new Uri(matchingGrpcUrl);
+        });
+        services.AddScoped<IPricingGrpcService, PricingGrpcService>();
 
         return services;
     }
