@@ -13,6 +13,7 @@ using Trip.Application.Features.Trips.Commands.DropOff;
 using Trip.Application.Features.Trips.Commands.PickUp;
 using Trip.Application.Features.Trips.Queries.GetAllTrips;
 using Trip.Application.Features.Trips.Queries.GetTripById;
+using Trip.API.DTOs;
 
 namespace Trip.API.Endpoints;
 
@@ -55,18 +56,18 @@ public static class TripEndpoints
         });
 
         // 3. Tài xế nhận chuyến
-        group.MapPost("/{id:guid}/driver-accept", async (Guid id, [FromQuery] Guid driverId, ISender sender, CancellationToken ct) =>
+        group.MapPost("/{id:guid}/driver-accept", async (Guid id, [FromBody] DriverAcceptRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new DriverAcceptCommand(id, driverId), ct);
+            var result = await sender.Send(new DriverAcceptCommand(id, request.DriverId), ct);
             return result.IsSuccess 
                 ? Results.Ok(new { message = "Nhận chuyến thành công" }) 
                 : result.ToProblemDetails();
         });
 
         // 4. Tài xế từ chối chuyến (theo notePhat)
-        group.MapPost("/{id:guid}/driver-reject", async (Guid id, [FromQuery] Guid driverId, ISender sender, CancellationToken ct) =>
+        group.MapPost("/{id:guid}/driver-reject", async (Guid id, [FromBody] DriverRejectRequest request, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new DriverRejectCommand(id, driverId), ct);
+            var result = await sender.Send(new DriverRejectCommand(id, request.DriverId), ct);
             return result.IsSuccess 
                 ? Results.Ok(new { message = "Từ chối chuyến thành công" }) 
                 : result.ToProblemDetails();
@@ -84,11 +85,12 @@ public static class TripEndpoints
         // 6. Tài xế trả khách (kích hoạt thanh toán - tự động lấy giá cước ước tính đã chốt lúc tạo chuyến)
         group.MapPost("/{id:guid}/dropoff", async (
             Guid id, 
-            [FromQuery] PaymentMethod paymentMethod = PaymentMethod.Wallet, 
-            [FromQuery] string? gatewayToken = null,
-            ISender sender = default!, 
-            CancellationToken ct = default) =>
+            [FromBody] DropOffRequest? request,
+            ISender sender, 
+            CancellationToken ct) =>
         {
+            var paymentMethod = request?.PaymentMethod ?? PaymentMethod.Wallet;
+            var gatewayToken = request?.GatewayToken;
             var result = await sender.Send(new DropOffCommand(id, paymentMethod, gatewayToken), ct);
             return result.IsSuccess 
                 ? Results.Ok(new { message = "Đã trả khách và gửi yêu cầu thanh toán" }) 

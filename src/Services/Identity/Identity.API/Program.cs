@@ -49,7 +49,7 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 .AddDefaultTokenProviders();
 
 // MassTransit with RabbitMQ EventBus
-builder.Services.AddCustomMassTransit(builder.Configuration);
+builder.Services.AddCustomMassTransit(builder.Configuration, "identity");
 
 // JWT Settings & Authentication
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
@@ -133,6 +133,5 @@ app.UseAuthorization();
 
 // Map Minimal API Endpoints
 app.MapAuthEndpoints();
-app.MapUserEndpoints();
 
 await app.RunAsync();

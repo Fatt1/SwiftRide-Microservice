@@ -1,4 +1,5 @@
-@Matching.API_HostAddress = http://localhost:5076
+# Local: http://localhost:5003 | Docker: http://localhost:6003
+@Matching.API_HostAddress = http://localhost:5003
 
 GET {{Matching.API_HostAddress}}/weatherforecast/
 Accept: application/json

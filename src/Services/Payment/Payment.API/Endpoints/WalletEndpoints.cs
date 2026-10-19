@@ -11,7 +11,7 @@ public static class WalletEndpoints
 
     public static IEndpointRouteBuilder MapWalletEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapApiV1Group("wallets").WithTags("Wallets");
+        var group = endpoints.MapApiV1Group("payments/wallets").WithTags("Wallets");
 
         group.MapGet("", async (ISender sender, CancellationToken ct) =>
         {

@@ -5,7 +5,7 @@ using Trip.Domain.Repositories;
 
 namespace Trip.Application.Features.Trips.Commands.DriverReject;
 
-internal sealed class DriverRejectHandler(ITripRepository tripRepository) 
+internal sealed class DriverRejectHandler(ITripRepository tripRepository)
     : ICommandHandler<DriverRejectCommand>
 {
     public async Task<Result> Handle(DriverRejectCommand request, CancellationToken cancellationToken)

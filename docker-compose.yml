@@ -90,6 +90,14 @@ services:
     networks:
       - swiftride-network
 
+  yarpapigw:
+    image: ${DOCKER_REGISTRY-}yarpapigw:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/ApiGateways/YARPAPiGw/Dockerfile
+    networks:
+      - swiftride-network
+
 networks:
   swiftride-network:
     driver: bridge
