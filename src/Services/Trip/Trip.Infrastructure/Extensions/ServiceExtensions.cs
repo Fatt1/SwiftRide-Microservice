@@ -26,7 +26,7 @@ public static class ServiceExtensions
             }));
 
         // Register MassTransit + RabbitMQ + Transactional Outbox for SQL Server + Consumers
-        services.AddCustomMassTransitWithSqlOutbox<TripDbContext>(configuration, busConfig =>
+        services.AddCustomMassTransitWithSqlOutbox<TripDbContext>(configuration, "trip", busConfig =>
         {
             busConfig.AddConsumer<PaymentCompletedConsumer>();
             busConfig.AddConsumer<PaymentFailedConsumer>();
@@ -37,7 +37,7 @@ public static class ServiceExtensions
         services.AddScoped<ITripRepository, TripRepository>();
 
         // Register gRPC Client for Matching Service
-        var matchingGrpcUrl = configuration["GrpcSettings:MatchingUrl"] ?? "http://localhost:5001";
+        var matchingGrpcUrl = configuration["GrpcSettings:MatchingUrl"] ?? "http://localhost:5004";
         services.AddGrpcClient<PricingService.PricingServiceClient>(options =>
         {
             options.Address = new Uri(matchingGrpcUrl);

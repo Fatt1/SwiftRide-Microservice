@@ -1,4 +1,5 @@
-@Payment.API_HostAddress = http://localhost:6003
+# Local: http://localhost:5005 | Docker: http://localhost:6005
+@Payment.API_HostAddress = http://localhost:5005
 @paymentId = REPLACE_WITH_PAYMENT_ID
 
 ### Charge a mock card. Reuse these IDs to replay the same request.
@@ -40,3 +41,21 @@ Content-Type: application/json
   "idempotencyKey": "66666666-6666-6666-6666-666666666666",
   "gatewayToken": "mock-decline"
 }
+
+### Get all wallets (GET /api/v1/payments/wallets)
+GET {{Payment.API_HostAddress}}/api/v1/payments/wallets
+Accept: application/json
+
+### Top up wallet (POST /api/v1/payments/wallets/{userId}/top-up)
+POST {{Payment.API_HostAddress}}/api/v1/payments/wallets/22222222-2222-2222-2222-222222222222/top-up
+Content-Type: application/json
+
+{
+  "idempotencyKey": "77777777-7777-7777-7777-777777777777",
+  "amount": 100000
+}
+
+### Get ledger history (GET /api/v1/payments/ledger)
+GET {{Payment.API_HostAddress}}/api/v1/payments/ledger
+Accept: application/json
+

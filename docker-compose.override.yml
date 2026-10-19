@@ -96,7 +96,7 @@ services:
       - OpenTelemetry__ServiceName=Identity.API
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
     ports:
-      - "6005:5000"
+      - "6001:5000"
     restart: on-failure
     depends_on:
       - identitydb
@@ -113,11 +113,11 @@ services:
       - EventBusSettings__Port=5672
       - EventBusSettings__UserName=guest
       - EventBusSettings__Password=guest
-      - GrpcSettings__MatchingUrl=http://matching.api:5002
+      - GrpcSettings__MatchingUrl=http://matching.api:5004
       - OpenTelemetry__ServiceName=Trip.API
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
     ports:
-      - "6004:5000"
+      - "6002:5000"
     restart: on-failure
     depends_on:
       - tripdb
@@ -138,7 +138,7 @@ services:
       - OpenTelemetry__ServiceName=Payment.API
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
     ports:
-      - "6003:5000"
+      - "6005:5000"
     restart: on-failure
     depends_on:
       - paymentdb
@@ -149,9 +149,9 @@ services:
     container_name: matching.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      # Kestrel Endpoints (Port 5000: HTTP/1.1 REST, Port 5001: HTTP/2 gRPC)
-      - Kestrel__Endpoints__HttpRest__Url=http://+:5001
-      - Kestrel__Endpoints__GrpcEndpoint__Url=http://+:5002
+      # Kestrel Endpoints (Port 5003: HTTP/1.1 REST, Port 5004: HTTP/2 gRPC)
+      - Kestrel__Endpoints__HttpRest__Url=http://+:5003
+      - Kestrel__Endpoints__GrpcEndpoint__Url=http://+:5004
       # MongoDB Settings
       - MongoDbSettings__ConnectionString=mongodb://root:Password%40123@matchingdb:27017/?authSource=admin
       - MongoDbSettings__DatabaseName=matchingdb
@@ -164,9 +164,27 @@ services:
       - OpenTelemetry__ServiceName=Matching.API
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
     ports:
-      - "6001:5001"
-      - "6002:5002"
+      - "6003:5003"
+      - "6004:5004"
     depends_on:
       - matchingdb
       - rabbitmq
       - jaeger
+
+  yarpapigw:
+    container_name: yarpapigw
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=5000
+      - ReverseProxy__Clusters__identity-cluster__Destinations__destination1__Address=http://identity.api:5000
+      - ReverseProxy__Clusters__trip-cluster__Destinations__destination1__Address=http://trip.api:5000
+      - ReverseProxy__Clusters__matching-cluster__Destinations__destination1__Address=http://matching.api:5003
+      - ReverseProxy__Clusters__payment-cluster__Destinations__destination1__Address=http://payment.api:5000
+    ports:
+      - "6000:5000"
+    restart: on-failure
+    depends_on:
+      - identity.api
+      - trip.api
+      - matching.api
+      - payment.api

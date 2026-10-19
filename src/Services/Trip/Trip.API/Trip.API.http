@@ -1,4 +1,5 @@
-@Trip.API_HostAddress = http://localhost:5251
+# Local: http://localhost:5002 | Docker: http://localhost:6002
+@Trip.API_HostAddress = http://localhost:5002
 @tripId = 00000000-0000-0000-0000-000000000000
 @driverId = 11111111-1111-1111-1111-111111111111
 
@@ -40,16 +41,32 @@ GET {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}
 Accept: application/json
 
 ### 3. Tài xế nhận cuốc (POST /api/v1/trips/{id}/driver-accept)
-POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/driver-accept?driverId={{driverId}}
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/driver-accept
+Content-Type: application/json
+
+{
+  "driverId": "{{driverId}}"
+}
 
 ### 4. Tài xế từ chối cuốc (POST /api/v1/trips/{id}/driver-reject)
-POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/driver-reject?driverId={{driverId}}
+POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/driver-reject
+Content-Type: application/json
+
+{
+  "driverId": "{{driverId}}"
+}
 
 ### 5. Tài xế đón khách (POST /api/v1/trips/{id}/pickup)
 POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/pickup
 
 ### 6. Tài xế trả khách (POST /api/v1/trips/{id}/dropoff - tự động lấy giá cước ước tính đã chốt)
 POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/dropoff
+Content-Type: application/json
+
+{
+  "paymentMethod": "Wallet"
+}
 
 ### 7. Hủy chuyến đi (POST /api/v1/trips/{id}/cancel)
 POST {{Trip.API_HostAddress}}/api/v1/trips/{{tripId}}/cancel
+

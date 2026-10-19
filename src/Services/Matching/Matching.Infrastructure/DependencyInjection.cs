@@ -1,4 +1,5 @@
 using Infrastructure.Extensions;
+using MassTransit;
 using Matching.Application.Configurations;
 using Matching.Domain.Repositories;
 using Matching.Infrastructure.Configurations;
@@ -20,7 +21,7 @@ public static class DependencyInjection
         services.ConfigureMongoDbClient(configuration);
 
         // 2. Register MassTransit + RabbitMQ + MongoDB Transactional Outbox
-        services.AddCustomMassTransitWithMongoOutbox(configuration, busConfig =>
+        services.AddCustomMassTransitWithMongoOutbox(configuration, "matching", busConfig =>
         {
             busConfig.AddConsumer<DriverCreatedConsumer>();
             busConfig.AddConsumer<TripAcceptedConsumer>();

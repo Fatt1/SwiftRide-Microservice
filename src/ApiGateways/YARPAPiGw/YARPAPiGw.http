@@ -1,4 +1,5 @@
-@Gateway_HostAddress = http://localhost:5047
+# Local: http://localhost:5000 | Docker: http://localhost:6000
+@Gateway_HostAddress = http://localhost:5000
 
 ### 1. Gateway Health Check / Info
 GET {{Gateway_HostAddress}}/
@@ -110,3 +111,11 @@ Authorization: Bearer {{authToken}}
   "amount": 50000,
   "method": 1
 }
+
+###
+
+### 8. Payment Service via Gateway - Lấy danh sách ví (GET /api/v1/payments/wallets)
+GET {{Gateway_HostAddress}}/api/v1/payments/wallets
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
