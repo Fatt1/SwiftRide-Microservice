@@ -69,7 +69,29 @@ public class FindDriverCommandHandler : ICommandHandler<FindDriverCommand, FindD
 
         await _matchingRepository.AddDriverAttemptAsync(matching.Id, nearestDriver.DriverId, cancellationToken);
 
-        _logger.LogInformation("END: Found driver {DriverId} for tripId: {TripId}", nearestDriver.DriverId, request.TripId);
+        // Bắn sự kiện DriverFoundEvent sang Notification Service qua RabbitMQ (MassTransit)
+        // để thông báo chuyến đi mới cho tài xế qua WebSocket
+        var pickup = !string.IsNullOrWhiteSpace(request.PickupAddress) 
+            ? request.PickupAddress 
+            : $"Vị trí đón ({matching.PickupLat:F4}, {matching.PickupLng:F4})";
+        var dropoff = !string.IsNullOrWhiteSpace(request.DropoffAddress) 
+            ? request.DropoffAddress 
+            : "Điểm đến của hành khách";
+
+        await _publishEndpoint.Publish(new DriverFoundEvent
+        {
+            TripId = request.TripId,
+            DriverId = nearestDriver.DriverId,
+            DriverName = nearestDriver.FullName,
+            RiderId = request.RiderId,
+            PickupAddress = pickup,
+            DropoffAddress = dropoff,
+            TotalFare = (decimal)matching.PricingBreakdown.FinalTotal,
+            EstimatedDurationMinutes = matching.EstimatedMinutes,
+            DistanceKm = matching.DistanceKm
+        }, cancellationToken);
+
+        _logger.LogInformation("END: Found driver {DriverId} for tripId: {TripId}. Published DriverFoundEvent.", nearestDriver.DriverId, request.TripId);
         return Result.Success<FindDriverResult>(
             new FindDriverResult(
                 nearestDriver.DriverId,

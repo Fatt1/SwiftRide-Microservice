@@ -21,25 +21,9 @@ services:
     networks:
       - swiftride-network
 
-  #database ui section
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    networks:
-      - swiftride-network
-
-  mongo-express:
-    image: mongo-express:latest
-    networks:
-      - swiftride-network
-
   #infrastructure section
   rabbitmq:
     image: rabbitmq:3-management
-    networks:
-      - swiftride-network
-
-  portainer:
-    image: portainer/portainer-ce:latest
     networks:
       - swiftride-network
 
@@ -87,6 +71,14 @@ services:
     build:
       context: .
       dockerfile: src/Services/Matching/Matching.API/Dockerfile
+    networks:
+      - swiftride-network
+
+  notification.api:
+    image: ${DOCKER_REGISTRY-}notification-api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Notification/Notification.API/Dockerfile
     networks:
       - swiftride-network
 

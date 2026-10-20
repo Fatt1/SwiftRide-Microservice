@@ -25,6 +25,9 @@
     <Project Path="src/Services/Matching/Matching.Domain/Matching.Domain.csproj" Id="93053d3e-6c2b-405d-a3e6-fbcfdc0ec101" />
     <Project Path="src/Services/Matching/Matching.Infrastructure/Matching.Infrastructure.csproj" Id="1190fb9b-5947-4e7f-932d-bce439ffa6ba" />
   </Folder>
+  <Folder Name="/src/Services/Notification/">
+    <Project Path="src/Services/Notification/Notification.API/Notification.API.csproj" />
+  </Folder>
   <Folder Name="/src/Services/Payment/">
     <Project Path="src/Services/Payment/Payment.API/Payment.API.csproj" />
     <Project Path="src/Services/Payment/Payment.Application/Payment.Application.csproj" Id="0065da2e-1a89-48dc-8fae-5aa9ba8a0f84" />

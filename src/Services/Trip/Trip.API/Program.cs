@@ -40,7 +40,7 @@ public class Program
             builder.Services.AddCustomOpenTelemetry(serviceName, otlpEndpoint);
 
             builder.AddSwiftRideApiVersioning();
-            builder.Services.AddAuthorization();
+
 
             var app = builder.Build();
 

@@ -6,5 +6,6 @@ public record TripAcceptedEvent : IntegrationBaseEvent
 {
     public Guid TripId { get; init; }
     public Guid DriverId { get; init; }
-
+    public Guid? RiderId { get; init; }
+    public string? DriverName { get; init; }
 }

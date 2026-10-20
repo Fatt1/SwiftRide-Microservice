@@ -1,3 +1,5 @@
+using EventBus.Messages.Events;
+using MassTransit;
 using Shared;
 using Shared.CQRS;
 using Trip.Domain.Enums;
@@ -5,7 +7,9 @@ using Trip.Domain.Repositories;
 
 namespace Trip.Application.Features.Trips.Commands.DriverReject;
 
-internal sealed class DriverRejectHandler(ITripRepository tripRepository)
+internal sealed class DriverRejectHandler(
+    ITripRepository tripRepository,
+    IPublishEndpoint publishEndpoint)
     : ICommandHandler<DriverRejectCommand>
 {
     public async Task<Result> Handle(DriverRejectCommand request, CancellationToken cancellationToken)
@@ -21,10 +25,18 @@ internal sealed class DriverRejectHandler(ITripRepository tripRepository)
             return Result.Failure(new ConflictError($"Không thể từ chối chuyến ở trạng thái '{trip.Status}'."));
         }
 
-        // Khi một tài xế từ chối nhận chuyến, chuyến đi vẫn giữ trạng thái Requested để hệ thống tiếp tục tìm tài xế khác.
-        // Chuyến đi CHỈ chuyển sang trạng thái DriverRejected khi Matching Service báo vượt quá số lần tìm kiếm
-        // và bắn sự kiện TripMatchingFailedEvent qua RabbitMQ (xử lý bởi TripMatchingFailedConsumer).
+        // Bắn sự kiện DriverRejectEvent để Notification Service gửi WebSocket thông báo tới Rider
+        await publishEndpoint.Publish(new DriverRejectEvent
+        {
+            TripId = trip.Id,
+            DriverId = request.DriverId,
+            RiderId = trip.RiderId,
+            Reason = "Tài xế đã từ chối nhận chuyến xe này."
+        }, cancellationToken);
+
+        await tripRepository.SaveChangesAsync();
 
         return Result.Success();
     }
 }
+
