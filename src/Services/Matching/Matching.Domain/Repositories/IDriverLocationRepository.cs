@@ -1,4 +1,4 @@
-﻿using Matching.Domain.Entities;
+using Matching.Domain.Entities;
 
 namespace Matching.Domain.Repositories;
 
@@ -11,4 +11,7 @@ public interface IDriverLocationRepository
     Task UpdateAsync(DriverLocation driverLocation, CancellationToken ct = default);
 
     Task<DriverLocation?> GetNearestAvailableDriverAsync(double latitude, double longitude, double maxRadiusInMeters, List<Guid> excludedDriverIds, CancellationToken ct = default);
+
+    Task<List<DriverLocation>> GetAllAsync(CancellationToken ct = default);
 }
+

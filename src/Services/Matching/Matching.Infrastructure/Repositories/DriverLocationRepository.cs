@@ -1,4 +1,4 @@
-﻿using Matching.Domain.Entities;
+using Matching.Domain.Entities;
 using Matching.Domain.Repositories;
 using MongoDB.Driver;
 using MongoDB.Driver.GeoJsonObjectModel;
@@ -50,4 +50,12 @@ public class DriverLocationRepository : IDriverLocationRepository
         var filter = Builders<DriverLocation>.Filter.Eq(x => x.DriverId, driverLocation.DriverId);
         return _driverLocations.ReplaceOneAsync(filter, driverLocation, cancellationToken: ct);
     }
+
+    public async Task<List<DriverLocation>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await _driverLocations
+            .Find(Builders<DriverLocation>.Filter.Empty)
+            .ToListAsync(ct);
+    }
 }
+

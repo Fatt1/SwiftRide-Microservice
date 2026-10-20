@@ -26,9 +26,23 @@ public static class WalletEndpoints
         {
             var result = await sender.Send(new TopUpWalletCommand(userId, request.IdempotencyKey, request.Amount), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        });
+
+        group.MapGet("/user/{userId:guid}", async (Guid userId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new Payment.Application.Features.Wallets.Queries.GetWalletByUserId.GetWalletByUserIdQuery(userId), ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
-        .WithSummary("Nạp tiền vào ví của người dùng")
-        .WithDescription("Nhập UserId vào đường dẫn; body gồm IdempotencyKey duy nhất và Amount lớn hơn 0. API cộng tiền, tạo giao dịch WalletTopUp và dòng ledger Credit, rồi trả về ví với số dư mới. Gửi lại cùng IdempotencyKey không cộng tiền lần nữa.");
+        .WithSummary("Lấy thông tin ví theo UserId")
+        .WithDescription("Trả về thông tin ví của người dùng (tự động tạo ví mới nếu chưa có).");
+
+        group.MapGet("/user/{userId:guid}/ledger", async (Guid userId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new Payment.Application.Features.Wallets.Queries.GetLedgerByUserId.GetLedgerByUserIdQuery(userId), ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
+        })
+        .WithSummary("Lấy lịch sử giao dịch sổ cái (ledger) theo UserId")
+        .WithDescription("Trả về danh sách các biến động số dư (nạp tiền, trừ tiền cuốc xe, v.v.) của ví.");
 
         return endpoints;
     }

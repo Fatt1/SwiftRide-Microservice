@@ -34,6 +34,8 @@ internal sealed class DriverRejectHandler(
             Reason = "Tài xế đã từ chối nhận chuyến xe này."
         }, cancellationToken);
 
+        await tripRepository.SaveChangesAsync();
+
         return Result.Success();
     }
 }
