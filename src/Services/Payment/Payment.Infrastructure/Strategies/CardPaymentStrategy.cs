@@ -22,7 +22,7 @@ public sealed class CardPaymentStrategy(IWalletRepository wallets, ICardPaymentP
         if (driver.Currency != payment.Currency)
             return Result.Failure(new ConflictError("Driver wallet currency does not match."));
 
-        var result = await processor.ChargeAsync(payment.Amount, payment.GatewayToken!, payment.IdempotencyKey, ct);
+        var result = await processor.ChargeAsync(payment.Amount, payment.GatewayToken!, payment.IdempotencyKey, context.RetryAttempt, ct);
         context.ProcessorResponse = result.Response;
         if (!result.IsSuccess)
             return Result.Failure(new ConflictError(result.FailureReason!));

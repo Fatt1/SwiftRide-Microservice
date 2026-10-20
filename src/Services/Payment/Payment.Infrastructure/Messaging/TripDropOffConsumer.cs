@@ -25,7 +25,8 @@ public sealed class TripDropOffConsumer(ISender sender, ILogger<TripDropOffConsu
             PaymentMethod = message.PaymentMethod,
             GatewayToken = message.GatewayToken,
             IdempotencyKey = message.Id,
-            CorrelationId = message.CorrelationId
+            CorrelationId = message.CorrelationId,
+            RetryAttempt = context.GetRetryAttempt()
         }, context.CancellationToken);
         if (result.IsFailure)
         {
