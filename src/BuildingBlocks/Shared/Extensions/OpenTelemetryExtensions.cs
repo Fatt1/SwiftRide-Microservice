@@ -29,8 +29,8 @@ public static class OpenTelemetryExtensions
                 tracing
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddSource("MassTransit");
-                ;
+                    .AddSource("MassTransit")
+                    .AddSource("Yarp.ReverseProxy");
 
                 if (!string.IsNullOrWhiteSpace(otlpEndpoint))
                 {

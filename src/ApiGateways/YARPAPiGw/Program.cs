@@ -2,10 +2,16 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Shared.Extensions;
 using Yarp.ReverseProxy.Transforms;
 using YARPAPiGw.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// OpenTelemetry Tracing & Metrics
+var serviceName = builder.Configuration["OpenTelemetry:ServiceName"] ?? "YarpApiGw";
+var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317";
+builder.Services.AddCustomOpenTelemetry(serviceName, otlpEndpoint);
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

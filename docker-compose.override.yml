@@ -166,6 +166,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=5000
+      - OpenTelemetry__ServiceName=YarpApiGw
+      - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
       - ReverseProxy__Clusters__identity-cluster__Destinations__destination1__Address=http://identity.api:5000
       - ReverseProxy__Clusters__trip-cluster__Destinations__destination1__Address=http://trip.api:5000
       - ReverseProxy__Clusters__matching-cluster__Destinations__destination1__Address=http://matching.api:5003
@@ -181,3 +183,4 @@ services:
       - matching.api
       - payment.api
       - notification.api
+      - jaeger

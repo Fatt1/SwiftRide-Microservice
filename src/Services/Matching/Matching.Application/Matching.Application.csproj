@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Matching.UnitTests" />
+    <InternalsVisibleTo Include="Matching.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\EventBus.Messages\EventBus.Messages.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
     <ProjectReference Include="..\Matching.Domain\Matching.Domain.csproj" />
