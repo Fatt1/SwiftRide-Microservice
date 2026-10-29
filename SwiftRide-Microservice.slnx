@@ -43,6 +43,7 @@
   <Folder Name="/tests/">
     <Project Path="src/tests/Matching/Matching.UnitTests/Matching.UnitTests.csproj" />
     <Project Path="src/tests/Matching/Matching.IntegrationTests/Matching.IntegrationTests.csproj" />
+    <Project Path="src/tests/Payment/Payment.UnitTests/Payment.UnitTests.csproj" />
     <Project Path="src/tests/Trip/Trip.UnitTests/Trip.UnitTests.csproj" />
     <Project Path="src/tests/Trip/Trip.IntegrationTests/Trip.IntegrationTests.csproj" />
   </Folder>
