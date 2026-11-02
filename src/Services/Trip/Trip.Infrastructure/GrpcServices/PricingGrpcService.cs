@@ -27,12 +27,14 @@ public class PricingGrpcService : IPricingGrpcService
         bool hasToll = false,
         string? promoCode = null,
         bool isRaining = false,
+        double? distanceKm = null,
+        int? estimatedMinutes = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("BEGIN: GetPricing via gRPC for TripId: {TripId}, HasToll: {HasToll}, IsRaining: {IsRaining}, PromoCode: {PromoCode}",
-                tripId, hasToll, isRaining, promoCode ?? "None");
+            _logger.LogInformation("BEGIN: GetPricing via gRPC for TripId: {TripId}, HasToll: {HasToll}, IsRaining: {IsRaining}, PromoCode: {PromoCode}, DistanceKm: {DistanceKm}, EstimatedMinutes: {EstimatedMinutes}",
+                tripId, hasToll, isRaining, promoCode ?? "None", distanceKm, estimatedMinutes);
 
             var request = new GetPricingRequest
             {
@@ -43,7 +45,9 @@ public class PricingGrpcService : IPricingGrpcService
                 DestinationLongitude = dropoffLng,
                 HasToll = hasToll,
                 IsRaining = isRaining,
-                PromoCode = promoCode ?? string.Empty
+                PromoCode = promoCode ?? string.Empty,
+                DistanceKm = distanceKm.GetValueOrDefault(),
+                EstimatedMinutes = estimatedMinutes.GetValueOrDefault()
             };
 
             var response = await _pricingClient.GetPricingAsync(request, cancellationToken: cancellationToken);

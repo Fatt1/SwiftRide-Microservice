@@ -63,6 +63,8 @@ public class CreateTripCommandHandlerTests
             command.HasToll,
             command.PromoCode,
             command.IsRaining,
+            Arg.Any<double?>(),
+            Arg.Any<int?>(),
             Arg.Any<CancellationToken>())
             .Returns(pricingDto);
 
@@ -113,6 +115,8 @@ public class CreateTripCommandHandlerTests
             Arg.Any<bool>(),
             Arg.Any<string?>(),
             Arg.Any<bool>(),
+            Arg.Any<double?>(),
+            Arg.Any<int?>(),
             Arg.Any<CancellationToken>())
             .Throws(new HttpRequestException("Matching Service unavailable"));
 

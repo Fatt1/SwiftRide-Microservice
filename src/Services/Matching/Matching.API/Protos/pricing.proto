@@ -2,7 +2,6 @@ syntax = "proto3";
 
 option csharp_namespace = "Matching.API.Protos";
 
-
 service PricingService {
   rpc GetPricing (GetPricingRequest) returns (PricingResponse);
 }
@@ -16,6 +15,8 @@ message GetPricingRequest {
   double destination_latitude = 6;
   string promo_code = 7;
   bool is_raining = 8;
+  double distance_km = 9;
+  int32 estimated_minutes = 10;
 }
 
 message PricingResponse {
