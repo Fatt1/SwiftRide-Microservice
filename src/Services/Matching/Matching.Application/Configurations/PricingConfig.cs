@@ -36,6 +36,6 @@ public class SurgeCondition
     // Time condition
     public int? FromHour { get; set; }
     public int? ToHour { get; set; }
-
+    public string? WeatherCondition { get; internal set; }
 }
 
