@@ -41,6 +41,35 @@ services:
     networks:
       - swiftride-network
 
+  loki:
+    image: grafana/loki:latest
+    container_name: swiftride-loki
+    restart: always
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - swiftride-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: swiftride-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
+      - jaeger
+    networks:
+      - swiftride-network
+
   #microservice api section
   identity.api:
     image: ${DOCKER_REGISTRY-}identity-api:${PLATFORM:-linux}-${TAG:-latest}
@@ -102,3 +131,4 @@ volumes:
   pgadmin_data:
   rabbitmq_data:
   portainer_data:
+  grafana_data:

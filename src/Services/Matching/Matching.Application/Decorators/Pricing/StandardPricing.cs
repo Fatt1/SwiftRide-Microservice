@@ -1,18 +1,18 @@
-using Matching.Application.Abstractions;
+﻿using Matching.Application.Abstractions;
 using Matching.Application.Configurations;
 using Matching.Application.Dtos;
 using Matching.Domain.Entities;
 
-namespace Matching.Application.Pricing.Stategies;
+namespace Matching.Application.Decorators.Pricing;
 
 public class StandardPricing : IPricingStrategy
 {
     private readonly PricingConfig _config;
-
     public StandardPricing(PricingConfig config)
     {
         _config = config;
     }
+
     public PricingBreakdown GetPrice(PricingContext context)
     {
         var distanceFare = context.DistanceKm * _config.PerKmRate;
@@ -25,6 +25,6 @@ public class StandardPricing : IPricingStrategy
             BaseFare = price,
             FinalTotal = price
         };
-
     }
+
 }

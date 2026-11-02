@@ -7,12 +7,15 @@ using Identity.API.Services;
 using Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Common.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using Shared.Exceptions;
 using Shared.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog(Serilogger.Configure);
 
 // API Versioning
 builder.AddSwiftRideApiVersioning();

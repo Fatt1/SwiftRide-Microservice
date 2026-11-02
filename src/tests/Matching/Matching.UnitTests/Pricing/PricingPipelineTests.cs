@@ -1,6 +1,6 @@
 using Matching.Application.Abstractions;
 using Matching.Application.Dtos;
-using Matching.Application.Pricing.Stategies;
+using Matching.Application.Decorators.Pricing;
 using Matching.Domain.Enums;
 using Matching.UnitTests.Common.Builders;
 using Xunit;
