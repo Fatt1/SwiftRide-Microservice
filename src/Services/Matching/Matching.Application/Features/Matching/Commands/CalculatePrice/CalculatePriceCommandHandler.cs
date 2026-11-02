@@ -1,8 +1,8 @@
 using Matching.Application.Abstractions;
 using Matching.Application.Configurations;
+using Matching.Application.Decorators.Pricing;
 using Matching.Application.Dtos;
 using Matching.Application.Helpers;
-using Matching.Application.Pricing.Stategies;
 using Matching.Domain.Entities;
 using Matching.Domain.Repositories;
 using Microsoft.Extensions.Logging;
@@ -41,7 +41,7 @@ public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository
         var pricingBreakdown = promoPricing.GetPrice(pricingContext);
         var taxAmount = Math.Round(pricingBreakdown.FinalTotal * config.Value.TaxRate, 2);
 
-        
+
         pricingBreakdown.DistanceFare = Math.Round(pricingBreakdown.DistanceFare, 2);
         pricingBreakdown.TimeFare = Math.Round(pricingBreakdown.TimeFare, 2);
         pricingBreakdown.BaseFare = Math.Round(pricingBreakdown.BaseFare, 2);

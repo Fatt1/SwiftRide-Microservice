@@ -69,6 +69,7 @@ services:
       - EventBusSettings__Password=guest
       - OpenTelemetry__ServiceName=Identity.API
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+      - Loki__Url=http://loki:3100
     ports:
       - "6001:5000"
     restart: on-failure
@@ -76,6 +77,7 @@ services:
       - identitydb
       - rabbitmq
       - jaeger
+      - loki
 
   trip.api:
     container_name: trip.api
@@ -90,6 +92,7 @@ services:
       - GrpcSettings__MatchingUrl=http://matching.api:5004
       - OpenTelemetry__ServiceName=Trip.API
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+      - Loki__Url=http://loki:3100
     ports:
       - "6002:5000"
     restart: on-failure
@@ -98,6 +101,7 @@ services:
       - rabbitmq
       - jaeger
       - matching.api
+      - loki
 
   payment.api:
     container_name: payment.api
@@ -111,6 +115,7 @@ services:
       - EventBusSettings__Password=guest
       - OpenTelemetry__ServiceName=Payment.API
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+      - Loki__Url=http://loki:3100
     ports:
       - "6005:5000"
     restart: on-failure
@@ -118,6 +123,7 @@ services:
       - paymentdb
       - rabbitmq
       - jaeger
+      - loki
 
   matching.api:
     container_name: matching.api
@@ -137,6 +143,7 @@ services:
       # OpenTelemetry / Jaeger Settings
       - OpenTelemetry__ServiceName=Matching.API
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+      - Loki__Url=http://loki:3100
     ports:
       - "6003:5003"
       - "6004:5004"
@@ -144,6 +151,7 @@ services:
       - matchingdb
       - rabbitmq
       - jaeger
+      - loki
 
   notification.api:
     container_name: notification.api
@@ -154,12 +162,14 @@ services:
       - EventBusSettings__Port=5672
       - EventBusSettings__UserName=guest
       - EventBusSettings__Password=guest
+      - Loki__Url=http://loki:3100
     ports:
       - "5006:5000"
       - "6006:5000"
     restart: on-failure
     depends_on:
       - rabbitmq
+      - loki
 
   yarpapigw:
     container_name: yarpapigw
@@ -168,6 +178,7 @@ services:
       - ASPNETCORE_HTTP_PORTS=5000
       - OpenTelemetry__ServiceName=YarpApiGw
       - OpenTelemetry__OtlpEndpoint=http://jaeger:4317
+      - Loki__Url=http://loki:3100
       - ReverseProxy__Clusters__identity-cluster__Destinations__destination1__Address=http://identity.api:5000
       - ReverseProxy__Clusters__trip-cluster__Destinations__destination1__Address=http://trip.api:5000
       - ReverseProxy__Clusters__matching-cluster__Destinations__destination1__Address=http://matching.api:5003
@@ -184,3 +195,4 @@ services:
       - payment.api
       - notification.api
       - jaeger
+      - loki

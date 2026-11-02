@@ -1,25 +1,21 @@
-using Matching.Application.Abstractions;
+﻿using Matching.Application.Abstractions;
 using Matching.Application.Configurations;
 using Matching.Application.Dtos;
 using Matching.Domain.Entities;
 
-namespace Matching.Application.Pricing.Stategies;
+namespace Matching.Application.Decorators.Pricing;
 
-public class PromotionPricing : IPricingStrategy
+public class PromotionPricing : PricingDecorator
 {
-    private readonly IPricingStrategy _inner;
-    private readonly PricingConfig _config;
-    public PromotionPricing(IPricingStrategy inner, PricingConfig config)
+    public PromotionPricing(IPricingStrategy inner, PricingConfig config) : base(inner, config)
     {
-        _inner = inner;
-        _config = config;
     }
-    public PricingBreakdown GetPrice(PricingContext context)
+    public override PricingBreakdown GetPrice(PricingContext context)
     {
-        var breakdown = _inner.GetPrice(context);
+        var breakdown = base.GetPrice(context);
         if (!string.IsNullOrWhiteSpace(context.PromoCode))
         {
-            var promo = _config.PromoCodes
+            var promo = base.Config.PromoCodes
                 .FirstOrDefault(p => string.Equals(p.Code, context.PromoCode, StringComparison.OrdinalIgnoreCase));
 
             if (promo != null)
@@ -32,7 +28,5 @@ public class PromotionPricing : IPricingStrategy
 
         breakdown.FareAfterDiscount = breakdown.FinalTotal;
         return breakdown;
-
-
     }
 }

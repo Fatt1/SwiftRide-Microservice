@@ -1,12 +1,17 @@
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Common.Logging;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using Shared.Extensions;
 using Yarp.ReverseProxy.Transforms;
 using YARPAPiGw.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog(Serilogger.Configure);
 
 // OpenTelemetry Tracing & Metrics
 var serviceName = builder.Configuration["OpenTelemetry:ServiceName"] ?? "YarpApiGw";
@@ -58,6 +63,47 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("authenticated", policy => policy.RequireAuthenticatedUser());
+});
+
+// Rate Limiter configuration using Sliding Window
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        await context.HttpContext.Response.WriteAsync("""
+        {
+            "status": 429,
+            "error": "Too Many Requests",
+            "message": "Quá nhiều yêu cầu. Vui lòng thử lại sau giây lát."
+        }
+        """, cancellationToken: token);
+    };
+
+    options.AddPolicy("sliding-window", httpContext =>
+    {
+        // Phân vùng theo User ID nếu đã xác thực, nếu chưa thì theo IP Client
+        var partitionKey = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? httpContext.User.FindFirst("sub")?.Value
+            ?? httpContext.Connection.RemoteIpAddress?.ToString()
+            ?? "anonymous";
+
+        return RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: partitionKey,
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 100, // Tối đa 100 request
+                Window = TimeSpan.FromMinutes(1), // Trong khung thời gian 1 phút
+                SegmentsPerWindow = 6, // 6 phân đoạn trượt (mỗi 10 giây trượt 1 đoạn)
+                QueueLimit = 2 // Không xếp hàng chờ, trả về 429 ngay khi vượt giới hạn
+            });
+    });
 });
 
 // Reverse Proxy (YARP) with user claim propagation headers
@@ -114,6 +160,9 @@ app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Rate limiting (Sliding window)
+app.UseRateLimiter();
 
 // Root Gateway info endpoint
 app.MapGet("/", () => Results.Ok(new

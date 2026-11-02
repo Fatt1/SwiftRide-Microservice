@@ -7,6 +7,7 @@ COPY Directory.Build.props Directory.Packages.props ./
 
 # Copy csproj for BuildingBlocks & YARP API Gateway
 COPY src/BuildingBlocks/Shared/Shared.csproj src/BuildingBlocks/Shared/
+COPY src/BuildingBlocks/Common.Logging/Common.Logging.csproj src/BuildingBlocks/Common.Logging/
 COPY src/ApiGateways/YARPAPiGw/YARPAPiGw.csproj src/ApiGateways/YARPAPiGw/
 
 # Restore dependencies
@@ -14,6 +15,7 @@ RUN dotnet restore src/ApiGateways/YARPAPiGw/YARPAPiGw.csproj
 
 # Copy source code
 COPY src/BuildingBlocks/Shared/ src/BuildingBlocks/Shared/
+COPY src/BuildingBlocks/Common.Logging/ src/BuildingBlocks/Common.Logging/
 COPY src/ApiGateways/YARPAPiGw/ src/ApiGateways/YARPAPiGw/
 
 # Build and publish
