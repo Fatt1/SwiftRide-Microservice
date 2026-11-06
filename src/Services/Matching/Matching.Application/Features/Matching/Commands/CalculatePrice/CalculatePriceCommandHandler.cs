@@ -20,7 +20,22 @@ public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository
     {
         logger.LogInformation("BEGIN: Calculating price for trip {TripId}", request.TripId);
 
-        var (distance, estimatedTime, duration) = GeoHelper.CalculateTravelEstimate(request.PickupLatitude, request.PickupLongitude, request.DestinationLatitude, request.DestinationLongitude);
+        double distance;
+        int estimatedTime;
+
+        if (request.DistanceKm.HasValue && request.DistanceKm.Value > 0)
+        {
+            distance = Math.Round(request.DistanceKm.Value, 1, MidpointRounding.AwayFromZero);
+            estimatedTime = request.EstimatedMinutes.HasValue && request.EstimatedMinutes.Value > 0
+                ? request.EstimatedMinutes.Value
+                : GeoHelper.CalculateEstimatedMinutes(distance);
+        }
+        else
+        {
+            var fallback = GeoHelper.CalculateTravelEstimate(request.PickupLatitude, request.PickupLongitude, request.DestinationLatitude, request.DestinationLongitude);
+            distance = fallback.DistanceKm;
+            estimatedTime = fallback.EstimatedMinutes;
+        }
 
         var pricingContext = new PricingContext(
             distance,

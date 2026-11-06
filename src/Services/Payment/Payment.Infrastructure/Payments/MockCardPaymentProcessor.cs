@@ -9,10 +9,19 @@ public sealed class MockCardPaymentProcessor : ICardPaymentProcessor
     public Task<CardPaymentResult> ChargeAsync(decimal amount, string token, Guid idempotencyKey, int retryAttempt, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
+        // sucess
+        // fail
 
         // 1. mock-fail: Lần đầu (retryAttempt == 0) ném lỗi mạng để MassTransit retry, lần sau sẽ thành công
         if (token == "mock-fail" && retryAttempt == 0)
             throw new TransientCardPaymentException("Mock gateway connection was lost.");
+        if (token == "mock-fail" && retryAttempt == 1)
+            throw new TransientCardPaymentException("Mock gateway connection was lost.");
+        if (token == "mock-fail" && retryAttempt == 2)
+            throw new TransientCardPaymentException("Mock gateway connection was lost.");
+        if (token == "mock-fail" && retryAttempt == 3)
+            return ProcessAsync("charge", amount, "mock-decline", idempotencyKey, ct);
+
 
         return ProcessAsync("charge", amount, token, idempotencyKey, ct);
     }

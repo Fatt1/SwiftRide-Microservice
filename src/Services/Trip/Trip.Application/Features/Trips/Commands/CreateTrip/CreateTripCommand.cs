@@ -13,5 +13,7 @@ public sealed record CreateTripCommand(
     double DropoffLng,
     bool HasToll = false,
     string? PromoCode = null,
-    bool IsRaining = false
+    bool IsRaining = false,
+    double? DistanceKm = null,
+    int? EstimatedMinutes = null
 ) : ICommand<CreateTripResponse>;

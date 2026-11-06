@@ -33,7 +33,9 @@ public class PricingGrpcService : PricingService.PricingServiceBase
             request.PickupLatitude,
             request.DestinationLongitude,
             request.DestinationLatitude,
-            tripId
+            tripId,
+            request.DistanceKm > 0 ? request.DistanceKm : null,
+            request.EstimatedMinutes > 0 ? request.EstimatedMinutes : null
             );
         var result = await _meditor.Send(command);
 
