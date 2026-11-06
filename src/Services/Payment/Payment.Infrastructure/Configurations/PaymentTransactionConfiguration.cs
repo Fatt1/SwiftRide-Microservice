@@ -9,7 +9,7 @@ public class PaymentTransactionConfiguration : IEntityTypeConfiguration<PaymentT
     public void Configure(EntityTypeBuilder<PaymentTransaction> builder)
     {
         builder.HasKey(p => p.Id);
-        builder.HasIndex(p => p.TripId).IsUnique().HasFilter("\"TripId\" IS NOT NULL");
+        builder.HasIndex(p => p.TripId);
         builder.HasIndex(p => p.IdempotencyKey).IsUnique();
 
         builder.Property(p => p.Amount).HasPrecision(18, 2).IsRequired();

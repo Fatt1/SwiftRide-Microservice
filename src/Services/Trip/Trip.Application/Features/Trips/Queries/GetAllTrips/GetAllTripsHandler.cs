@@ -45,7 +45,8 @@ internal sealed class GetAllTripsHandler(ITripRepository tripRepository)
                 trip.EstimatedFare,
                 trip.FinalFare,
                 trip.DistanceKm,
-                trip.CreatedAt
+                trip.CreatedAt,
+                trip.PaymentFailureReason
             ))
             .ToListAsync(cancellationToken);
 

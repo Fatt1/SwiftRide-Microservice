@@ -11,7 +11,9 @@ public sealed class PaymentRepository(PaymentDbContext context)
 {
     public async Task<IAsyncDisposable?> BeginOwnedTransactionAsync() =>
         context.Database.CurrentTransaction is null ? await BeginTransactionAsync() : null;
+    
     public Task LockPaymentsAsync(IEnumerable<Guid> ids, CancellationToken ct) => LockAsync("payment", ids, ct);
+   
     public Task LockWalletsAsync(IEnumerable<Guid> ids, CancellationToken ct) => LockAsync("wallet", ids, ct);
 
     private async Task LockAsync(string scope, IEnumerable<Guid> ids, CancellationToken ct)
@@ -27,11 +29,19 @@ public sealed class PaymentRepository(PaymentDbContext context)
 
     public Task<PaymentTransaction?> GetByIdAsync(Guid id, CancellationToken ct) =>
         FindByCondition(x => x.Id == id, trackChanges: true).SingleOrDefaultAsync(ct);
+    
     public async Task<IReadOnlyList<PaymentTransaction>> GetAllAsync(CancellationToken ct) =>
         await context.Payments.AsNoTracking().OrderByDescending(p => p.CreatedAt).ToListAsync(ct);
+    
     public Task<PaymentTransaction?> GetByTripIdAsync(Guid tripId, CancellationToken ct) =>
-        FindByCondition(x => x.TripId == tripId, trackChanges: true).SingleOrDefaultAsync(ct);
+        FindByCondition(x => x.TripId == tripId, trackChanges: true).OrderByDescending(p => p.CreatedAt).FirstOrDefaultAsync(ct);
+    public async Task<IReadOnlyList<PaymentTransaction>> GetAllByTripIdAsync(Guid tripId, CancellationToken ct) =>
+        await context.Payments.AsNoTracking().Where(p => p.TripId == tripId).OrderByDescending(p => p.CreatedAt).ToListAsync(ct);
+    public Task<PaymentTransaction?> GetCompletedByTripIdAsync(Guid tripId, CancellationToken ct) =>
+        FindByCondition(x => x.TripId == tripId && (x.Status == Payment.Domain.Enums.PaymentStatus.Completed || x.Status == Payment.Domain.Enums.PaymentStatus.Refunded), trackChanges: true)
+            .OrderByDescending(p => p.CreatedAt).FirstOrDefaultAsync(ct);
     public Task<PaymentTransaction?> GetByIdempotencyKeyAsync(Guid key, CancellationToken ct) =>
         FindByCondition(x => x.IdempotencyKey == key, trackChanges: true).SingleOrDefaultAsync(ct);
+    
     public void Add(PaymentTransaction payment) => Stage(payment);
 }

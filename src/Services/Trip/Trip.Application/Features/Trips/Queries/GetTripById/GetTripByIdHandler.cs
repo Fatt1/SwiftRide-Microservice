@@ -31,7 +31,8 @@ internal sealed class GetTripByIdHandler(ITripRepository tripRepository)
             trip.EstimatedFare,
             trip.FinalFare,
             trip.DistanceKm,
-            trip.CreatedAt
+            trip.CreatedAt,
+            trip.PaymentFailureReason
         );
 
         return Result.Success(dto);

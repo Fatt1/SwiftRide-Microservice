@@ -11,6 +11,7 @@ using Trip.Application.Features.Trips.Commands.DriverAccept;
 using Trip.Application.Features.Trips.Commands.DriverReject;
 using Trip.Application.Features.Trips.Commands.DropOff;
 using Trip.Application.Features.Trips.Commands.PickUp;
+using Trip.Application.Features.Trips.Commands.RetryPayment;
 using Trip.Application.Features.Trips.Queries.GetAllTrips;
 using Trip.Application.Features.Trips.Queries.GetTripById;
 using Trip.API.DTOs;
@@ -41,6 +42,15 @@ public static class TripEndpoints
             CancellationToken ct) =>
         {
             var result = await sender.Send(new GetAllTripsQuery(riderId, driverId, status), ct);
+            return result.IsSuccess 
+                ? Results.Ok(result.Value) 
+                : result.ToProblemDetails();
+        });
+
+        // 2b. Lấy danh sách chuyến đi của một Rider cụ thể
+        group.MapGet("/rider/{riderId:guid}", async (Guid riderId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetAllTripsQuery(riderId, null, null), ct);
             return result.IsSuccess 
                 ? Results.Ok(result.Value) 
                 : result.ToProblemDetails();
@@ -94,6 +104,21 @@ public static class TripEndpoints
             var result = await sender.Send(new DropOffCommand(id, paymentMethod, gatewayToken), ct);
             return result.IsSuccess 
                 ? Results.Ok(new { message = "Đã trả khách và gửi yêu cầu thanh toán" }) 
+                : result.ToProblemDetails();
+        });
+
+        // 6b. Khách hàng thanh toán lại chuyến đi (khi trạng thái thanh toán trước đó bị thất bại)
+        group.MapPost("/{id:guid}/retry-payment", async (
+            Guid id,
+            [FromBody] RetryPaymentRequest? request,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var paymentMethod = request?.PaymentMethod ?? PaymentMethod.Wallet;
+            var gatewayToken = request?.GatewayToken;
+            var result = await sender.Send(new RetryPaymentCommand(id, paymentMethod, gatewayToken), ct);
+            return result.IsSuccess 
+                ? Results.Ok(new { message = "Đã gửi lại yêu cầu thanh toán thành công" }) 
                 : result.ToProblemDetails();
         });
 

@@ -14,5 +14,10 @@ public record TripDto(
     decimal? EstimatedFare,
     decimal? FinalFare,
     decimal? DistanceKm,
-    DateTimeOffset CreatedAt
-);
+    DateTimeOffset CreatedAt,
+    string? PaymentFailureReason = null
+)
+{
+    public string? Reason => PaymentFailureReason;
+}
+
