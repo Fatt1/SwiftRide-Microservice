@@ -11,9 +11,6 @@ public record CalculatePriceCommand(
         double PickupLatitude,
         double DestinationLongitude,
         double DestinationLatitude,
-        Guid TripId) : ICommand<CalculatePriceDto>;
-
-
-
-
-
+        Guid TripId,
+        double? DistanceKm = null,
+        int? EstimatedMinutes = null) : ICommand<CalculatePriceDto>;

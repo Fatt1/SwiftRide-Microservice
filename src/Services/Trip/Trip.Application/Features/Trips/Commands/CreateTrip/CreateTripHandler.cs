@@ -29,7 +29,7 @@ internal sealed class CreateTripHandler(
         // 3. Gọi gRPC sang Matching Service để lấy giá cước và khoảng cách (có fallback nếu Matching chưa bật)
         PricingDetailsDto? pricingDetails = null;
         decimal estimatedFare = 50000m;
-        decimal distanceKm = 5.0m;
+        decimal distanceKm = (decimal)(request.DistanceKm.GetValueOrDefault() > 0 ? request.DistanceKm.Value : 5.0);
         try
         {
             pricingDetails = await pricingGrpcService.GetPricingAsync(
@@ -41,6 +41,8 @@ internal sealed class CreateTripHandler(
                 request.HasToll,
                 request.PromoCode,
                 request.IsRaining,
+                request.DistanceKm,
+                request.EstimatedMinutes,
                 cancellationToken);
 
             estimatedFare = (decimal)pricingDetails.FinalTotal;
@@ -49,6 +51,8 @@ internal sealed class CreateTripHandler(
         catch
         {
             // Fallback giá mặc định nếu Matching Service chưa khởi chạy
+            var fallbackDist = request.DistanceKm.GetValueOrDefault() > 0 ? request.DistanceKm.Value : 5.0;
+            var fallbackMins = request.EstimatedMinutes.GetValueOrDefault() > 0 ? request.EstimatedMinutes.Value : 15;
             pricingDetails = new PricingDetailsDto(
                 DistanceFare: 30000.0,
                 TimeFare: 10000.0,
@@ -62,8 +66,8 @@ internal sealed class CreateTripHandler(
                 DiscountAmount: 0.0,
                 TaxAmount: 4000.0,
                 FinalTotal: 50000.0,
-                DistanceKm: 5.0,
-                EstimatedMinutes: 15
+                DistanceKm: fallbackDist,
+                EstimatedMinutes: fallbackMins
             );
         }
 

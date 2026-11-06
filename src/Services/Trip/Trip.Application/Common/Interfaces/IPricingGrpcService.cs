@@ -13,6 +13,7 @@ public interface IPricingGrpcService
         bool hasToll = false,
         string? promoCode = null,
         bool isRaining = false,
+        double? distanceKm = null,
+        int? estimatedMinutes = null,
         CancellationToken cancellationToken = default);
 }
-
