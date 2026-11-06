@@ -28,32 +28,39 @@ public sealed class CreatePaymentCommandHandler(
                 request.TripId, request.RiderId, request.DriverId, request.Amount, request.Currency,
                 request.PaymentMethod, request.IdempotencyKey);
            
-            var byTrip = await payments.GetByTripIdAsync(request.TripId, ct);
-            var byKey = await payments.GetByIdempotencyKeyAsync(request.IdempotencyKey, ct);
-            var existing = byTrip ?? byKey;
-            if (existing is not null)
+            // 1. Kiểm tra trùng lặp theo IdempotencyKey (cùng key trả lại kết quả cũ)
+            var existingByKey = await payments.GetByIdempotencyKeyAsync(request.IdempotencyKey, ct);
+            if (existingByKey is not null)
             {
-                if ((byTrip is not null && byKey is not null && byTrip.Id != byKey.Id) ||
-                    existing.TripId != request.TripId ||
-                    existing.IdempotencyKey != request.IdempotencyKey ||
-                    existing.Type != Payment.Domain.Enums.PaymentType.TripPayment ||
-                    existing.RiderId != request.RiderId || existing.DriverId != request.DriverId ||
-                    existing.Amount != request.Amount || existing.Currency != request.Currency ||
-                    existing.PaymentMethod != request.PaymentMethod)
+                if (existingByKey.TripId != request.TripId ||
+                    existingByKey.RiderId != request.RiderId ||
+                    existingByKey.Amount != request.Amount ||
+                    existingByKey.PaymentMethod != request.PaymentMethod)
                 {
-                    logger.LogWarning("Yêu cầu thanh toán xung đột với thanh toán {PaymentId} của chuyến {TripId}", existing.Id, request.TripId);
-                    return Result.Failure<PaymentDto>(new ConflictError("The trip or idempotency key belongs to a different payment request."));
+                    logger.LogWarning("IdempotencyKey {Key} xung đột dữ liệu với thanh toán {PaymentId}", request.IdempotencyKey, existingByKey.Id);
+                    return Result.Failure<PaymentDto>(new ConflictError("The idempotency key belongs to a different payment request."));
                 }
-                logger.LogInformation("Thanh toán trùng: TripId={TripId}, PaymentId={PaymentId}, Status={Status}, IdempotencyKey={IdempotencyKey}; trả kết quả cũ, không thu tiền lần nữa",
-                    request.TripId, existing.Id, existing.Status, request.IdempotencyKey);
-                return Result.Success(PaymentDto.From(existing));
+                logger.LogInformation("Giao dịch trùng theo IdempotencyKey={Key}: trả kết quả cũ (PaymentId={PaymentId}, Status={Status})",
+                    request.IdempotencyKey, existingByKey.Id, existingByKey.Status);
+                return Result.Success(PaymentDto.From(existingByKey));
             }
 
+            // 2. Kiểm tra nếu chuyến đi này ĐÃ có giao dịch hoàn tất thành công (Completed)
+            var completedPayment = await payments.GetCompletedByTripIdAsync(request.TripId, ct);
+            if (completedPayment is not null)
+            {
+                logger.LogInformation("Chuyến đi {TripId} đã được thanh toán thành công trước đó (PaymentId={PaymentId})",
+                    request.TripId, completedPayment.Id);
+                return Result.Success(PaymentDto.From(completedPayment));
+            }
+
+            // 3. Cho phép 1 chuyến đi có nhiều PaymentTransactions (khi thanh toán lại là tạo mới hoàn toàn)
             await transactions.LockWalletsAsync([request.RiderId, request.DriverId], ct);
             var payment = PaymentTransaction.Create(request.TripId, request.RiderId, request.DriverId,
                 request.Amount, request.PaymentMethod, request.IdempotencyKey, request.GatewayToken, request.Currency);
             var context = new PaymentExecutionContext(payment) { RetryAttempt = request.RetryAttempt };
-            logger.LogInformation("Đang thu tiền bằng {PaymentMethod} cho thanh toán {PaymentId}", payment.PaymentMethod, payment.Id);
+            logger.LogInformation("Đang thu tiền bằng {PaymentMethod} cho thanh toán mới {PaymentId} của chuyến {TripId}", payment.PaymentMethod, payment.Id, payment.TripId);
+            
             var outcome = await strategies.GetStrategy(request.PaymentMethod).ChargeAsync(context, ct);
             payments.Add(payment);
             var correlationId = request.CorrelationId == Guid.Empty ? request.IdempotencyKey : request.CorrelationId;
@@ -66,7 +73,7 @@ public sealed class CreatePaymentCommandHandler(
                     RiderId = payment.RiderId, DriverId = payment.DriverId!.Value, Amount = payment.Amount,
                     PaymentMethod = payment.PaymentMethod
                 }, ct);
-                logger.LogInformation("Thu tiền thành công: TripId={TripId}, PaymentId={PaymentId}, Amount={Amount} {Currency}, Method={PaymentMethod}; đã tạo hai dòng ledger và đưa PaymentCompletedEvent vào outbox, chờ lưu transaction",
+                logger.LogInformation("Thu tiền thành công: TripId={TripId}, PaymentId={PaymentId}, Amount={Amount} {Currency}, Method={PaymentMethod}",
                     payment.TripId, payment.Id, payment.Amount, payment.Currency, payment.PaymentMethod);
             }
             else
@@ -77,7 +84,7 @@ public sealed class CreatePaymentCommandHandler(
                     CorrelationId = correlationId, TripId = payment.TripId!.Value, RiderId = payment.RiderId,
                     Amount = payment.Amount, Reason = payment.FailureReason!
                 }, ct);
-                logger.LogWarning("Thu tiền thất bại: TripId={TripId}, PaymentId={PaymentId}, Method={PaymentMethod}, Reason={Reason}; PaymentStatus=Failed, không tạo ledger chuyển tiền, đã đưa PaymentFailedEvent vào outbox, chờ lưu transaction",
+                logger.LogWarning("Thu tiền thất bại: TripId={TripId}, PaymentId={PaymentId}, Method={PaymentMethod}, Reason={Reason}",
                     payment.TripId, payment.Id, payment.PaymentMethod, payment.FailureReason);
             }
             logger.LogInformation("Thanh toán {PaymentId} cho chuyến {TripId} đã sẵn sàng để lưu, trạng thái {Status}. TraceId={TraceId} SpanId={SpanId}",

@@ -7,6 +7,8 @@ public interface IPaymentRepository
     Task<PaymentTransaction?> GetByIdAsync(Guid id, CancellationToken ct);
     Task<IReadOnlyList<PaymentTransaction>> GetAllAsync(CancellationToken ct);
     Task<PaymentTransaction?> GetByTripIdAsync(Guid tripId, CancellationToken ct);
+    Task<IReadOnlyList<PaymentTransaction>> GetAllByTripIdAsync(Guid tripId, CancellationToken ct);
+    Task<PaymentTransaction?> GetCompletedByTripIdAsync(Guid tripId, CancellationToken ct);
     Task<PaymentTransaction?> GetByIdempotencyKeyAsync(Guid key, CancellationToken ct);
     void Add(PaymentTransaction payment);
 }

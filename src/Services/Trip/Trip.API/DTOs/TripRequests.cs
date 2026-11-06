@@ -19,3 +19,11 @@ public sealed record DropOffRequest(
     PaymentMethod PaymentMethod = PaymentMethod.Wallet,
     string? GatewayToken = null
 );
+
+/// <summary>
+/// DTO cho yêu cầu hành khách thanh toán lại chuyến đi bị lỗi.
+/// </summary>
+public sealed record RetryPaymentRequest(
+    PaymentMethod PaymentMethod = PaymentMethod.Wallet,
+    string? GatewayToken = null
+);
