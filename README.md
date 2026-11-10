@@ -49,6 +49,8 @@ Dự án được xây dựng dựa trên nguyên lý kiến trúc **Microservic
 
 ### 2.1 Sơ đồ kiến trúc logic & luồng dữ liệu
 
+![Sơ đồ kiến trúc hệ thống SwiftRide](docs/images/system-architecture.jpg)
+
 ```mermaid
 flowchart TB
     subgraph Clients["Tầng Presentation (Clients)"]
