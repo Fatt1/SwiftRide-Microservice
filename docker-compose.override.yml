@@ -51,8 +51,10 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "5552:5552"   # RabbitMQ Streams protocol port
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro  # auto-enable stream plugins
 
 
 

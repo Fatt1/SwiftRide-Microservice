@@ -26,6 +26,17 @@ public static class MassTransitExtensions
                 busConfig.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(servicePrefix, false));
             }
 
+            // Dùng RabbitMQ Streams cho tất cả queue — message persist trên disk, có thể replay
+            busConfig.AddConfigureEndpointsCallback((_, endpoint) =>
+            {
+                if (endpoint is IRabbitMqReceiveEndpointConfigurator rmq)
+                {
+                    rmq.SetQueueArgument("x-queue-type", "stream");
+                    rmq.SetQueueArgument("x-max-age", "7D");          // giữ tối đa 7 ngày
+                    rmq.SetQueueArgument("x-stream-max-segment-size-bytes", 536870912); // 512MB/segment
+                }
+            });
+
             configure?.Invoke(busConfig);
 
             busConfig.UsingRabbitMq((context, rabbit) =>
@@ -61,6 +72,17 @@ public static class MassTransitExtensions
                 outbox.UseSqlServer();
                 outbox.UseBusOutbox();
                 outbox.DisableInboxCleanupService(); // Keeps inbox records for auditing/idempotency
+            });
+
+            // Dùng RabbitMQ Streams cho tất cả queue — message persist trên disk, có thể replay
+            busConfig.AddConfigureEndpointsCallback((_, endpoint) =>
+            {
+                if (endpoint is IRabbitMqReceiveEndpointConfigurator rmq)
+                {
+                    rmq.SetQueueArgument("x-queue-type", "stream");
+                    rmq.SetQueueArgument("x-max-age", "7D");
+                    rmq.SetQueueArgument("x-stream-max-segment-size-bytes", 536870912);
+                }
             });
 
             configure?.Invoke(busConfig);
@@ -100,8 +122,17 @@ public static class MassTransitExtensions
                 outbox.DisableInboxCleanupService();
             });
 
+            // Dùng RabbitMQ Streams cho tất cả queue — message persist trên disk, có thể replay
             busConfig.AddConfigureEndpointsCallback((context, _, endpoint) =>
-                endpoint.UseEntityFrameworkOutbox<TDbContext>(context));
+            {
+                if (endpoint is IRabbitMqReceiveEndpointConfigurator rmq)
+                {
+                    rmq.SetQueueArgument("x-queue-type", "stream");
+                    rmq.SetQueueArgument("x-max-age", "7D");
+                    rmq.SetQueueArgument("x-stream-max-segment-size-bytes", 536870912);
+                }
+                endpoint.UseEntityFrameworkOutbox<TDbContext>(context);
+            });
 
             configure?.Invoke(busConfig);
 
@@ -137,6 +168,17 @@ public static class MassTransitExtensions
                 outbox.ClientFactory(provider => provider.GetRequiredService<MongoDB.Driver.IMongoClient>());
                 outbox.DatabaseFactory(provider => provider.GetRequiredService<MongoDB.Driver.IMongoDatabase>());
                 outbox.UseBusOutbox();
+            });
+
+            // Dùng RabbitMQ Streams cho tất cả queue — message persist trên disk, có thể replay
+            busConfig.AddConfigureEndpointsCallback((_, endpoint) =>
+            {
+                if (endpoint is IRabbitMqReceiveEndpointConfigurator rmq)
+                {
+                    rmq.SetQueueArgument("x-queue-type", "stream");
+                    rmq.SetQueueArgument("x-max-age", "7D");
+                    rmq.SetQueueArgument("x-stream-max-segment-size-bytes", 536870912);
+                }
             });
 
             configure?.Invoke(busConfig);
