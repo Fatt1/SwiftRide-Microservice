@@ -31,7 +31,7 @@ public class FindDriverCommandHandlerTests
             .Returns((MatchSession?)null);
 
         var handler = CreateHandler();
-        var command = new FindDriverCommand(tripId, "Pickup Address", "Dropoff Address", Guid.NewGuid());
+        var command = new FindDriverCommand(tripId);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -56,7 +56,7 @@ public class FindDriverCommandHandlerTests
             .Returns(session);
 
         var handler = CreateHandler();
-        var command = new FindDriverCommand(tripId, "Pickup", "Dropoff", Guid.NewGuid());
+        var command = new FindDriverCommand(tripId);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -87,7 +87,7 @@ public class FindDriverCommandHandlerTests
             .Returns((DriverLocation?)null);
 
         var handler = CreateHandler();
-        var command = new FindDriverCommand(tripId, "Pickup", "Dropoff", Guid.NewGuid());
+        var command = new FindDriverCommand(tripId);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -102,7 +102,6 @@ public class FindDriverCommandHandlerTests
     {
         // Arrange
         var tripId = Guid.NewGuid();
-        var riderId = Guid.NewGuid();
         var session = new MatchSessionBuilder()
             .WithTripId(tripId)
             .WithPickupLocation(10.7769, 106.7009)
@@ -123,7 +122,7 @@ public class FindDriverCommandHandlerTests
             .Returns(driver);
 
         var handler = CreateHandler();
-        var command = new FindDriverCommand(tripId, "123 Le Loi", "456 Nguyen Hue", riderId);
+        var command = new FindDriverCommand(tripId);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -138,10 +137,7 @@ public class FindDriverCommandHandlerTests
         await _publishEndpoint.Received(1).Publish(
             Arg.Is<DriverFoundEvent>(e =>
                 e.TripId == tripId &&
-                e.DriverId == driver.DriverId &&
-                e.RiderId == riderId &&
-                e.PickupAddress == "123 Le Loi" &&
-                e.DropoffAddress == "456 Nguyen Hue"),
+                e.DriverId == driver.DriverId),
             Arg.Any<CancellationToken>());
     }
 }
