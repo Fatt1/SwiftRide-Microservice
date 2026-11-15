@@ -27,9 +27,6 @@ public class DriverFoundConsumer : IConsumer<DriverFoundEvent>
             tripId = msg.TripId,
             driverId = msg.DriverId,
             driverName = msg.DriverName,
-            riderId = msg.RiderId,
-            pickupAddress = msg.PickupAddress,
-            dropoffAddress = msg.DropoffAddress,
             totalFare = msg.TotalFare,
             estimatedDurationMinutes = msg.EstimatedDurationMinutes,
             distanceKm = msg.DistanceKm,
@@ -44,7 +41,7 @@ public class DriverFoundConsumer : IConsumer<DriverFoundEvent>
         {
             type = "DriverFound",
             title = "Có chuyến xe mới dành cho bạn!",
-            message = $"Từ: {msg.PickupAddress} -> Đến: {msg.DropoffAddress} | Cước phí: {msg.TotalFare:N0} đ | Ước tính: {msg.EstimatedDurationMinutes} phút",
+            message = $"Chuyến xe #{msg.TripId} | Cước phí: {msg.TotalFare:N0} đ | Ước tính: {msg.EstimatedDurationMinutes} phút ({msg.DistanceKm} km)",
             data = payload,
             timestamp = DateTime.UtcNow
         });

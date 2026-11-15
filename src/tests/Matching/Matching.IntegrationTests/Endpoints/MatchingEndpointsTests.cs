@@ -159,12 +159,7 @@ public class MatchingEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtu
             .Build();
         await driverCol.InsertOneAsync(driver);
 
-        var command = new FindDriverCommand(
-            TripId: tripId,
-            PickupAddress: "Ben Thanh Market",
-            DropoffAddress: "Landmark 81",
-            RiderId: Guid.NewGuid()
-        );
+        var command = new FindDriverCommand(tripId);
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/v1/matching/match", command);
@@ -187,11 +182,7 @@ public class MatchingEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtu
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
-        var command = new FindDriverCommand(
-            TripId: Guid.NewGuid(),
-            PickupAddress: "Nowhere",
-            DropoffAddress: "Somewhere"
-        );
+        var command = new FindDriverCommand(Guid.NewGuid());
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/v1/matching/match", command);
@@ -215,11 +206,7 @@ public class MatchingEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtu
             .Build();
         await sessionCol.InsertOneAsync(session);
 
-        var command = new FindDriverCommand(
-            TripId: tripId,
-            PickupAddress: "Somewhere in desert",
-            DropoffAddress: "Far away"
-        );
+        var command = new FindDriverCommand(tripId);
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/v1/matching/match", command);

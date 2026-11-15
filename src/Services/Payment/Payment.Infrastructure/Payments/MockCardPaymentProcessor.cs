@@ -19,8 +19,8 @@ public sealed class MockCardPaymentProcessor : ICardPaymentProcessor
             throw new TransientCardPaymentException("Mock gateway connection was lost.");
         if (token == "mock-fail" && retryAttempt == 2)
             throw new TransientCardPaymentException("Mock gateway connection was lost.");
-        if (token == "mock-fail" && retryAttempt == 3)
-            return ProcessAsync("charge", amount, "mock-decline", idempotencyKey, ct);
+        //if (token == "mock-fail" && retryAttempt == 3)
+        //    return ProcessAsync("charge", amount, "mock-decline", idempotencyKey, ct);
 
 
         return ProcessAsync("charge", amount, token, idempotencyKey, ct);
