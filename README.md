@@ -372,6 +372,16 @@ docker compose ps
 
 ### 10.3 Khởi chạy thủ công / PowerShell Script (Hybrid Mode)
 
+Theo dõi nội dung từng message RabbitMQ bằng Python chạy thủ công:
+
+```powershell
+python -m pip install pika==1.3.2
+python monitor_rabbitmq.py
+```
+
+Script tự bật tracing, kết nối lại khi mất kết nối và in JSON ra terminal. Nhấn `Ctrl+C` để dừng.
+Mặc định kết nối `localhost:5672`, Management API `http://localhost:15672`, tài khoản `guest`/`guest`.
+
 Chế độ khuyên dùng khi phát triển (**Development Mode**): Chạy CSDL và Broker trong Docker, chạy trực tiếp mã nguồn .NET trên máy host để dễ dàng debug và xem console log:
 
 ```powershell
