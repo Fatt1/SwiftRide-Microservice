@@ -42,11 +42,11 @@ public class PaymentFailedConsumerTests
     }
 
     [Fact]
-    public async Task Consume_WhenTripExists_MarksTripPaymentFailedWithReasonAndSaves()
+    public async Task Consume_WhenTripExists_KeepsPendingWithoutChangingFailureReason()
     {
         // Arrange
         var trip = new TripBuilder()
-            .WithStatus(TripStatus.DroppedOff)
+            .WithStatus(TripStatus.PaymentPending)
             .Build();
 
         _tripRepository.FindByIdAsync(trip.Id).Returns(trip);
@@ -55,7 +55,8 @@ public class PaymentFailedConsumerTests
         var context = Substitute.For<ConsumeContext<PaymentFailedEvent>>();
         context.Message.Returns(new PaymentFailedEvent
         {
-            TripId = trip.Id,
+            TripId = trip.Id, CorrelationId = Guid.NewGuid(),
+            RiderId = trip.RiderId, Amount = trip.EstimatedFare!.Value,
             Reason = failureReason
         });
 
@@ -65,9 +66,9 @@ public class PaymentFailedConsumerTests
         await consumer.Consume(context);
 
         // Assert
-        Assert.Equal(TripStatus.PaymentFailed, trip.Status);
-        Assert.Equal(failureReason, trip.PaymentFailureReason);
-        await _tripRepository.Received(1).Update(trip);
-        await _tripRepository.Received(1).SaveChangesAsync();
+        Assert.Equal(TripStatus.PaymentPending, trip.Status);
+        Assert.Null(trip.FailureReason);
+        await _tripRepository.DidNotReceive().Update(trip);
+        await _tripRepository.DidNotReceive().SaveChangesAsync();
     }
 }

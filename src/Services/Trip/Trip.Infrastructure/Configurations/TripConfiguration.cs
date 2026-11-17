@@ -18,7 +18,6 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip.Domain.Entities.T
         builder.Property(t => t.DropoffLng).HasPrecision(10, 7);
 
         builder.Property(t => t.EstimatedFare).HasPrecision(10, 2);
-        builder.Property(t => t.FinalFare).HasPrecision(10, 2);
         builder.Property(t => t.DistanceKm).HasPrecision(8, 2);
 
         builder.Property(t => t.Status)
@@ -26,7 +25,8 @@ public class TripConfiguration : IEntityTypeConfiguration<Trip.Domain.Entities.T
               .HasMaxLength(30)
               .IsRequired();
 
-        builder.Property(t => t.QuoteId).HasMaxLength(50);
-        builder.Property(t => t.PaymentFailureReason).HasMaxLength(500);
+        builder.Ignore(t => t.QuoteId);
+        builder.Property(t => t.MatchSessionId).HasMaxLength(50);
+        builder.Property(t => t.FailureReason).HasMaxLength(500);
     }
 }

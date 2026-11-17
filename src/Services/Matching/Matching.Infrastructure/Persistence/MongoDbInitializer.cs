@@ -24,6 +24,8 @@ public class MongoDbInitializer : IHostedService
 
             // 1. DriverLocation indexes
             var driverLocations = _database.GetCollection<DriverLocation>("driver_locations");
+            await driverLocations.UpdateManyAsync(Builders<DriverLocation>.Filter.Empty,
+                Builders<DriverLocation>.Update.Unset("activeOfferId").Unset("ActiveOfferId"), cancellationToken: cancellationToken);
             var driverIdIndex = new CreateIndexModel<DriverLocation>(
                 Builders<DriverLocation>.IndexKeys.Ascending(x => x.DriverId),
                 new CreateIndexOptions { Unique = true, Name = "IX_DriverLocation_DriverId" });
@@ -41,9 +43,13 @@ public class MongoDbInitializer : IHostedService
 
             // 2. MatchSession indexes
             var matchSessions = _database.GetCollection<MatchSession>("match_sessions");
+            await matchSessions.UpdateManyAsync(Builders<MatchSession>.Filter.Empty,
+                Builders<MatchSession>.Update.Unset("version").Unset("Version").Unset("offerSequence").Unset("OfferSequence").Unset("currentOfferId").Unset("CurrentOfferId"), cancellationToken: cancellationToken);
+            await matchSessions.UpdateManyAsync(Builders<MatchSession>.Filter.Exists("driverAttempts"),
+                Builders<MatchSession>.Update.Unset("driverAttempts.$[].sequence").Unset("driverAttempts.$[].offerId"), cancellationToken: cancellationToken);
             var tripIdIndex = new CreateIndexModel<MatchSession>(
                 Builders<MatchSession>.IndexKeys.Ascending(x => x.TripId),
-                new CreateIndexOptions { Name = "IX_MatchSession_TripId" });
+                new CreateIndexOptions { Unique = true, Name = "UX_MatchSession_TripId" });
             await matchSessions.Indexes.CreateOneAsync(tripIdIndex, cancellationToken: cancellationToken);
 
             _logger.LogInformation("MongoDB initialization completed successfully.");
@@ -51,6 +57,7 @@ public class MongoDbInitializer : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while initializing MongoDB.");
+            throw;
         }
     }
 

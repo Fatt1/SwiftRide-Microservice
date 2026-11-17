@@ -1,4 +1,4 @@
-using Matching.Domain.Entities;
+using Matching.Application.Features.Matching.Dtos;
 using Shared.CQRS;
 
 namespace Matching.Application.Features.Matching.Commands.CalculatePrice;
@@ -11,6 +11,4 @@ public record CalculatePriceCommand(
         double PickupLatitude,
         double DestinationLongitude,
         double DestinationLatitude,
-        Guid TripId,
-        double? DistanceKm = null,
-        int? EstimatedMinutes = null) : ICommand<CalculatePriceDto>;
+        Guid TripId) : ICommand<CalculatePriceDto>;

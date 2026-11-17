@@ -96,7 +96,7 @@ public class PricingGrpcServiceTests
             .Throws(new RpcException(new Status(StatusCode.Unavailable, "Service is down")));
 
         // Act & Assert
-        await Assert.ThrowsAsync<RpcException>(() =>
+        await Assert.ThrowsAsync<Trip.Application.Common.Interfaces.PricingUnavailableException>(() =>
             service.GetPricingAsync(tripId, 10.0, 106.0, 10.1, 106.1));
     }
 }

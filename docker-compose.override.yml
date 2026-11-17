@@ -134,6 +134,8 @@ services:
       # Kestrel Endpoints (Port 5003: HTTP/1.1 REST, Port 5004: HTTP/2 gRPC)
       - Kestrel__Endpoints__HttpRest__Url=http://+:5003
       - Kestrel__Endpoints__GrpcEndpoint__Url=http://+:5004
+      - Routing__BaseUrl=https://router.project-osrm.org
+      - Routing__Profile=driving
       # MongoDB Settings
       - MongoDbSettings__ConnectionString=mongodb://root:Password%40123@matchingdb:27017/?authSource=admin
       - MongoDbSettings__DatabaseName=matchingdb
@@ -155,23 +157,6 @@ services:
       - jaeger
       - loki
 
-  notification.api:
-    container_name: notification.api
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=5000
-      - EventBusSettings__HostAddress=rabbitmq
-      - EventBusSettings__Port=5672
-      - EventBusSettings__UserName=guest
-      - EventBusSettings__Password=guest
-      - Loki__Url=http://loki:3100
-    ports:
-      - "5006:5000"
-      - "6006:5000"
-    restart: on-failure
-    depends_on:
-      - rabbitmq
-      - loki
 
   yarpapigw:
     container_name: yarpapigw
@@ -185,7 +170,6 @@ services:
       - ReverseProxy__Clusters__trip-cluster__Destinations__destination1__Address=http://trip.api:5000
       - ReverseProxy__Clusters__matching-cluster__Destinations__destination1__Address=http://matching.api:5003
       - ReverseProxy__Clusters__payment-cluster__Destinations__destination1__Address=http://payment.api:5000
-      - ReverseProxy__Clusters__notification-cluster__Destinations__destination1__Address=http://notification.api:5000
     ports:
       - "5000:5000"
       - "6000:5000"
@@ -195,6 +179,5 @@ services:
       - trip.api
       - matching.api
       - payment.api
-      - notification.api
       - jaeger
       - loki

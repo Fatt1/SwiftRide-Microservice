@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Service · ER Data Model</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1120px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 980px; display: block; }
+
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">SWIFTRIDE · PAYMENT SERVICE · ER MODEL</p>
+    <h1>Payment Service · Data Model</h1>
+    <p class="subtitle">Polyglot Persistence: PostgreSQL (PaymentDB) · Double-Entry Ledger, Idempotent Payments &amp; User Wallets</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1020 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="payment-er-title payment-er-desc">
+        <title id="payment-er-title">Payment Service Data Model</title>
+        <desc id="payment-er-desc">Entity-relationship diagram showing Payments aggregate root, Wallets, double-entry LedgerEntries, and Refunds in PaymentDB.</desc>
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/>
+
+        <!-- RELATIONSHIP LINES (Drawn before boxes) -->
+
+        <!-- 1. Payments — Refunds (1:N ON DELETE CASCADE) -->
+        <line x1="360" y1="250" x2="280" y2="250" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- 2. Payments — LedgerEntries (1:N ON DELETE CASCADE) -->
+        <line x1="650" y1="365" x2="740" y2="365" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- 3. Wallets — LedgerEntries (1:N ON DELETE RESTRICT) -->
+        <line x1="855" y1="220" x2="855" y2="270" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- CARDINALITY & RELATIONSHIP LABELS -->
+
+        <!-- Payments -> Refunds -->
+        <rect x="334" y="242" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="342" y="254" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="290" y="242" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="298" y="254" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+        <rect x="298" y="228" width="46" height="13" rx="2" fill="#f5f5f5"/>
+        <text x="321" y="237" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CASCADE</text>
+
+        <!-- Payments -> LedgerEntries -->
+        <rect x="660" y="357" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="668" y="369" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="714" y="357" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="722" y="369" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+        <rect x="672" y="343" width="46" height="13" rx="2" fill="#f5f5f5"/>
+        <text x="695" y="352" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CASCADE</text>
+
+        <!-- Wallets -> LedgerEntries -->
+        <rect x="847" y="226" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="855" y="238" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="847" y="248" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="855" y="260" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+
+        <!-- ENTITY: Payments (PaymentTransaction - Focal Coral Aggregate Root) -->
+        <rect x="360" y="50" width="290" height="410" rx="6" fill="rgba(191,69,32,0.03)" stroke="#bf4520" stroke-width="1"/>
+        <rect x="360" y="50" width="290" height="42" rx="6" fill="rgba(191,69,32,0.10)"/>
+        <rect x="360" y="84" width="290" height="8" fill="rgba(191,69,32,0.10)"/>
+        <line x1="360" y1="92" x2="650" y2="92" stroke="rgba(191,69,32,0.40)" stroke-width="1"/>
+        <text x="376" y="68" fill="#bf4520" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">TABLE · AGGREGATE ROOT</text>
+        <text x="376" y="85" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Payments (Transactions)</text>
+
+        <!-- Fields of Payments -->
+        <text x="376" y="114" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="634" y="114" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (PK)</text>
+
+        <text x="376" y="136" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ TripId</text>
+        <text x="634" y="136" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (index)</text>
+
+        <text x="376" y="158" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ RiderId, DriverId</text>
+        <text x="634" y="158" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid, uuid (null)</text>
+
+        <text x="376" y="180" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Amount, Currency</text>
+        <text x="634" y="180" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">numeric(18,2), varchar(3)</text>
+
+        <text x="376" y="202" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">PaymentMethod</text>
+        <text x="634" y="202" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">varchar(10) [Wallet/Card]</text>
+
+        <text x="376" y="224" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Status</text>
+        <text x="634" y="224" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" font-weight="600">varchar(20) [Pending/Done]</text>
+
+        <text x="376" y="246" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Type</text>
+        <text x="634" y="246" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">varchar(20) [TripFare/TopUp]</text>
+
+        <text x="376" y="268" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">IdempotencyKey</text>
+        <text x="634" y="268" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (unique index)</text>
+
+        <text x="376" y="290" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">FailureReason</text>
+        <text x="634" y="290" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">varchar(500) (null)</text>
+
+        <text x="376" y="312" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">GatewayToken</text>
+        <text x="634" y="312" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text (null)</text>
+
+        <text x="376" y="334" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">GatewayResponse</text>
+        <text x="634" y="334" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">jsonb (raw payload)</text>
+
+        <text x="376" y="356" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">CreatedAt, ProcessedAt</text>
+        <text x="634" y="356" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">timestamptz</text>
+
+        <text x="376" y="378" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">LastModifiedAt</text>
+        <text x="634" y="378" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">timestamptz</text>
+
+        <text x="376" y="400" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">+ Navigation: LedgerEntries</text>
+        <text x="634" y="400" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">ICollection&lt;LedgerEntry&gt;</text>
+
+        <text x="376" y="422" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">+ Navigation: Refunds</text>
+        <text x="634" y="422" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">ICollection&lt;Refund&gt;</text>
+
+        <!-- ENTITY: Wallets -->
+        <rect x="740" y="50" width="230" height="170" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="740" y="50" width="230" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="740" y="80" width="230" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="740" y1="88" x2="970" y2="88" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="756" y="66" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">TABLE · LEDGER ACCOUNT</text>
+        <text x="756" y="82" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">Wallets</text>
+
+        <text x="756" y="110" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="954" y="110" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (PK)</text>
+
+        <text x="756" y="132" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">UserId</text>
+        <text x="954" y="132" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (unique index)</text>
+
+        <text x="756" y="154" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Balance</text>
+        <text x="954" y="154" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">numeric(18,2)</text>
+
+        <text x="756" y="176" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Currency</text>
+        <text x="954" y="176" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">varchar(3) ['VND']</text>
+
+        <text x="756" y="198" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">CreatedAt, ModifiedAt</text>
+        <text x="954" y="198" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">timestamptz</text>
+
+        <!-- ENTITY: LedgerEntries (Double-Entry Ledger) -->
+        <rect x="740" y="270" width="230" height="190" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="740" y="270" width="230" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="740" y="300" width="230" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="740" y1="308" x2="970" y2="308" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="756" y="286" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">TABLE · DOUBLE-ENTRY</text>
+        <text x="756" y="302" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">LedgerEntries</text>
+
+        <text x="756" y="330" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="954" y="330" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (PK)</text>
+
+        <text x="756" y="352" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ PaymentId</text>
+        <text x="954" y="352" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (FK Cascade)</text>
+
+        <text x="756" y="374" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ WalletId</text>
+        <text x="954" y="374" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (FK Restrict)</text>
+
+        <text x="756" y="396" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Amount</text>
+        <text x="954" y="396" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">numeric(18,2)</text>
+
+        <text x="756" y="418" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">EntryType</text>
+        <text x="954" y="418" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" font-weight="600">varchar(10) [Debit/Credit]</text>
+
+        <text x="756" y="440" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Method, Description</text>
+        <text x="954" y="440" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">varchar(10), text</text>
+
+        <!-- ENTITY: Refunds -->
+        <rect x="60" y="160" width="220" height="180" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="60" y="160" width="220" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="60" y="190" width="220" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="60" y1="198" x2="280" y2="198" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="76" y="176" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">TABLE</text>
+        <text x="76" y="192" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">Refunds</text>
+
+        <text x="76" y="220" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="264" y="220" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (PK)</text>
+
+        <text x="76" y="242" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ PaymentId</text>
+        <text x="264" y="242" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uuid (FK Cascade)</text>
+
+        <text x="76" y="264" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Amount</text>
+        <text x="264" y="264" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">numeric(18,2)</text>
+
+        <text x="76" y="286" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Reason</text>
+        <text x="264" y="286" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text</text>
+
+        <text x="76" y="308" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Status</text>
+        <text x="264" y="308" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">varchar(20)</text>
+
+        <text x="76" y="330" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">CreatedAt, ProcessedAt</text>
+        <text x="264" y="330" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">timestamptz</text>
+
+        <!-- LEGEND STRIP -->
+        <line x1="40" y1="480" x2="980" y2="480" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
+        <text x="40" y="502" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40" y="512" width="14" height="10" rx="2" fill="rgba(191,69,32,0.06)" stroke="#bf4520" stroke-width="1"/>
+        <text x="60" y="520" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Aggregate root</text>
+
+        <rect x="180" y="512" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="200" y="520" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Ledger entity</text>
+
+        <text x="320" y="521" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">#</text>
+        <text x="336" y="520" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Primary key</text>
+
+        <text x="420" y="521" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">→</text>
+        <text x="436" y="520" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Foreign key (FK)</text>
+
+        <text x="560" y="521" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">1 / N</text>
+        <text x="596" y="520" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Cardinality</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

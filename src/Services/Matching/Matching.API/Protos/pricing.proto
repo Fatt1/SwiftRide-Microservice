@@ -15,8 +15,6 @@ message GetPricingRequest {
   double destination_latitude = 6;
   string promo_code = 7;
   bool is_raining = 8;
-  double distance_km = 9;
-  int32 estimated_minutes = 10;
 }
 
 message PricingResponse {
@@ -34,6 +32,7 @@ message PricingResponse {
   double final_total = 12;
   double distance_km = 13;
   int32 estimated_minutes = 14;
+  string match_session_id = 15;
 }
 
 message AppliedSurge {

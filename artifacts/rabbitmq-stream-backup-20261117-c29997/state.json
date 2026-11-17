@@ -1,0 +1,747 @@
+{
+  "payment": {
+    "walletUserIds": [
+      "34b984cd-dede-46ba-8c78-ab82546f0052",
+      "df467fe0-256e-4dd5-a4d3-4bbf6d62a72a",
+      "6321c080-a05d-4a43-b898-c69fa3dbbf6e",
+      "a983a8d8-9769-4566-802d-306421cd705e",
+      "7034ed7b-cfc6-4f06-b12f-7bcc3138aa43",
+      "fe03826a-80d4-4150-aa16-d8c333cfa984",
+      "f71e43fc-f0e6-427b-a19f-09a365825386",
+      "84374eee-6692-49e5-a961-5f602bd23e68",
+      "a7c4845c-ddef-4586-b1a6-49cc61862405",
+      "2422e1fb-bb00-4449-8b51-aaa17136118b",
+      "24aac115-11d3-46e9-a35f-1f158b07b1de",
+      "cad33380-b409-493e-bf4b-d9f060a0af27",
+      "d23c3059-4429-4885-97bd-0d4ac5b5bcfa",
+      "18a38dc5-2358-469f-a661-2bf4eb833e3c",
+      "3087106a-4279-47d8-85cc-b492c91c1b89",
+      "132408b5-90e2-4c88-a3cd-398c1fe542ee",
+      "0ce1bb6d-e5e5-4519-b8cf-6ad716ed452c",
+      "80785bd4-2647-4288-b3b7-d3cea84b2d17",
+      "46721149-d2bb-41d8-ba9d-e9417ebb5fa0",
+      "bf2e013c-7bda-45a6-8875-6cb9431e53ec",
+      "538343ac-fd0e-493d-9241-baf1bdb49312"
+    ],
+    "paymentKeys": []
+  },
+  "trips": [
+    {
+      "Id": "587BA6BA-B722-4EE1-A910-2AF6C2937E54",
+      "Status": "Failed",
+      "MatchSessionId": "6afc2903db7d3bd1c8dd98ed"
+    },
+    {
+      "Id": "D597D9B9-43BE-4EA6-B688-3E504DAF205B",
+      "Status": "PaymentPending",
+      "DriverId": "CAD33380-B409-493E-BF4B-D9F060A0AF27",
+      "OfferedDriverId": "CAD33380-B409-493E-BF4B-D9F060A0AF27",
+      "MatchSessionId": "6afc36e63f18837cfda15faf"
+    },
+    {
+      "Id": "DD0BA91A-741E-48B5-A0E5-9C5820227C8B",
+      "Status": "Requested",
+      "MatchSessionId": "6afb46de634680cef80750b3"
+    },
+    {
+      "Id": "87FDDAD1-8383-44D2-852C-F4FD2FA6452A",
+      "Status": "Requested",
+      "MatchSessionId": "6afb46ab634680cef80750b2"
+    }
+  ],
+  "matching": {
+    "sessions": [
+      {
+        "_id": {
+          "$oid": "6afb46ab634680cef80750b2"
+        },
+        "tripId": "87fddad1-8383-44d2-852c-f4fd2fa6452a",
+        "maxAllowedRejections": 3,
+        "offeredDriverId": null,
+        "pickupLocation": {
+          "type": "Point",
+          "coordinates": [
+            106.698,
+            10.7725
+          ]
+        },
+        "distanceKm": 5.3804,
+        "estimatedMinutes": 9,
+        "pricingBreakdown": {
+          "distanceFare": {
+            "$numberDecimal": "43043.199999999997"
+          },
+          "timeFare": {
+            "$numberDecimal": "4500"
+          },
+          "taxRate": {
+            "$numberDecimal": "0.10000000000000001"
+          },
+          "baseFare": {
+            "$numberDecimal": "47543.199999999997"
+          },
+          "retentionFactor": {
+            "$numberDecimal": "1"
+          },
+          "fareAfterSurge": {
+            "$numberDecimal": "0"
+          },
+          "fareAfterDiscount": {
+            "$numberDecimal": "47543.199999999997"
+          },
+          "tollFee": {
+            "$numberDecimal": "0"
+          },
+          "appliedSurges": [],
+          "discountAmount": {
+            "$numberDecimal": "0"
+          },
+          "taxAmount": {
+            "$numberDecimal": "4754.3199999999997"
+          },
+          "finalTotal": {
+            "$numberDecimal": "52000"
+          }
+        },
+        "matchedDriverId": null,
+        "driverAttempts": [],
+        "status": "Searching",
+        "createdAt": {
+          "$date": "2026-11-16T18:08:43.779Z"
+        },
+        "lastModifiedAt": {
+          "$date": "2026-11-16T18:08:43.779Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb46de634680cef80750b3"
+        },
+        "tripId": "dd0ba91a-741e-48b5-a0e5-9c5820227c8b",
+        "maxAllowedRejections": 3,
+        "offeredDriverId": null,
+        "pickupLocation": {
+          "type": "Point",
+          "coordinates": [
+            106.698,
+            10.7725
+          ]
+        },
+        "distanceKm": 5.3804,
+        "estimatedMinutes": 9,
+        "pricingBreakdown": {
+          "distanceFare": {
+            "$numberDecimal": "43043.199999999997"
+          },
+          "timeFare": {
+            "$numberDecimal": "4500"
+          },
+          "taxRate": {
+            "$numberDecimal": "0.10000000000000001"
+          },
+          "baseFare": {
+            "$numberDecimal": "47543.199999999997"
+          },
+          "retentionFactor": {
+            "$numberDecimal": "1"
+          },
+          "fareAfterSurge": {
+            "$numberDecimal": "0"
+          },
+          "fareAfterDiscount": {
+            "$numberDecimal": "47543.199999999997"
+          },
+          "tollFee": {
+            "$numberDecimal": "0"
+          },
+          "appliedSurges": [],
+          "discountAmount": {
+            "$numberDecimal": "0"
+          },
+          "taxAmount": {
+            "$numberDecimal": "4754.3199999999997"
+          },
+          "finalTotal": {
+            "$numberDecimal": "52000"
+          }
+        },
+        "matchedDriverId": null,
+        "driverAttempts": [
+          {
+            "outcome": "Rejected",
+            "driverId": "cad33380-b409-493e-bf4b-d9f060a0af27",
+            "attemptedAt": {
+              "$date": "2026-11-16T18:10:46.369Z"
+            }
+          }
+        ],
+        "status": "Searching",
+        "createdAt": {
+          "$date": "2026-11-16T18:09:34.791Z"
+        },
+        "lastModifiedAt": {
+          "$date": "2026-11-16T18:10:46.369Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afc2903db7d3bd1c8dd98ed"
+        },
+        "tripId": "587ba6ba-b722-4ee1-a910-2af6c2937e54",
+        "maxAllowedRejections": 3,
+        "offeredDriverId": null,
+        "pickupLocation": {
+          "type": "Point",
+          "coordinates": [
+            106.698,
+            10.7725
+          ]
+        },
+        "distanceKm": 5.3804,
+        "estimatedMinutes": 9,
+        "pricingBreakdown": {
+          "distanceFare": {
+            "$numberDecimal": "43043.199999999997"
+          },
+          "timeFare": {
+            "$numberDecimal": "4500"
+          },
+          "taxRate": {
+            "$numberDecimal": "0.10000000000000001"
+          },
+          "baseFare": {
+            "$numberDecimal": "47543.199999999997"
+          },
+          "retentionFactor": {
+            "$numberDecimal": "1"
+          },
+          "fareAfterSurge": {
+            "$numberDecimal": "66560.479999999996"
+          },
+          "fareAfterDiscount": {
+            "$numberDecimal": "66560.479999999996"
+          },
+          "tollFee": {
+            "$numberDecimal": "0"
+          },
+          "appliedSurges": [
+            {
+              "type": "Time",
+              "name": "Peak Hour (Evening)",
+              "multiplier": {
+                "$numberDecimal": "1.3999999999999999"
+              }
+            }
+          ],
+          "discountAmount": {
+            "$numberDecimal": "0"
+          },
+          "taxAmount": {
+            "$numberDecimal": "6656.0500000000002"
+          },
+          "finalTotal": {
+            "$numberDecimal": "73000"
+          }
+        },
+        "matchedDriverId": null,
+        "driverAttempts": [
+          {
+            "outcome": "Rejected",
+            "driverId": "cad33380-b409-493e-bf4b-d9f060a0af27",
+            "attemptedAt": {
+              "$date": "2026-11-17T10:15:24.278Z"
+            }
+          },
+          {
+            "outcome": "Rejected",
+            "driverId": "0ce1bb6d-e5e5-4519-b8cf-6ad716ed452c",
+            "attemptedAt": {
+              "$date": "2026-11-17T10:16:33.546Z"
+            }
+          },
+          {
+            "outcome": "Rejected",
+            "driverId": "34b984cd-dede-46ba-8c78-ab82546f0052",
+            "attemptedAt": {
+              "$date": "2026-11-17T10:16:58.198Z"
+            }
+          },
+          {
+            "outcome": "Rejected",
+            "driverId": "bf2e013c-7bda-45a6-8875-6cb9431e53ec",
+            "attemptedAt": {
+              "$date": "2026-11-17T10:17:23.030Z"
+            }
+          }
+        ],
+        "status": "NoDriver",
+        "createdAt": {
+          "$date": "2026-11-17T10:14:27.722Z"
+        },
+        "lastModifiedAt": {
+          "$date": "2026-11-17T10:17:55.567Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afc36e63f18837cfda15faf"
+        },
+        "tripId": "d597d9b9-43be-4ea6-b688-3e504daf205b",
+        "maxAllowedRejections": 3,
+        "offeredDriverId": "cad33380-b409-493e-bf4b-d9f060a0af27",
+        "pickupLocation": {
+          "type": "Point",
+          "coordinates": [
+            106.698,
+            10.7725
+          ]
+        },
+        "distanceKm": 5.3804,
+        "estimatedMinutes": 9,
+        "pricingBreakdown": {
+          "distanceFare": {
+            "$numberDecimal": "43043.199999999997"
+          },
+          "timeFare": {
+            "$numberDecimal": "4500"
+          },
+          "taxRate": {
+            "$numberDecimal": "0.10000000000000001"
+          },
+          "baseFare": {
+            "$numberDecimal": "47543.199999999997"
+          },
+          "retentionFactor": {
+            "$numberDecimal": "0.90000000000000002"
+          },
+          "fareAfterSurge": {
+            "$numberDecimal": "66560.479999999996"
+          },
+          "fareAfterDiscount": {
+            "$numberDecimal": "59904.43"
+          },
+          "tollFee": {
+            "$numberDecimal": "0"
+          },
+          "appliedSurges": [
+            {
+              "type": "Time",
+              "name": "Peak Hour (Evening)",
+              "multiplier": {
+                "$numberDecimal": "1.3999999999999999"
+              }
+            }
+          ],
+          "discountAmount": {
+            "$numberDecimal": "6656.0500000000002"
+          },
+          "taxAmount": {
+            "$numberDecimal": "5990.4399999999996"
+          },
+          "finalTotal": {
+            "$numberDecimal": "66000"
+          }
+        },
+        "matchedDriverId": "cad33380-b409-493e-bf4b-d9f060a0af27",
+        "driverAttempts": [
+          {
+            "outcome": "Accepted",
+            "driverId": "cad33380-b409-493e-bf4b-d9f060a0af27",
+            "attemptedAt": {
+              "$date": "2026-11-17T11:14:54Z"
+            }
+          }
+        ],
+        "status": "Matched",
+        "createdAt": {
+          "$date": "2026-11-17T11:13:42.007Z"
+        },
+        "lastModifiedAt": {
+          "$date": "2026-11-17T11:15:11.240Z"
+        }
+      }
+    ],
+    "drivers": [
+      {
+        "_id": {
+          "$oid": "6afb3c59831ff10e336e47cf"
+        },
+        "driverId": "df467fe0-256e-4dd5-a4d3-4bbf6d62a72a",
+        "fullName": "Tai xe 01",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.68741857310415,
+            10.774406799872436
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:41.687Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c59831ff10e336e47d0"
+        },
+        "driverId": "d23c3059-4429-4885-97bd-0d4ac5b5bcfa",
+        "fullName": "Tai xe 02",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.70620231230028,
+            10.764135936528268
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:41.748Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c59831ff10e336e47d1"
+        },
+        "driverId": "2422e1fb-bb00-4449-8b51-aaa17136118b",
+        "fullName": "Tai xe 03",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.7083251038977,
+            10.777456996395602
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:41.890Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5a831ff10e336e47d2"
+        },
+        "driverId": "34b984cd-dede-46ba-8c78-ab82546f0052",
+        "fullName": "Tai xe 04",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.70411330178841,
+            10.771741931712869
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:42.038Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5a831ff10e336e47d3"
+        },
+        "driverId": "0ce1bb6d-e5e5-4519-b8cf-6ad716ed452c",
+        "fullName": "Tai xe 05",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.6928752540492,
+            10.773516446755378
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:42.194Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5a831ff10e336e47d4"
+        },
+        "driverId": "6321c080-a05d-4a43-b898-c69fa3dbbf6e",
+        "fullName": "Tai xe 06",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.68862174478673,
+            10.784706683192455
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:42.333Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5a831ff10e336e47d5"
+        },
+        "driverId": "18a38dc5-2358-469f-a661-2bf4eb833e3c",
+        "fullName": "Tai xe 07",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.70665267055772,
+            10.766937496113105
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:42.470Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5a831ff10e336e47d6"
+        },
+        "driverId": "a983a8d8-9769-4566-802d-306421cd705e",
+        "fullName": "Tai xe 08",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.700572204927,
+            10.766565966358863
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:42.619Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5a831ff10e336e47d7"
+        },
+        "driverId": "80785bd4-2647-4288-b3b7-d3cea84b2d17",
+        "fullName": "Tai xe 09",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.69189377793265,
+            10.781469875729277
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:42.774Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5a831ff10e336e47d8"
+        },
+        "driverId": "7034ed7b-cfc6-4f06-b12f-7bcc3138aa43",
+        "fullName": "Tai xe 10",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.69265413372764,
+            10.76138224597159
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:42.913Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5b831ff10e336e47d9"
+        },
+        "driverId": "24aac115-11d3-46e9-a35f-1f158b07b1de",
+        "fullName": "Tai xe 11",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.70563298065558,
+            10.78465260492637
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:43.061Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5b831ff10e336e47da"
+        },
+        "driverId": "fe03826a-80d4-4150-aa16-d8c333cfa984",
+        "fullName": "Tai xe 12",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.69020701986084,
+            10.78379635336781
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:43.199Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5b831ff10e336e47db"
+        },
+        "driverId": "3087106a-4279-47d8-85cc-b492c91c1b89",
+        "fullName": "Tai xe 13",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.68312016275351,
+            10.779876348712147
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:43.322Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5b831ff10e336e47dc"
+        },
+        "driverId": "46721149-d2bb-41d8-ba9d-e9417ebb5fa0",
+        "fullName": "Tai xe 14",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.68451641334107,
+            10.770398617361975
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:43.474Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5b831ff10e336e47dd"
+        },
+        "driverId": "f71e43fc-f0e6-427b-a19f-09a365825386",
+        "fullName": "Tai xe 15",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.70152840518561,
+            10.783922872526647
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:43.613Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5b831ff10e336e47de"
+        },
+        "driverId": "cad33380-b409-493e-bf4b-d9f060a0af27",
+        "fullName": "Tai xe 16",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.69555182566715,
+            10.773103849722645
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:43.747Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5b831ff10e336e47df"
+        },
+        "driverId": "84374eee-6692-49e5-a961-5f602bd23e68",
+        "fullName": "Tai xe 17",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.688962624006,
+            10.779113754584214
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:43.885Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5b831ff10e336e47e0"
+        },
+        "driverId": "132408b5-90e2-4c88-a3cd-398c1fe542ee",
+        "fullName": "Tai xe 18",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.70452790227021,
+            10.783052789663436
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:43.989Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5c831ff10e336e47e1"
+        },
+        "driverId": "bf2e013c-7bda-45a6-8875-6cb9431e53ec",
+        "fullName": "Tai xe 19",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.69419971990308,
+            10.777516435103621
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:44.100Z"
+        }
+      },
+      {
+        "_id": {
+          "$oid": "6afb3c5c831ff10e336e47e2"
+        },
+        "driverId": "a7c4845c-ddef-4586-b1a6-49cc61862405",
+        "fullName": "Tai xe 20",
+        "location": {
+          "type": "Point",
+          "coordinates": [
+            106.70711128728186,
+            10.775652696351361
+          ]
+        },
+        "isAvailable": true,
+        "activeTripId": null,
+        "updatedAt": {
+          "$date": "2026-11-16T17:24:44.209Z"
+        }
+      }
+    ]
+  }
+}

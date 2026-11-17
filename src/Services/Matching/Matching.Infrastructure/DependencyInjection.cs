@@ -1,11 +1,12 @@
 using Infrastructure.Extensions;
-using MassTransit;
+using Matching.Application.Abstractions;
 using Matching.Application.Configurations;
 using Matching.Domain.Repositories;
 using Matching.Infrastructure.Configurations;
 using Matching.Infrastructure.Consumers;
 using Matching.Infrastructure.Persistence;
 using Matching.Infrastructure.Repositories;
+using Matching.Infrastructure.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -26,11 +27,21 @@ public static class DependencyInjection
             busConfig.AddConsumer<DriverCreatedConsumer>();
             busConfig.AddConsumer<TripAcceptedConsumer>();
             busConfig.AddConsumer<TripDropOffConsumer>();
+            busConfig.AddConsumer<DriverRejectedConsumer>();
+            busConfig.AddConsumer<TripCancelledConsumer>();
         });
 
         // 3. Register Pricing Configuration (Options Pattern)
-        services.Configure<PricingConfig>(configuration.GetSection(PricingConfig.SectionName));
+        services.AddOptions<PricingConfig>().Bind(configuration.GetSection(PricingConfig.SectionName))
+            .Validate(c => c.MaxAllowedRejections >= 0, "MaxAllowedRejections must be non-negative.").ValidateOnStart();
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<PricingConfig>>().Value);
+
+        services.Configure<OsrmOptions>(configuration.GetSection("Routing"));
+        services.AddHttpClient<IRouteEstimator, OsrmRouteEstimator>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("SwiftRide/1.0 (dev-environment)");
+        });
 
         // 4. Register Repositories
         services.AddScoped<IMatchingRepository, MatchingRepository>();

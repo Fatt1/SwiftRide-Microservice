@@ -146,6 +146,9 @@ public class TripEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         await db.SaveChangesAsync();
 
         var driverId = Guid.NewGuid();
+
+        trip.SetDriverOffer(trip.MatchSessionId!, driverId, 1);
+        await db.SaveChangesAsync();
         var request = new DriverAcceptRequest(driverId);
 
         // Act
@@ -175,7 +178,7 @@ public class TripEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         await db.Trips.AddAsync(trip);
         await db.SaveChangesAsync();
 
-        var request = new DriverAcceptRequest(Guid.NewGuid());
+        var request = new DriverAcceptRequest(Guid.Empty);
 
         // Act
         var response = await _client.PostAsJsonAsync($"/api/v1/trips/{trip.Id}/driver-accept", request);
@@ -195,6 +198,9 @@ public class TripEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         await db.SaveChangesAsync();
 
         var driverId = Guid.NewGuid();
+
+        trip.SetDriverOffer(trip.MatchSessionId!, driverId, 1);
+        await db.SaveChangesAsync();
         var request = new DriverRejectRequest(driverId);
 
         // Act
@@ -273,8 +279,8 @@ public class TripEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         using var verifyDb = fixture.GetDbContext();
         var updated = await verifyDb.Trips.FindAsync(trip.Id);
         Assert.NotNull(updated);
-        Assert.Equal(TripStatus.DroppedOff, updated.Status);
-        Assert.Equal(85000m, updated.FinalFare);
+        Assert.Equal(TripStatus.PaymentPending, updated.Status);
+        Assert.Equal(85000m, updated.EstimatedFare);
 
         await fixture.PublishEndpointMock.Received().Publish(
             Arg.Is<TripDropOffEvent>(e =>
@@ -341,4 +347,55 @@ public class TripEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         // Assert
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Validation_InvalidCreate_ReturnsFieldErrorsAndDoesNotSaveTrip()
+    {
+        // Arrange
+        await fixture.ResetDatabaseAsync();
+        fixture.PricingGrpcServiceMock.ClearReceivedCalls();
+        var command = new CreateTripCommand(Guid.Empty, "", "Destination", 91, 106.7, 10.8, 106.8);
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/trips", command);
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var json = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(json.RootElement.GetProperty("errors").TryGetProperty("PickupLat", out _));
+        using var db = fixture.GetDbContext(); Assert.False(await db.Trips.AnyAsync());
+        Assert.Empty(fixture.PricingGrpcServiceMock.ReceivedCalls());
+    }
+    [Fact]
+    public async Task Validation_MissingDriverId_ReturnsBadRequestAndDoesNotChangeTrip()
+    {
+        // Arrange
+        await fixture.ResetDatabaseAsync(); using var db = fixture.GetDbContext();
+        var trip = new TripBuilder().Build(); db.Trips.Add(trip); await db.SaveChangesAsync();
+        // Act
+        var response = await _client.PostAsJsonAsync($"/api/v1/trips/{trip.Id}/driver-accept", new DriverAcceptRequest(Guid.Empty));
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await db.Entry(trip).ReloadAsync(); Assert.Equal(TripStatus.Requested, trip.Status); Assert.Null(trip.DriverId);
+    }
+    [Fact]
+    public async Task Validation_UnknownStatusFilter_ReturnsBadRequest()
+    {
+        // Arrange
+        await fixture.ResetDatabaseAsync();
+        // Act
+        var response = await _client.GetAsync("/api/v1/trips?status=NotAStatus");
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RemovedManualPaymentRetryEndpoint_ReturnsNotFound()
+    {
+        // Arrange
+        var tripId = Guid.NewGuid();
+        // Act
+        var response = await _client.PostAsJsonAsync($"/api/v1/trips/{tripId}/retry-payment", new { paymentMethod = "Wallet" });
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
 }

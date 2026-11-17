@@ -1,4 +1,5 @@
 using Matching.Application.Configurations;
+using Matching.Application.Abstractions;
 using Matching.Application.Features.Matching.Commands.CalculatePrice;
 using Matching.Domain.Entities;
 using Matching.Domain.Repositories;
@@ -15,6 +16,13 @@ public class CalculatePriceCommandHandlerTests
     private readonly IMatchingRepository _matchingRepository = Substitute.For<IMatchingRepository>();
     private readonly ILogger<CalculatePriceCommandHandler> _logger = Substitute.For<ILogger<CalculatePriceCommandHandler>>();
 
+    private static IRouteEstimator Routes()
+    {
+        var routes = Substitute.For<IRouteEstimator>();
+        routes.EstimateAsync(Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
+            .Returns(new RouteEstimate(3.5, 12));
+        return routes;
+    }
     [Fact]
     public async Task Handle_WithValidCommand_CalculatesPricingAndSavesMatchSession()
     {
@@ -25,7 +33,7 @@ public class CalculatePriceCommandHandlerTests
             .WithTaxRate(0.10)
             .Build();
         var options = Options.Create(pricingConfig);
-        var handler = new CalculatePriceCommandHandler(_matchingRepository, _logger, options);
+        var handler = new CalculatePriceCommandHandler(_matchingRepository, _logger, options, Routes());
 
         var tripId = Guid.NewGuid();
         // Coordinates for roughly 3.5 km trip in HCMC
@@ -72,7 +80,7 @@ public class CalculatePriceCommandHandlerTests
             .WithPromoCode("DISCOUNT20", factor: 0.8)
             .Build();
         var options = Options.Create(pricingConfig);
-        var handler = new CalculatePriceCommandHandler(_matchingRepository, _logger, options);
+        var handler = new CalculatePriceCommandHandler(_matchingRepository, _logger, options, Routes());
 
         var tripId = Guid.NewGuid();
         var command = new CalculatePriceCommand(

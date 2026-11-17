@@ -30,7 +30,7 @@ public class DriverLocationRepository : IDriverLocationRepository
 
         var builder = Builders<DriverLocation>.Filter;
 
-        var statusFilter = builder.Eq(x => x.IsAvailable, true);
+        var statusFilter = builder.And(builder.Eq(x => x.IsAvailable, true), builder.Eq(x => x.ActiveTripId, null));
 
         var exclusionFilter = excludedDriverIds.Count > 0
             ? builder.Nin(x => x.DriverId, excludedDriverIds)
@@ -51,6 +51,22 @@ public class DriverLocationRepository : IDriverLocationRepository
         return _driverLocations.ReplaceOneAsync(filter, driverLocation, cancellationToken: ct);
     }
 
+    public async Task<bool> TryReserveAsync(Guid driverId, Guid tripId, CancellationToken ct = default)
+    {
+
+        var f = Builders<DriverLocation>.Filter;
+        var filter = f.And(f.Eq(x => x.DriverId, driverId), f.Eq(x => x.IsAvailable, true), f.Eq(x => x.ActiveTripId, null));
+        var result = await _driverLocations.UpdateOneAsync(filter, Builders<DriverLocation>.Update
+            .Set(x => x.IsAvailable, false).Set(x => x.ActiveTripId, tripId), cancellationToken: ct);
+        return result.ModifiedCount == 1;
+    }
+    public Task ReleaseAsync(Guid driverId, Guid tripId, CancellationToken ct = default)
+    {
+        var f = Builders<DriverLocation>.Filter;
+        var filter = f.And(f.Eq(x => x.DriverId, driverId), f.Eq(x => x.ActiveTripId, tripId));
+        return _driverLocations.UpdateOneAsync(filter, Builders<DriverLocation>.Update
+            .Set(x => x.IsAvailable, true).Set(x => x.ActiveTripId, null), cancellationToken: ct);
+    }
     public async Task<List<DriverLocation>> GetAllAsync(CancellationToken ct = default)
     {
         return await _driverLocations

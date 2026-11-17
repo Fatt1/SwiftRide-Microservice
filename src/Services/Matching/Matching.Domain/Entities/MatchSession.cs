@@ -13,6 +13,21 @@ public class MatchSession
     public string Id { get; set; } = default!;
 
     public Guid TripId { get; set; }
+    public int MaxAllowedRejections { get; set; } = 3;
+    public Guid? OfferedDriverId { get; set; }
+
+    [BsonIgnore]
+    public int RejectCount => DriverAttempts.Count(x => x.Outcome == "Rejected");
+
+    public bool OfferDriver(Guid driverId)
+    {
+        if (Status != MatchSessionStatus.Searching || OfferedDriverId.HasValue)
+            return false;
+        OfferedDriverId = driverId;
+        DriverAttempts.Add(new DriverAttempt { DriverId = driverId });
+        LastModifiedAt = DateTime.UtcNow;
+        return true;
+    }
 
     [BsonRequired]
     public GeoJsonPoint<GeoJson2DGeographicCoordinates> PickupLocation { get; set; } = default!;
@@ -78,66 +93,5 @@ public class MatchSession
         LastModifiedAt = DateTime.UtcNow;
     }
 
-    public void MarkExpired()
-    {
-        Status = MatchSessionStatus.Expired;
-        LastModifiedAt = DateTime.UtcNow;
-    }
-}
 
-public class PricingBreakdown
-{
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double DistanceFare { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double TimeFare { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double TaxRate { get; set; } = 0.1;
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double BaseFare { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double RetentionFactor { get; set; } = 1.0;
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double FareAfterSurge { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double FareAfterDiscount { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double TollFee { get; set; }
-
-    public List<AppliedSurge> AppliedSurges { get; set; } = [];
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double DiscountAmount { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double TaxAmount { get; set; }
-
-    [BsonRepresentation(BsonType.Decimal128, AllowTruncation = true)]
-    public double FinalTotal { get; set; }
-}
-
-public class AppliedSurge
-{
-    [BsonRepresentation(BsonType.String)]
-    public SurgeType Type { get; set; }
-
-    public string Name { get; set; } = default!;
-
-    [BsonRepresentation(BsonType.Decimal128)]
-    public double Multiplier { get; set; }
-}
-
-public class DriverAttempt
-{
-    public Guid DriverId { get; set; }
-
-    [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
-    public DateTime AttemptedAt { get; set; } = DateTime.UtcNow;
 }

@@ -1,0 +1,19 @@
+{
+  "messageId": "8b407e6a-c79c-4a04-a84c-c2425d5943e8",
+  "messageType": [
+    "urn:message:EventBus.Messages.Events:TripDropOffEvent"
+  ],
+  "message": {
+    "tripId": "d597d9b9-43be-4ea6-b688-3e504daf205b",
+    "riderId": "538343ac-fd0e-493d-9241-baf1bdb49312",
+    "driverId": "cad33380-b409-493e-bf4b-d9f060a0af27",
+    "amount": "66000.00",
+    "paymentMethod": 1,
+    "gatewayToken": "mock-success",
+    "currency": "VND",
+    "id": "1cf624a7-7927-48d0-904e-1f5b9ecda125",
+    "correlationId": "2bee0734-852e-493a-8a0b-a063dbe127d2",
+    "creationDate": "2026-11-17T11:16:53.7708396+00:00",
+    "idempotencyKey": "46b6d65f-fdf7-442e-a313-a739dcb083ee"
+  }
+}

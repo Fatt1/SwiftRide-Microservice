@@ -1,175 +1,77 @@
 using Trip.Domain.Enums;
 using Trip.UnitTests.Common.Builders;
 using Xunit;
-
 namespace Trip.UnitTests.Domain;
-
 public class TripTests
 {
-    [Fact]
-    public void Create_WithValidParameters_InitializesTripCorrectly()
-    {
-        // Arrange
-        var riderId = Guid.NewGuid();
-        const string pickup = "227 Nguyen Van Cu, D5, HCMC";
-        const string dropoff = "Ben Thanh Market, D1, HCMC";
-        const double pickupLat = 10.762622;
-        const double pickupLng = 106.682373;
-        const double dropoffLat = 10.772545;
-        const double dropoffLng = 106.698032;
-
-        // Act
-        var trip = TripEntity.Create(
-            riderId, pickup, dropoff, pickupLat, pickupLng, dropoffLat, dropoffLng);
-
-        // Assert
-        Assert.NotEqual(Guid.Empty, trip.Id);
-        Assert.Equal(riderId, trip.RiderId);
-        Assert.Null(trip.DriverId);
-        Assert.Equal(TripStatus.Requested, trip.Status);
-        Assert.Equal(pickup, trip.PickupAddress);
-        Assert.Equal(dropoff, trip.DropoffAddress);
-        Assert.Equal(pickupLat, trip.PickupLat);
-        Assert.Equal(pickupLng, trip.PickupLng);
-        Assert.Equal(dropoffLat, trip.DropoffLat);
-        Assert.Equal(dropoffLng, trip.DropoffLng);
-        Assert.NotEqual(Guid.Empty, trip.CorrelationId);
-        Assert.True(trip.CreatedAt <= DateTimeOffset.UtcNow);
-        Assert.True(trip.LastModifiedAt <= DateTimeOffset.UtcNow);
-    }
-
-    [Fact]
-    public void SetPricingInfo_WhenCalled_UpdatesEstimatedFareDistanceAndQuoteId()
+    [Theory]
+    [InlineData(0)] [InlineData(1)] [InlineData(3)] [InlineData(7)]
+    public void RejectByDriver_ConfigurableLimit_FailsOnlyAboveK(int k)
     {
         // Arrange
         var trip = new TripBuilder().Build();
-        const decimal estimatedFare = 75000m;
-        const decimal distanceKm = 8.5m;
-        const string quoteId = "quote-12345";
-        var beforeUpdate = DateTimeOffset.UtcNow;
-
-        // Act
-        trip.SetPricingInfo(estimatedFare, distanceKm, quoteId);
-
-        // Assert
-        Assert.Equal(estimatedFare, trip.EstimatedFare);
-        Assert.Equal(distanceKm, trip.DistanceKm);
-        Assert.Equal(quoteId, trip.QuoteId);
-        Assert.True(trip.LastModifiedAt >= beforeUpdate);
+        // Act / Assert: observe every rejection boundary.
+        for (var count = 1; count <= k + 1; count++)
+        {
+            var driver = Guid.NewGuid();
+            Assert.True(trip.SetDriverOffer(trip.MatchSessionId!, driver, k));
+            trip.RejectByDriver(driver);
+            Assert.Throws<InvalidOperationException>(() => trip.RejectByDriver(driver));
+            Assert.Equal(count, trip.RejectCount);
+            Assert.Null(trip.OfferedDriverId);
+            Assert.Equal(count <= k ? TripStatus.Requested : TripStatus.Failed, trip.Status);
+        }
+        Assert.NotNull(trip.FailureReason);
     }
-
     [Fact]
-    public void AcceptByDriver_WhenCalled_SetsDriverIdAndStatusDriverAccepted()
+    public void AcceptByDriver_StaleOrWrongDriver_CannotTakeTrip()
     {
         // Arrange
-        var trip = new TripBuilder().WithStatus(TripStatus.Requested).Build();
-        var driverId = Guid.NewGuid();
-        var beforeUpdate = DateTimeOffset.UtcNow;
+        var trip = new TripBuilder().Build(); var a = Guid.NewGuid(); var b = Guid.NewGuid();
 
+        trip.SetDriverOffer(trip.MatchSessionId!, a, 3);
+        trip.RejectByDriver(a);
+        trip.SetDriverOffer(trip.MatchSessionId!, b, 3);
         // Act
-        trip.AcceptByDriver(driverId);
-
+        Assert.Throws<InvalidOperationException>(() => trip.AcceptByDriver(a));
+        trip.AcceptByDriver(b);
         // Assert
-        Assert.Equal(driverId, trip.DriverId);
-        Assert.Equal(TripStatus.DriverAccepted, trip.Status);
-        Assert.True(trip.LastModifiedAt >= beforeUpdate);
+        Assert.Equal(b, trip.DriverId); Assert.Equal(TripStatus.DriverAccepted, trip.Status);
+        Assert.False(trip.SetDriverOffer(trip.MatchSessionId!, a, 3));
     }
-
     [Fact]
-    public void MarkPickedUp_WhenCalled_UpdatesStatusToPickedUp()
+    public void Lifecycle_InvalidTransitions_AreRejected()
     {
         // Arrange
-        var trip = new TripBuilder().WithStatus(TripStatus.DriverAccepted).Build();
-        var beforeUpdate = DateTimeOffset.UtcNow;
-
-        // Act
-        trip.MarkPickedUp();
-
-        // Assert
-        Assert.Equal(TripStatus.PickedUp, trip.Status);
-        Assert.True(trip.LastModifiedAt >= beforeUpdate);
-    }
-
-    [Fact]
-    public void MarkDroppedOff_WhenCalled_SetsFinalFareAndStatusDroppedOff()
-    {
-        // Arrange
-        var trip = new TripBuilder().WithStatus(TripStatus.PickedUp).Build();
-        const decimal finalFare = 82000m;
-        var beforeUpdate = DateTimeOffset.UtcNow;
-
-        // Act
-        trip.MarkDroppedOff(finalFare);
-
-        // Assert
-        Assert.Equal(TripStatus.DroppedOff, trip.Status);
-        Assert.Equal(finalFare, trip.FinalFare);
-        Assert.True(trip.LastModifiedAt >= beforeUpdate);
-    }
-
-    [Fact]
-    public void MarkCompleted_WhenCalled_SetsStatusCompletedAndClearsPaymentFailureReason()
-    {
-        // Arrange
-        var trip = new TripBuilder()
-            .WithStatus(TripStatus.PaymentFailed)
-            .WithPaymentFailureReason("Card declined")
-            .Build();
-        var beforeUpdate = DateTimeOffset.UtcNow;
-
-        // Act
-        trip.MarkCompleted();
-
-        // Assert
-        Assert.Equal(TripStatus.Completed, trip.Status);
-        Assert.Null(trip.PaymentFailureReason);
-        Assert.True(trip.LastModifiedAt >= beforeUpdate);
-    }
-
-    [Fact]
-    public void MarkPaymentFailed_WhenCalled_SetsStatusPaymentFailedAndReason()
-    {
-        // Arrange
-        var trip = new TripBuilder().WithStatus(TripStatus.DroppedOff).Build();
-        const string reason = "Insufficient funds in rider wallet";
-        var beforeUpdate = DateTimeOffset.UtcNow;
-
-        // Act
-        trip.MarkPaymentFailed(reason);
-
-        // Assert
-        Assert.Equal(TripStatus.PaymentFailed, trip.Status);
-        Assert.Equal(reason, trip.PaymentFailureReason);
-        Assert.True(trip.LastModifiedAt >= beforeUpdate);
-    }
-
-    [Fact]
-    public void RejectByDriver_WhenCalled_SetsStatusDriverRejected()
-    {
-        // Arrange
-        var trip = new TripBuilder().WithStatus(TripStatus.Requested).Build();
-        var beforeUpdate = DateTimeOffset.UtcNow;
-
-        // Act
-        trip.RejectByDriver();
-
-        // Assert
-        Assert.Equal(TripStatus.DriverRejected, trip.Status);
-        Assert.True(trip.LastModifiedAt >= beforeUpdate);
-    }
-
-    [Fact]
-    public void Cancel_WhenCalled_SetsStatusCancelled()
-    {
-        // Arrange
-        var trip = new TripBuilder().WithStatus(TripStatus.Requested).Build();
-        var beforeUpdate = DateTimeOffset.UtcNow;
-
-        // Act
+        var trip = new TripBuilder().Build();
+        // Act / Assert
+        Assert.Throws<InvalidOperationException>(() => trip.MarkPickedUp());
+        Assert.Throws<InvalidOperationException>(() => trip.MarkCompleted());
+        Assert.Throws<InvalidOperationException>(() => trip.MarkDroppedOff());
         trip.Cancel();
-
+        Assert.Throws<InvalidOperationException>(() => trip.MarkFailed("late failure"));
+    }
+    [Fact]
+    public void Payment_Pending_CannotStartAnotherPaymentOrCancel()
+    {
+        // Arrange
+        var trip = new TripBuilder().WithStatus(TripStatus.PaymentPending).Build();
+        // Act
         // Assert
-        Assert.Equal(TripStatus.Cancelled, trip.Status);
-        Assert.True(trip.LastModifiedAt >= beforeUpdate);
+        Assert.Equal(TripStatus.PaymentPending, trip.Status);
+        Assert.Throws<InvalidOperationException>(() => trip.BeginPayment());
+        Assert.Throws<InvalidOperationException>(() => trip.Cancel());
+    }
+    [Fact]
+    public void SetDriverOffer_DuplicateAndDifferentOffer_KeepCurrentOffer()
+    {
+        // Arrange
+        var trip = new TripBuilder().Build(); var driver = Guid.NewGuid();
+        // Act
+        Assert.True(trip.SetDriverOffer(trip.MatchSessionId!, driver, 1));
+        Assert.True(trip.SetDriverOffer(trip.MatchSessionId!, driver, 1));
+        Assert.False(trip.SetDriverOffer(trip.MatchSessionId!, Guid.NewGuid(), 1));
+        // Assert
+        Assert.Equal(driver, trip.OfferedDriverId); Assert.Null(trip.DriverId);
     }
 }

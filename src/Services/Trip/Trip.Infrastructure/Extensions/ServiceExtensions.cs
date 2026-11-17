@@ -3,7 +3,7 @@ using Matching.API.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Trip.Application.Common.Interfaces;
+using Trip.Application.Interfaces;
 using Trip.Domain.Repositories;
 using Trip.Infrastructure.Consumers;
 using Trip.Infrastructure.GrpcServices;
@@ -20,10 +20,13 @@ public static class ServiceExtensions
             ?? "Server=localhost,1435;Database=tripdb;User Id=sa;Password=Password@123;TrustServerCertificate=True;";
 
         services.AddDbContext<TripDbContext>(options =>
+        {
             options.UseSqlServer(connectionString, sql =>
             {
                 sql.MigrationsAssembly(typeof(TripDbContext).Assembly.FullName);
-            }));
+            });
+
+        });
 
         // Register MassTransit + RabbitMQ + Transactional Outbox for SQL Server + Consumers
         services.AddCustomMassTransitWithSqlOutbox<TripDbContext>(configuration, "trip", busConfig =>
@@ -31,6 +34,8 @@ public static class ServiceExtensions
             busConfig.AddConsumer<PaymentCompletedConsumer>();
             busConfig.AddConsumer<PaymentFailedConsumer>();
             busConfig.AddConsumer<TripMatchingFailedConsumer>();
+            busConfig.AddConsumer<DriverFoundConsumer>();
+            busConfig.AddConsumer<PaymentFaultConsumer>();
         });
 
         // Đăng ký TripRepository

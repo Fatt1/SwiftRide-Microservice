@@ -14,18 +14,19 @@ internal sealed class GetAllTripsHandler(ITripRepository tripRepository)
     {
         var query = tripRepository.FindAll(trackChanges: false);
 
-        if (request.RiderId.HasValue && request.RiderId.Value != Guid.Empty)
+        if (request.RiderId.HasValue)
         {
             query = query.Where(t => t.RiderId == request.RiderId.Value);
         }
 
-        if (request.DriverId.HasValue && request.DriverId.Value != Guid.Empty)
+        if (request.DriverId.HasValue)
         {
             query = query.Where(t => t.DriverId == request.DriverId.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(request.Status) && Enum.TryParse<TripStatus>(request.Status, true, out var status))
+        if (!string.IsNullOrWhiteSpace(request.Status))
         {
+            var status = Enum.Parse<TripStatus>(request.Status, true);
             query = query.Where(t => t.Status == status);
         }
 
@@ -43,10 +44,11 @@ internal sealed class GetAllTripsHandler(ITripRepository tripRepository)
                 trip.DropoffLat,
                 trip.DropoffLng,
                 trip.EstimatedFare,
-                trip.FinalFare,
+                trip.EstimatedFare,
                 trip.DistanceKm,
                 trip.CreatedAt,
-                trip.PaymentFailureReason
+                trip.RejectCount, trip.MatchSessionId, trip.OfferedDriverId,
+                trip.FailureReason, trip.EstimatedMinutes, trip.MaxAllowedRejections
             ))
             .ToListAsync(cancellationToken);
 

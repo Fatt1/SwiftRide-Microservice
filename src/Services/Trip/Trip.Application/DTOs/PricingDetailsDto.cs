@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Trip.Application.DTOs;
 
 public sealed record AppliedSurgeDto(
@@ -20,5 +22,7 @@ public sealed record PricingDetailsDto(
     double TaxAmount,
     double FinalTotal,
     double DistanceKm,
-    int EstimatedMinutes
+    int EstimatedMinutes,
+    string MatchSessionId = "",
+    [property: JsonIgnore] int MaxAllowedRejections = 0
 );

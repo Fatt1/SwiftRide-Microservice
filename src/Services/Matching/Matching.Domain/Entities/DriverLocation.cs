@@ -20,6 +20,7 @@ public class DriverLocation
     public GeoJsonPoint<GeoJson2DGeographicCoordinates> Location { get; set; } = default!;
 
     public bool IsAvailable { get; set; }
+    public Guid? ActiveTripId { get; set; }
 
     [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

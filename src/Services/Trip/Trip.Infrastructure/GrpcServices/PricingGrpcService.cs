@@ -1,7 +1,8 @@
 using Matching.API.Protos;
 using Microsoft.Extensions.Logging;
-using Trip.Application.Common.Interfaces;
 using Trip.Application.DTOs;
+using Trip.Application.Interfaces;
+using Trip.Domain.Exceptions;
 
 namespace Trip.Infrastructure.GrpcServices;
 
@@ -50,7 +51,7 @@ public class PricingGrpcService : IPricingGrpcService
                 EstimatedMinutes = estimatedMinutes.GetValueOrDefault()
             };
 
-            var response = await _pricingClient.GetPricingAsync(request, cancellationToken: cancellationToken);
+            var response = await _pricingClient.GetPricingAsync(request, deadline: DateTime.UtcNow.AddSeconds(15), cancellationToken: cancellationToken);
 
             _logger.LogInformation("END: Successfully got pricing for TripId {TripId}: FinalTotal = {FinalTotal}, Distance = {Distance}km",
                 tripId, response.FinalTotal, response.DistanceKm);
@@ -78,9 +79,13 @@ public class PricingGrpcService : IPricingGrpcService
                 TaxAmount: response.TaxAmount,
                 FinalTotal: response.FinalTotal,
                 DistanceKm: response.DistanceKm,
-                EstimatedMinutes: response.EstimatedMinutes
+                EstimatedMinutes: response.EstimatedMinutes,
+                MatchSessionId: response.MatchSessionId,
+                MaxAllowedRejections: response.MaxAllowedRejections
             );
         }
+        catch (Grpc.Core.RpcException ex) when (ex.StatusCode is Grpc.Core.StatusCode.Unavailable or Grpc.Core.StatusCode.DeadlineExceeded)
+        { throw new PricingUnavailableException("Cannot obtain a road route and quote. Please retry.", ex); }
         catch (Exception ex)
         {
             _logger.LogError(ex, "ERROR: Failed to call Pricing gRPC for TripId: {TripId}", tripId);

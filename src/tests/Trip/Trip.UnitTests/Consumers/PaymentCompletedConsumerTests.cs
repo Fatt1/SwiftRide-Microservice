@@ -46,7 +46,7 @@ public class PaymentCompletedConsumerTests
     {
         // Arrange
         var trip = new TripBuilder()
-            .WithStatus(TripStatus.DroppedOff)
+            .WithStatus(TripStatus.PaymentPending)
             .Build();
 
         _tripRepository.FindByIdAsync(trip.Id).Returns(trip);
@@ -54,8 +54,9 @@ public class PaymentCompletedConsumerTests
         var context = Substitute.For<ConsumeContext<PaymentCompletedEvent>>();
         context.Message.Returns(new PaymentCompletedEvent
         {
-            TripId = trip.Id,
-            PaymentId = Guid.NewGuid()
+            TripId = trip.Id, CorrelationId = Guid.NewGuid(),
+            RiderId = trip.RiderId, Amount = trip.EstimatedFare!.Value,
+            PaymentId = Guid.NewGuid(), DriverId = trip.DriverId!.Value
         });
 
         var consumer = CreateConsumer();

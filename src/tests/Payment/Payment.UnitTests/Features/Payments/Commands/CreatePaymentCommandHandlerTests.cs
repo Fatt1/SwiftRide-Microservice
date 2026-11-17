@@ -59,7 +59,7 @@ public class CreatePaymentCommandHandlerTests
             .WithStatus(PaymentStatus.Completed)
             .Build();
 
-        _payments.GetByTripIdAsync(tripId, Arg.Any<CancellationToken>()).Returns(existing);
+        _payments.GetByIdempotencyKeyAsync(idempotencyKey, Arg.Any<CancellationToken>()).Returns(existing);
 
         var command = new CreatePaymentCommand
         {
@@ -100,7 +100,7 @@ public class CreatePaymentCommandHandlerTests
             .WithIdempotencyKey(idempotencyKey)
             .Build();
 
-        _payments.GetByTripIdAsync(tripId, Arg.Any<CancellationToken>()).Returns(existing);
+        _payments.GetByIdempotencyKeyAsync(idempotencyKey, Arg.Any<CancellationToken>()).Returns(existing);
 
         var command = new CreatePaymentCommand
         {
@@ -207,7 +207,7 @@ public class CreatePaymentCommandHandlerTests
             IdempotencyKey = Guid.NewGuid()
         };
 
-        _payments.GetByTripIdAsync(command.TripId, Arg.Any<CancellationToken>())
+        _payments.GetByIdempotencyKeyAsync(command.IdempotencyKey, Arg.Any<CancellationToken>())
             .Returns<PaymentTransaction?>(_ => throw new InvalidOperationException("DB connection error"));
 
         // Act & Assert
@@ -215,5 +215,71 @@ public class CreatePaymentCommandHandlerTests
             _handler.Handle(command, CancellationToken.None));
 
         await _transactions.Received(1).RollBackTransactionAsync();
+    }
+    [Fact]
+    public async Task Handle_AlreadySettledTrip_RespondsForCurrentAttemptWithoutChargingAgain()
+    {
+        // Arrange
+        var existing = new PaymentTransactionBuilder().WithStatus(PaymentStatus.Completed).Build();
+        var key = Guid.NewGuid();
+        _payments.GetCompletedByTripIdAsync(existing.TripId!.Value, Arg.Any<CancellationToken>()).Returns(existing);
+        var command = new CreatePaymentCommand { TripId = existing.TripId.Value, RiderId = existing.RiderId,
+            DriverId = existing.DriverId!.Value, Amount = existing.Amount, Currency = existing.Currency,
+            PaymentMethod = existing.PaymentMethod, IdempotencyKey = key };
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+        // Assert
+        Assert.True(result.IsSuccess); Assert.Equal(existing.Id, result.Value.PaymentId);
+        await _paymentStrategy.DidNotReceive().ChargeAsync(Arg.Any<PaymentExecutionContext>(), Arg.Any<CancellationToken>());
+        await _publisher.Received().Publish(Arg.Is<PaymentCompletedEvent>(e => e.CorrelationId == key && e.PaymentId == existing.Id), Arg.Any<CancellationToken>());
+    }
+    [Fact]
+    public async Task Handle_SameKeyWithDifferentDriver_RejectsWithoutCharging()
+    {
+        // Arrange
+        var existing = new PaymentTransactionBuilder().WithStatus(PaymentStatus.Completed).Build();
+        _payments.GetByIdempotencyKeyAsync(existing.IdempotencyKey, Arg.Any<CancellationToken>()).Returns(existing);
+        var command = new CreatePaymentCommand { TripId = existing.TripId!.Value, RiderId = existing.RiderId,
+            DriverId = Guid.NewGuid(), Amount = existing.Amount, Currency = existing.Currency,
+            PaymentMethod = existing.PaymentMethod, IdempotencyKey = existing.IdempotencyKey };
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+        // Assert
+        Assert.IsType<ConflictError>(result.Error);
+        await _paymentStrategy.DidNotReceive().ChargeAsync(Arg.Any<PaymentExecutionContext>(), Arg.Any<CancellationToken>());
+    }
+
+
+    [Fact]
+    public async Task Consume_DifferentEventIdsWithSameIdempotencyKey_ReturnsExistingPaymentAndLogsWarnings()
+    {
+        // Arrange
+        var existing = new PaymentTransactionBuilder().WithStatus(PaymentStatus.Completed).Build();
+        _payments.GetByIdempotencyKeyAsync(existing.IdempotencyKey, Arg.Any<CancellationToken>()).Returns(existing);
+        var sender = Substitute.For<MediatR.ISender>();
+        sender.Send(Arg.Any<CreatePaymentCommand>(), Arg.Any<CancellationToken>())
+            .Returns(call => _handler.Handle(call.ArgAt<CreatePaymentCommand>(0), call.ArgAt<CancellationToken>(1)));
+        var consumer = new Payment.Infrastructure.Messaging.TripDropOffConsumer(sender,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<Payment.Infrastructure.Messaging.TripDropOffConsumer>.Instance);
+
+        // Act: event identity changes, payment attempt identity stays the same.
+        for (var i = 0; i < 2; i++)
+        {
+            var context = Substitute.For<ConsumeContext<TripDropOffEvent>>();
+            context.Message.Returns(new TripDropOffEvent
+            {
+                Id = Guid.NewGuid(), IdempotencyKey = existing.IdempotencyKey,
+                TripId = existing.TripId!.Value, RiderId = existing.RiderId, DriverId = existing.DriverId!.Value,
+                Amount = existing.Amount, Currency = existing.Currency, PaymentMethod = existing.PaymentMethod
+            });
+            await consumer.Consume(context);
+        }
+
+        // Assert
+        await _payments.Received(2).GetByIdempotencyKeyAsync(existing.IdempotencyKey, Arg.Any<CancellationToken>());
+        await _paymentStrategy.DidNotReceive().ChargeAsync(Arg.Any<PaymentExecutionContext>(), Arg.Any<CancellationToken>());
+        Assert.Equal(2, _logger.ReceivedCalls().Count(call =>
+            call.GetMethodInfo().Name == "Log" && Equals(call.GetArguments()[0], LogLevel.Warning) &&
+            call.GetArguments()[2]!.ToString()!.Contains("IdempotencyKey=")));
     }
 }

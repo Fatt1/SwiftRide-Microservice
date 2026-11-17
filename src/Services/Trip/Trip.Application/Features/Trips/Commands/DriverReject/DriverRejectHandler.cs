@@ -4,39 +4,36 @@ using Shared;
 using Shared.CQRS;
 using Trip.Domain.Enums;
 using Trip.Domain.Repositories;
-
 namespace Trip.Application.Features.Trips.Commands.DriverReject;
 
-internal sealed class DriverRejectHandler(
-    ITripRepository tripRepository,
-    IPublishEndpoint publishEndpoint)
-    : ICommandHandler<DriverRejectCommand>
+internal sealed class DriverRejectHandler(ITripRepository tripRepository, IPublishEndpoint publishEndpoint)
+    : ICommandHandler<DriverRejectCommand, DriverRejectResponse>
 {
-    public async Task<Result> Handle(DriverRejectCommand request, CancellationToken cancellationToken)
+    public async Task<Result<DriverRejectResponse>> Handle(DriverRejectCommand request, CancellationToken ct)
     {
         var trip = await tripRepository.FindByIdAsync(request.TripId);
         if (trip is null)
-        {
-            return Result.Failure(new NotFoundError("Trip", request.TripId));
-        }
+            return Result.Failure<DriverRejectResponse>(new NotFoundError("Trip", request.TripId));
 
         if (trip.Status != TripStatus.Requested)
-        {
-            return Result.Failure(new ConflictError($"Không thể từ chối chuyến ở trạng thái '{trip.Status}'."));
-        }
+            return Result.Failure<DriverRejectResponse>(new ConflictError($"Cannot reject a trip in status {trip.Status}."));
+        if (trip.OfferedDriverId != request.DriverId)
+            return Result.Failure<DriverRejectResponse>(new ConflictError("Only the current offered driver can reject this trip."));
 
-        // Bắn sự kiện DriverRejectEvent để Notification Service gửi WebSocket thông báo tới Rider
+        trip.RejectByDriver(request.DriverId);
+        await tripRepository.Update(trip);
         await publishEndpoint.Publish(new DriverRejectEvent
         {
             TripId = trip.Id,
             DriverId = request.DriverId,
             RiderId = trip.RiderId,
-            Reason = "Tài xế đã từ chối nhận chuyến xe này."
-        }, cancellationToken);
-
+            MatchSessionId = trip.MatchSessionId!,
+            RejectCount = trip.RejectCount,
+            TripFailed = trip.Status == TripStatus.Failed,
+            Reason = trip.FailureReason ?? "Driver rejected the trip."
+        }, ct);
         await tripRepository.SaveChangesAsync();
-
-        return Result.Success();
+        return Result.Success(new DriverRejectResponse(trip.Id, trip.RejectCount, trip.MaxAllowedRejections, trip.Status.ToString(),
+             "Hủy chuyến thành công."));
     }
 }
-

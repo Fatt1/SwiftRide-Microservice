@@ -15,7 +15,7 @@ public class TripMatchingFailedConsumerTests
     private readonly ITripRepository _tripRepository = Substitute.For<ITripRepository>();
     private readonly ILogger<TripMatchingFailedConsumer> _logger = Substitute.For<ILogger<TripMatchingFailedConsumer>>();
 
-    private TripMatchingFailedConsumer CreateConsumer() => new(_tripRepository, _logger);
+    private TripMatchingFailedConsumer CreateConsumer() => new(_tripRepository);
 
     [Fact]
     public async Task Consume_WhenTripNotFound_LogsWarningAndDoesNotUpdate()
@@ -53,7 +53,7 @@ public class TripMatchingFailedConsumerTests
         var context = Substitute.For<ConsumeContext<TripMatchingFailedEvent>>();
         context.Message.Returns(new TripMatchingFailedEvent
         {
-            TripId = trip.Id
+            TripId = trip.Id, MatchSessionId = trip.MatchSessionId!
         });
 
         var consumer = CreateConsumer();
@@ -62,7 +62,7 @@ public class TripMatchingFailedConsumerTests
         await consumer.Consume(context);
 
         // Assert
-        Assert.Equal(TripStatus.DriverRejected, trip.Status);
+        Assert.Equal(TripStatus.Failed, trip.Status);
         await _tripRepository.Received(1).Update(trip);
         await _tripRepository.Received(1).SaveChangesAsync();
     }
@@ -83,7 +83,7 @@ public class TripMatchingFailedConsumerTests
         var context = Substitute.For<ConsumeContext<TripMatchingFailedEvent>>();
         context.Message.Returns(new TripMatchingFailedEvent
         {
-            TripId = trip.Id
+            TripId = trip.Id, MatchSessionId = trip.MatchSessionId!
         });
 
         var consumer = CreateConsumer();

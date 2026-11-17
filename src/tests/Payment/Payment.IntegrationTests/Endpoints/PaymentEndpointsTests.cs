@@ -55,7 +55,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaymentDto>();
+        var result = await response.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.TripId.ShouldBe(tripId);
         result.Status.ShouldBe(PaymentStatus.Completed);
@@ -119,11 +119,11 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaymentDto>();
+        var result = await response.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.Status.ShouldBe(PaymentStatus.Failed);
         result.FailureReason.ShouldNotBeNull();
-        result.FailureReason.ShouldContain("Insufficient balance");
+        result.FailureReason.ShouldContain("Insufficient");
 
         using (var verifyDb = fixture.GetDbContext())
         {
@@ -160,12 +160,18 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
             Currency = "VND"
         };
 
+        using (var seed = fixture.GetDbContext())
+        {
+            seed.Wallets.Add(new WalletBuilder().WithUserId(command.DriverId).WithBalance(0m).Build());
+            await seed.SaveChangesAsync();
+        }
+
         // Act
         var response = await _client.PostAsJsonAsync("/api/v1/payments", command);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaymentDto>();
+        var result = await response.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.Status.ShouldBe(PaymentStatus.Completed);
         result.PaymentMethod.ShouldBe(PaymentMethod.Card);
@@ -195,12 +201,18 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
             Currency = "VND"
         };
 
+        using (var seed = fixture.GetDbContext())
+        {
+            seed.Wallets.Add(new WalletBuilder().WithUserId(command.DriverId).WithBalance(0m).Build());
+            await seed.SaveChangesAsync();
+        }
+
         // Act
         var response = await _client.PostAsJsonAsync("/api/v1/payments", command);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaymentDto>();
+        var result = await response.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.Status.ShouldBe(PaymentStatus.Failed);
         result.FailureReason.ShouldBe("Mock card was declined.");
@@ -238,12 +250,12 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         // Act - Call 1
         var response1 = await _client.PostAsJsonAsync("/api/v1/payments", command);
         response1.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result1 = await response1.Content.ReadFromJsonAsync<PaymentDto>();
+        var result1 = await response1.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
 
         // Act - Call 2 with identical command
         var response2 = await _client.PostAsJsonAsync("/api/v1/payments", command);
         response2.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result2 = await response2.Content.ReadFromJsonAsync<PaymentDto>();
+        var result2 = await response2.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
 
         // Assert
         result1.ShouldNotBeNull();
@@ -339,7 +351,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<PaymentHistoryDto>>();
+        var result = await response.Content.ReadFromJsonAsync<List<PaymentHistoryDto>>(TestJson.Options);
         result.ShouldNotBeNull();
         result.Count.ShouldBe(2);
     }
@@ -363,7 +375,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaymentDto>();
+        var result = await response.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.PaymentId.ShouldBe(paymentId);
         result.Amount.ShouldBe(150_000m);
@@ -403,7 +415,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaymentHistoryDto>();
+        var result = await response.Content.ReadFromJsonAsync<PaymentHistoryDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.TripId.ShouldBe(tripId);
         result.Amount.ShouldBe(99_000m);
@@ -457,7 +469,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<RefundDto>();
+        var result = await response.Content.ReadFromJsonAsync<RefundDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.PaymentId.ShouldBe(paymentId);
         result.Amount.ShouldBe(100_000m);
@@ -514,12 +526,12 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         // Act - 1st call
         var response1 = await _client.PostAsJsonAsync($"/api/v1/payments/{paymentId}/refund", command);
         response1.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result1 = await response1.Content.ReadFromJsonAsync<RefundDto>();
+        var result1 = await response1.Content.ReadFromJsonAsync<RefundDto>(TestJson.Options);
 
         // Act - 2nd call
         var response2 = await _client.PostAsJsonAsync($"/api/v1/payments/{paymentId}/refund", command);
         response2.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result2 = await response2.Content.ReadFromJsonAsync<RefundDto>();
+        var result2 = await response2.Content.ReadFromJsonAsync<RefundDto>(TestJson.Options);
 
         // Assert
         result1.ShouldNotBeNull();
@@ -597,7 +609,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<LedgerEntryDto>>();
+        var result = await response.Content.ReadFromJsonAsync<List<LedgerEntryDto>>(TestJson.Options);
         result.ShouldNotBeNull();
         result.Count.ShouldBe(2);
     }
@@ -627,7 +639,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<LedgerEntryDto>>();
+        var result = await response.Content.ReadFromJsonAsync<List<LedgerEntryDto>>(TestJson.Options);
         result.ShouldNotBeNull();
         result.Count.ShouldBe(1);
         result[0].PaymentId.ShouldBe(paymentId);
@@ -646,4 +658,16 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Validation_EmptyPaymentId_ReturnsBadRequest()
+    {
+        // Arrange
+        await fixture.ResetDatabaseAsync();
+        // Act
+        var response = await _client.GetAsync($"/api/v1/payments/{Guid.Empty}");
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
 }

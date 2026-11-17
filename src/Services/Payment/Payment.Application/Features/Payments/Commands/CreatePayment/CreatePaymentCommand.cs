@@ -16,7 +16,5 @@ public sealed record CreatePaymentCommand : ICommand<PaymentDto>
     public string Currency { get; init; } = "VND";
     public string? GatewayToken { get; init; }
     [JsonIgnore]
-    public Guid CorrelationId { get; init; }
-    [JsonIgnore]
     public int RetryAttempt { get; init; }
 }

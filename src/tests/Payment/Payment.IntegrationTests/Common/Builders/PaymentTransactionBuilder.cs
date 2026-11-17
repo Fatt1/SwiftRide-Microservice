@@ -88,13 +88,13 @@ public class PaymentTransactionBuilder
             case PaymentStatus.Pending:
                 break;
             case PaymentStatus.Completed:
-                payment.MarkCompleted("tx_success");
+                payment.MarkCompleted("""{"reference":"tx_success"}""");
                 break;
             case PaymentStatus.Failed:
-                payment.MarkFailed(_failureReason ?? "Insufficient balance", "tx_failed");
+                payment.MarkFailed(_failureReason ?? "Insufficient balance", """{"reference":"tx_failed"}""");
                 break;
             case PaymentStatus.Refunded:
-                payment.MarkCompleted("tx_success");
+                payment.MarkCompleted("""{"reference":"tx_success"}""");
                 payment.MarkRefunded();
                 break;
         }

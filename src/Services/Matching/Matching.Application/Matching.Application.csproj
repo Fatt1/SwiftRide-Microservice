@@ -19,8 +19,5 @@
 	<ItemGroup>
 		<PackageReference Include="MassTransit" />
 	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Features\Matching\Dtos\" />
-	</ItemGroup>
 
 </Project>

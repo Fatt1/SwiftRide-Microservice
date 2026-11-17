@@ -20,7 +20,7 @@ public class GetMatchSessionByIdHandlerTests
         _matchingRepository.GetByIdAsync(sessionId, Arg.Any<CancellationToken>())
             .Returns((MatchSession?)null);
 
-        var handler = new GetMatchSessionByIdHandler(_matchingRepository);
+        var handler = global::Matching.UnitTests.ValidatedHandlers.GetMatchSessionById(_matchingRepository);
         var query = new GetMatchSessionByIdQuery(sessionId);
 
         // Act
@@ -43,7 +43,7 @@ public class GetMatchSessionByIdHandlerTests
         _matchingRepository.GetByIdAsync(session.Id, Arg.Any<CancellationToken>())
             .Returns(session);
 
-        var handler = new GetMatchSessionByIdHandler(_matchingRepository);
+        var handler = global::Matching.UnitTests.ValidatedHandlers.GetMatchSessionById(_matchingRepository);
         var query = new GetMatchSessionByIdQuery(session.Id);
 
         // Act

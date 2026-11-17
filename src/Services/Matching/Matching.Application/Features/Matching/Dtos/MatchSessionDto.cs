@@ -14,5 +14,6 @@ public sealed record MatchSessionDto(
     List<DriverAttempt> DriverAttempts,
     string Status,
     DateTime CreatedAt,
-    DateTime LastModifiedAt
+    DateTime LastModifiedAt,
+    Guid? OfferedDriverId = null, int MaxAllowedRejections = 3, int RejectCount = 0
 );

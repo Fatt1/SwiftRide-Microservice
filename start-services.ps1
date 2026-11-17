@@ -6,7 +6,6 @@ $services = @(
     @{ Name = "Trip.API"; Dir = "$baseDir\src\Services\Trip\Trip.API" },
     @{ Name = "Matching.API"; Dir = "$baseDir\src\Services\Matching\Matching.API" },
     @{ Name = "Payment.API"; Dir = "$baseDir\src\Services\Payment\Payment.API" },
-    @{ Name = "Notification.API"; Dir = "$baseDir\src\Services\Notification\Notification.API" },
     @{ Name = "YARPAPiGw"; Dir = "$baseDir\src\ApiGateways\YARPAPiGw" }
 )
 

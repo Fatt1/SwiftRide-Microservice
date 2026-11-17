@@ -1,0 +1,28 @@
+[
+  {
+    "queue": "payment-trip-drop-off",
+    "body": "ewogICJtZXNzYWdlSWQiOiAiMDEwMDAwMDAtNjI2Yi1iNjliLWYzMTUtMDhkZjQ0OWM0OGQ5IiwKICAicmVxdWVzdElkIjogbnVsbCwKICAiY29ycmVsYXRpb25JZCI6ICIyYmVlMDczNC04NTJlLTQ5M2EtOGEwYi1hMDYzZGJlMTI3ZDIiLAogICJjb252ZXJzYXRpb25JZCI6ICIwMTAwMDAwMC02MjZiLWI2OWItNTc0Ny0wOGRmNDQ5YzQ4ZGEiLAogICJpbml0aWF0b3JJZCI6IG51bGwsCiAgInNvdXJjZUFkZHJlc3MiOiAicmFiYml0bXE6Ly9yYWJiaXRtcS8zNjdmMDFhN2RlZGFfVHJpcEFQSV9idXNfeXJ5eXl5ZG5wcTVqczkzc2JkeHdqZzc0ZGE/dGVtcG9yYXJ5PXRydWUiLAogICJkZXN0aW5hdGlvbkFkZHJlc3MiOiAicmFiYml0bXE6Ly9yYWJiaXRtcS9FdmVudEJ1cy5NZXNzYWdlcy5FdmVudHM6VHJpcERyb3BPZmZFdmVudCIsCiAgInJlc3BvbnNlQWRkcmVzcyI6IG51bGwsCiAgImZhdWx0QWRkcmVzcyI6IG51bGwsCiAgIm1lc3NhZ2VUeXBlIjogWwogICAgInVybjptZXNzYWdlOkV2ZW50QnVzLk1lc3NhZ2VzLkV2ZW50czpUcmlwRHJvcE9mZkV2ZW50IiwKICAgICJ1cm46bWVzc2FnZTpFdmVudEJ1cy5NZXNzYWdlcy5Db21tb246SW50ZWdyYXRpb25CYXNlRXZlbnQiLAogICAgInVybjptZXNzYWdlOkV2ZW50QnVzLk1lc3NhZ2VzLkNvbW1vbjpJSW50ZWdyYXRpb25FdmVudCIKICBdLAogICJtZXNzYWdlIjogewogICAgInRyaXBJZCI6ICJkNTk3ZDliOS00M2JlLTRlYTYtYjY4OC0zZTUwNGRhZjIwNWIiLAogICAgInJpZGVySWQiOiAiNTM4MzQzYWMtZmQwZS00OTNkLTkyNDEtYmFmMWJkYjQ5MzEyIiwKICAgICJkcml2ZXJJZCI6ICJjYWQzMzM4MC1iNDA5LTQ5M2UtYmY0Yi1kOWYwNjBhMGFmMjciLAogICAgImFtb3VudCI6ICI2NjAwMC4wMCIsCiAgICAicGF5bWVudE1ldGhvZCI6IDEsCiAgICAiZ2F0ZXdheVRva2VuIjogIm1vY2stc3VjY2VzcyIsCiAgICAiY3VycmVuY3kiOiAiVk5EIiwKICAgICJpZCI6ICI0NmI2ZDY1Zi1mZGY3LTQ0MmUtYTMxMy1hNzM5ZGNiMDgzZWUiLAogICAgImNvcnJlbGF0aW9uSWQiOiAiMmJlZTA3MzQtODUyZS00OTNhLThhMGItYTA2M2RiZTEyN2QyIiwKICAgICJjcmVhdGlvbkRhdGUiOiAiMjAyNi0xMS0xN1QxMToxNjo1My43NzA4Mzk2KzAwOjAwIgogIH0sCiAgImV4cGlyYXRpb25UaW1lIjogbnVsbCwKICAic2VudFRpbWUiOiAiMjAyNi0xMS0xN1QxMToxNjo1My43NzI5ODEzWiIsCiAgImhlYWRlcnMiOiB7CiAgICAiTVQtQWN0aXZpdHktSWQiOiAiMDAtYTZlOTg3NDVmYzYzZGIzMzJkODJlZDczYWU5YWUyNzUtZTEyNmU2MDNlZGExM2ZlMy0wMSIKICB9LAogICJob3N0IjogewogICAgIm1hY2hpbmVOYW1lIjogIjM2N2YwMWE3ZGVkYSIsCiAgICAicHJvY2Vzc05hbWUiOiAiVHJpcC5BUEkiLAogICAgInByb2Nlc3NJZCI6IDEsCiAgICAiYXNzZW1ibHkiOiAiVHJpcC5BUEkiLAogICAgImFzc2VtYmx5VmVyc2lvbiI6ICIxLjAuMC4wIiwKICAgICJmcmFtZXdvcmtWZXJzaW9uIjogIjEwLjAuMTMiLAogICAgIm1hc3NUcmFuc2l0VmVyc2lvbiI6ICI4LjMuNy4wIiwKICAgICJvcGVyYXRpbmdTeXN0ZW1WZXJzaW9uIjogIlVuaXggNi42Ljg3LjIiCiAgfQp9",
+    "properties": {
+      "content_type": "application/vnd.masstransit+json",
+      "content_encoding": null,
+      "headers": {
+        "MT-Activity-Id": "00-a6e98745fc63db332d82ed73ae9ae275-e126e603eda13fe3-01",
+        "x-dotnet-pub-seq-no": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002",
+        "x-stream-offset": 0
+      },
+      "delivery_mode": 2,
+      "priority": null,
+      "correlation_id": "2bee0734-852e-493a-8a0b-a063dbe127d2",
+      "reply_to": null,
+      "expiration": null,
+      "message_id": "01000000-626b-b69b-f315-08df449c48d9",
+      "timestamp": null,
+      "type": null,
+      "user_id": null,
+      "app_id": null,
+      "cluster_id": null
+    },
+    "exchange": "EventBus.Messages.Events:TripDropOffEvent",
+    "routing_key": ""
+  }
+]

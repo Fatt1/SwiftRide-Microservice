@@ -198,9 +198,6 @@ namespace Trip.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("CorrelationId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -228,16 +225,25 @@ namespace Trip.Infrastructure.Persistence.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<decimal?>("FinalFare")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                    b.Property<int>("EstimatedMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTimeOffset>("LastModifiedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("PaymentFailureReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                    b.Property<string>("MatchSessionId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("MaxAllowedRejections")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("OfferedDriverId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PickupAddress")
                         .IsRequired()
@@ -252,9 +258,8 @@ namespace Trip.Infrastructure.Persistence.Migrations
                         .HasPrecision(10, 7)
                         .HasColumnType("float(10)");
 
-                    b.Property<string>("QuoteId")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("RejectCount")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("RiderId")
                         .HasColumnType("uniqueidentifier");

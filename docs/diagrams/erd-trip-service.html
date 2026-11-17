@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trip Service · ER Data Model</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1120px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 980px; display: block; }
+
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">SWIFTRIDE · TRIP SERVICE · ER MODEL</p>
+    <h1>Trip Service · Data Model</h1>
+    <p class="subtitle">Polyglot Persistence: SQL Server (TripDB) · State Machine Aggregate &amp; Transactional Outbox Pattern</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1040 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="trip-er-title trip-er-desc">
+        <title id="trip-er-title">Trip Service Data Model</title>
+        <desc id="trip-er-desc">Entity-relationship diagram showing Trip aggregate root, its state machine attributes, and the MassTransit Transactional Outbox tables in TripDB.</desc>
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/>
+
+        <!-- RELATIONSHIP LINES (Drawn before boxes) -->
+
+        <!-- 1. Trips — OutboxMessage (1:N Event Emission) -->
+        <line x1="380" y1="180" x2="480" y2="180" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- 2. OutboxState — OutboxMessage (1:N FK OutboxId) -->
+        <line x1="780" y1="130" x2="740" y2="130" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- 3. InboxState — OutboxMessage (1:N FK InboxMessageId) with r=8 elbows -->
+        <path d="M 780,310 H 768 Q 760,310 760,302 V 248 Q 760,240 752,240 H 740" fill="none" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- CARDINALITY & RELATIONSHIP LABELS -->
+
+        <!-- Trips -> OutboxMessage -->
+        <rect x="394" y="172" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="402" y="184" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="454" y="172" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="462" y="184" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+        <rect x="408" y="160" width="46" height="13" rx="2" fill="#f5f5f5"/>
+        <text x="431" y="169" fill="#4f5d75" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EVENTS</text>
+
+        <!-- OutboxState -> OutboxMessage -->
+        <rect x="760" y="122" width="14" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="767" y="134" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="744" y="122" width="14" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="751" y="134" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+
+        <!-- InboxState -> OutboxMessage -->
+        <rect x="764" y="302" width="14" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="771" y="314" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="744" y="232" width="14" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="751" y="244" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+
+        <!-- ENTITY: Trips (Focal Coral Aggregate Root) -->
+        <rect x="60" y="50" width="320" height="420" rx="6" fill="rgba(191,69,32,0.03)" stroke="#bf4520" stroke-width="1"/>
+        <rect x="60" y="50" width="320" height="42" rx="6" fill="rgba(191,69,32,0.10)"/>
+        <rect x="60" y="84" width="320" height="8" fill="rgba(191,69,32,0.10)"/>
+        <line x1="60" y1="92" x2="380" y2="92" stroke="rgba(191,69,32,0.40)" stroke-width="1"/>
+        <text x="76" y="68" fill="#bf4520" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">ENTITY · AGGREGATE ROOT</text>
+        <text x="76" y="85" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Trips</text>
+
+        <!-- Fields of Trips -->
+        <text x="76" y="114" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="364" y="114" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="76" y="136" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ RiderId</text>
+        <text x="364" y="136" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="76" y="158" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ DriverId</text>
+        <text x="364" y="158" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier (null)</text>
+
+        <text x="76" y="180" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Status</text>
+        <text x="364" y="180" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" font-weight="600">nvarchar(30) · Enum</text>
+
+        <text x="76" y="202" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">PickupAddress</text>
+        <text x="364" y="202" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(500)</text>
+
+        <text x="76" y="224" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">DropoffAddress</text>
+        <text x="364" y="224" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(500)</text>
+
+        <text x="76" y="246" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">PickupLat, PickupLng</text>
+        <text x="364" y="246" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">float(10)</text>
+
+        <text x="76" y="268" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">DropoffLat, DropoffLng</text>
+        <text x="364" y="268" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">float(10)</text>
+
+        <text x="76" y="290" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">EstimatedFare, FinalFare</text>
+        <text x="364" y="290" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">decimal(10,2)</text>
+
+        <text x="76" y="312" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">DistanceKm, EstimatedMins</text>
+        <text x="364" y="312" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">decimal(8,2), int</text>
+
+        <text x="76" y="334" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">MatchSessionId (QuoteId)</text>
+        <text x="364" y="334" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(50)</text>
+
+        <text x="76" y="356" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">CurrentOfferId, OfferedDriverId</text>
+        <text x="364" y="356" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="76" y="378" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">OfferSeq, RejectCount, MaxRej</text>
+        <text x="364" y="378" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">int, int, int</text>
+
+        <text x="76" y="400" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">CorrelationId</text>
+        <text x="364" y="400" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="76" y="422" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">FailureReason, PayFailReason</text>
+        <text x="364" y="422" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(500)</text>
+
+        <text x="76" y="444" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">CreatedAt, LastModifiedAt</text>
+        <text x="364" y="444" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">datetimeoffset</text>
+
+        <!-- ENTITY: OutboxMessage -->
+        <rect x="480" y="50" width="260" height="280" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="480" y="50" width="260" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="480" y="80" width="260" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="480" y1="88" x2="740" y2="88" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="496" y="66" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">OUTBOX · TRANSACTIONAL</text>
+        <text x="496" y="82" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">OutboxMessage</text>
+
+        <text x="496" y="110" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># SequenceNumber</text>
+        <text x="724" y="110" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">bigint (identity)</text>
+
+        <text x="496" y="132" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">MessageId</text>
+        <text x="724" y="132" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="496" y="154" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">CorrelationId</text>
+        <text x="724" y="154" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="496" y="176" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">MessageType</text>
+        <text x="724" y="176" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <text x="496" y="198" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Body (Payload)</text>
+        <text x="724" y="198" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <text x="496" y="220" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">ContentType</text>
+        <text x="724" y="220" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(256)</text>
+
+        <text x="496" y="242" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ OutboxId</text>
+        <text x="724" y="242" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="496" y="264" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ InboxMessageId</text>
+        <text x="724" y="264" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="496" y="286" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">EnqueueTime, SentTime</text>
+        <text x="724" y="286" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">datetime2</text>
+
+        <text x="496" y="308" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">+ 6 outbox routing props</text>
+        <text x="724" y="308" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">metadata</text>
+
+        <!-- ENTITY: OutboxState -->
+        <rect x="780" y="50" width="220" height="150" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="780" y="50" width="220" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="780" y="80" width="220" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="780" y1="88" x2="1000" y2="88" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="796" y="66" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">OUTBOX STATE</text>
+        <text x="796" y="82" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">OutboxState</text>
+
+        <text x="796" y="110" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># OutboxId</text>
+        <text x="984" y="110" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="796" y="132" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">LockId</text>
+        <text x="984" y="132" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="796" y="154" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Created</text>
+        <text x="984" y="154" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">datetime2</text>
+
+        <text x="796" y="176" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Delivered</text>
+        <text x="984" y="176" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">datetime2 (null)</text>
+
+        <!-- ENTITY: InboxState -->
+        <rect x="780" y="240" width="220" height="170" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="780" y="240" width="220" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="780" y="270" width="220" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="780" y1="278" x2="1000" y2="278" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="796" y="256" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">INBOX · DEDUPLICATION</text>
+        <text x="796" y="272" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">InboxState</text>
+
+        <text x="796" y="300" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="984" y="300" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">bigint (identity)</text>
+
+        <text x="796" y="322" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">MessageId</text>
+        <text x="984" y="322" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="796" y="344" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">ConsumerId</text>
+        <text x="984" y="344" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">uniqueidentifier</text>
+
+        <text x="796" y="366" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Received</text>
+        <text x="984" y="366" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">datetime2</text>
+
+        <text x="796" y="388" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">ReceiveCount</text>
+        <text x="984" y="388" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">int</text>
+
+        <!-- LEGEND STRIP -->
+        <line x1="40" y1="500" x2="1000" y2="500" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
+        <text x="40" y="522" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40" y="532" width="14" height="10" rx="2" fill="rgba(191,69,32,0.06)" stroke="#bf4520" stroke-width="1"/>
+        <text x="60" y="540" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Aggregate root</text>
+
+        <rect x="180" y="532" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="200" y="540" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Transactional entity</text>
+
+        <text x="340" y="541" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">#</text>
+        <text x="356" y="540" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Primary key</text>
+
+        <text x="440" y="541" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">→</text>
+        <text x="456" y="540" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Foreign / reference key</text>
+
+        <text x="590" y="541" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">1 / N</text>
+        <text x="626" y="540" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Cardinality</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
