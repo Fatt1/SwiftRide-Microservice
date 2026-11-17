@@ -26,6 +26,8 @@ public class Program
 
             builder.Services.AddAuthorization();
             builder.Services.AddOpenApi("v1");
+            builder.Services.ConfigureHttpJsonOptions(options =>
+                options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 
             // Register the global exception handler (IExceptionHandler implementation).

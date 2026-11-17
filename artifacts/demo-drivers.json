@@ -1,0 +1,142 @@
+[
+  {
+    "userId": "df467fe0-256e-4dd5-a4d3-4bbf6d62a72a",
+    "userName": "driver01",
+    "email": "driver01@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "d23c3059-4429-4885-97bd-0d4ac5b5bcfa",
+    "userName": "driver02",
+    "email": "driver02@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "2422e1fb-bb00-4449-8b51-aaa17136118b",
+    "userName": "driver03",
+    "email": "driver03@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "34b984cd-dede-46ba-8c78-ab82546f0052",
+    "userName": "driver04",
+    "email": "driver04@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "0ce1bb6d-e5e5-4519-b8cf-6ad716ed452c",
+    "userName": "driver05",
+    "email": "driver05@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "6321c080-a05d-4a43-b898-c69fa3dbbf6e",
+    "userName": "driver06",
+    "email": "driver06@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "18a38dc5-2358-469f-a661-2bf4eb833e3c",
+    "userName": "driver07",
+    "email": "driver07@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "a983a8d8-9769-4566-802d-306421cd705e",
+    "userName": "driver08",
+    "email": "driver08@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "80785bd4-2647-4288-b3b7-d3cea84b2d17",
+    "userName": "driver09",
+    "email": "driver09@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "7034ed7b-cfc6-4f06-b12f-7bcc3138aa43",
+    "userName": "driver10",
+    "email": "driver10@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "24aac115-11d3-46e9-a35f-1f158b07b1de",
+    "userName": "driver11",
+    "email": "driver11@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "fe03826a-80d4-4150-aa16-d8c333cfa984",
+    "userName": "driver12",
+    "email": "driver12@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "3087106a-4279-47d8-85cc-b492c91c1b89",
+    "userName": "driver13",
+    "email": "driver13@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "46721149-d2bb-41d8-ba9d-e9417ebb5fa0",
+    "userName": "driver14",
+    "email": "driver14@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "f71e43fc-f0e6-427b-a19f-09a365825386",
+    "userName": "driver15",
+    "email": "driver15@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "cad33380-b409-493e-bf4b-d9f060a0af27",
+    "userName": "driver16",
+    "email": "driver16@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "84374eee-6692-49e5-a961-5f602bd23e68",
+    "userName": "driver17",
+    "email": "driver17@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "132408b5-90e2-4c88-a3cd-398c1fe542ee",
+    "userName": "driver18",
+    "email": "driver18@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "bf2e013c-7bda-45a6-8875-6cb9431e53ec",
+    "userName": "driver19",
+    "email": "driver19@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  },
+  {
+    "userId": "a7c4845c-ddef-4586-b1a6-49cc61862405",
+    "userName": "driver20",
+    "email": "driver20@swiftride.local",
+    "role": "Driver",
+    "message": "Đăng ký tài khoản thành công"
+  }
+]

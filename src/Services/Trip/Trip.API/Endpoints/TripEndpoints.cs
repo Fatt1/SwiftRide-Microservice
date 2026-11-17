@@ -11,7 +11,6 @@ using Trip.Application.Features.Trips.Commands.DriverAccept;
 using Trip.Application.Features.Trips.Commands.DriverReject;
 using Trip.Application.Features.Trips.Commands.DropOff;
 using Trip.Application.Features.Trips.Commands.PickUp;
-using Trip.Application.Features.Trips.Commands.RetryPayment;
 using Trip.Application.Features.Trips.Queries.GetAllTrips;
 using Trip.Application.Features.Trips.Queries.GetTripById;
 using Trip.API.DTOs;
@@ -28,8 +27,8 @@ public static class TripEndpoints
         group.MapPost("/", async ([FromBody] CreateTripCommand command, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(command, ct);
-            return result.IsSuccess 
-                ? Results.Created($"/api/v1/trips/{result.Value.TripId}", result.Value) 
+            return result.IsSuccess
+                ? Results.Created($"/api/v1/trips/{result.Value.TripId}", result.Value)
                 : result.ToProblemDetails();
         });
 
@@ -42,8 +41,8 @@ public static class TripEndpoints
             CancellationToken ct) =>
         {
             var result = await sender.Send(new GetAllTripsQuery(riderId, driverId, status), ct);
-            return result.IsSuccess 
-                ? Results.Ok(result.Value) 
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         });
 
@@ -51,8 +50,8 @@ public static class TripEndpoints
         group.MapGet("/rider/{riderId:guid}", async (Guid riderId, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetAllTripsQuery(riderId, null, null), ct);
-            return result.IsSuccess 
-                ? Results.Ok(result.Value) 
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         });
 
@@ -60,8 +59,8 @@ public static class TripEndpoints
         group.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetTripByIdQuery(id), ct);
-            return result.IsSuccess 
-                ? Results.Ok(result.Value) 
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         });
 
@@ -69,8 +68,8 @@ public static class TripEndpoints
         group.MapPost("/{id:guid}/driver-accept", async (Guid id, [FromBody] DriverAcceptRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new DriverAcceptCommand(id, request.DriverId), ct);
-            return result.IsSuccess 
-                ? Results.Ok(new { message = "Nhận chuyến thành công" }) 
+            return result.IsSuccess
+                ? Results.Ok(new { message = "Nhận chuyến thành công" })
                 : result.ToProblemDetails();
         });
 
@@ -78,8 +77,8 @@ public static class TripEndpoints
         group.MapPost("/{id:guid}/driver-reject", async (Guid id, [FromBody] DriverRejectRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new DriverRejectCommand(id, request.DriverId), ct);
-            return result.IsSuccess 
-                ? Results.Ok(new { message = "Từ chối chuyến thành công" }) 
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
                 : result.ToProblemDetails();
         });
 
@@ -87,38 +86,23 @@ public static class TripEndpoints
         group.MapPost("/{id:guid}/pickup", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new PickUpCommand(id), ct);
-            return result.IsSuccess 
-                ? Results.Ok(new { message = "Đã đón khách" }) 
+            return result.IsSuccess
+                ? Results.Ok(new { message = "Đã đón khách" })
                 : result.ToProblemDetails();
         });
 
         // 6. Tài xế trả khách (kích hoạt thanh toán - tự động lấy giá cước ước tính đã chốt lúc tạo chuyến)
         group.MapPost("/{id:guid}/dropoff", async (
-            Guid id, 
-            [FromBody] DropOffRequest? request,
-            ISender sender, 
-            CancellationToken ct) =>
-        {
-            var paymentMethod = request?.PaymentMethod ?? PaymentMethod.Wallet;
-            var gatewayToken = request?.GatewayToken;
-            var result = await sender.Send(new DropOffCommand(id, paymentMethod, gatewayToken), ct);
-            return result.IsSuccess 
-                ? Results.Ok(new { message = "Đã trả khách và gửi yêu cầu thanh toán" }) 
-                : result.ToProblemDetails();
-        });
-
-        // 6b. Khách hàng thanh toán lại chuyến đi (khi trạng thái thanh toán trước đó bị thất bại)
-        group.MapPost("/{id:guid}/retry-payment", async (
             Guid id,
-            [FromBody] RetryPaymentRequest? request,
+            [FromBody] DropOffRequest? request,
             ISender sender,
             CancellationToken ct) =>
         {
             var paymentMethod = request?.PaymentMethod ?? PaymentMethod.Wallet;
             var gatewayToken = request?.GatewayToken;
-            var result = await sender.Send(new RetryPaymentCommand(id, paymentMethod, gatewayToken), ct);
-            return result.IsSuccess 
-                ? Results.Ok(new { message = "Đã gửi lại yêu cầu thanh toán thành công" }) 
+            var result = await sender.Send(new DropOffCommand(id, paymentMethod, gatewayToken), ct);
+            return result.IsSuccess
+                ? Results.Ok(new { message = "Đã trả khách và gửi yêu cầu thanh toán" })
                 : result.ToProblemDetails();
         });
 
@@ -126,8 +110,8 @@ public static class TripEndpoints
         group.MapPost("/{id:guid}/cancel", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new CancelTripCommand(id), ct);
-            return result.IsSuccess 
-                ? Results.Ok(new { message = "Hủy chuyến thành công" }) 
+            return result.IsSuccess
+                ? Results.Ok(new { message = "Hủy chuyến thành công" })
                 : result.ToProblemDetails();
         });
 

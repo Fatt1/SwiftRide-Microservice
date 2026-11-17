@@ -12,6 +12,8 @@ public interface IDriverLocationRepository
 
     Task<DriverLocation?> GetNearestAvailableDriverAsync(double latitude, double longitude, double maxRadiusInMeters, List<Guid> excludedDriverIds, CancellationToken ct = default);
 
+    Task<bool> TryReserveAsync(Guid driverId, Guid tripId, CancellationToken ct = default);
+    Task ReleaseAsync(Guid driverId, Guid tripId, CancellationToken ct = default);
     Task<List<DriverLocation>> GetAllAsync(CancellationToken ct = default);
 }
 

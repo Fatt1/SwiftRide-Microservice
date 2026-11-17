@@ -10,7 +10,8 @@ public sealed class GetLedgerByPaymentIdQueryHandler(ILedgerRepository ledger, I
 {
     public async Task<Result<IReadOnlyList<LedgerEntryDto>>> Handle(GetLedgerByPaymentIdQuery request, CancellationToken ct)
     {
-        if (await payments.GetByIdAsync(request.PaymentId, ct) is null)
+        var payment = await payments.GetByIdAsync(request.PaymentId, ct);
+        if (payment is null)
             return Result.Failure<IReadOnlyList<LedgerEntryDto>>(new NotFoundError("Payment", request.PaymentId));
 
         var entries = await ledger.GetByPaymentIdAsync(request.PaymentId, ct);

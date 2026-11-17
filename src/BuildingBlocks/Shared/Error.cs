@@ -1,4 +1,4 @@
-﻿namespace Shared;
+namespace Shared;
 
 /// <summary>
 /// Base error type carrying a machine-readable code and human-readable message.
@@ -47,5 +47,7 @@ public record ForbiddenError(string Message)
     : Error("Forbidden", Message);
 
 /// <summary>A catch-all for unexpected domain failures — maps to HTTP 400.</summary>
+public record UnavailableError(string Message) : Error("ServiceUnavailable", Message);
+
 public record BadError(string Message)
     : Error("BadRequest", Message);

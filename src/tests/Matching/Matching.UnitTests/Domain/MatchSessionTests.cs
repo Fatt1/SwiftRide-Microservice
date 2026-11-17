@@ -96,20 +96,18 @@ public class MatchSessionTests
         Assert.True(session.LastModifiedAt >= beforeUpdate);
     }
 
-    [Fact]
-    public void MarkExpired_WhenTimeoutReached_SetsStatusToExpired()
+    [Theory]
+    [InlineData(MatchSessionStatus.Cancelled)]
+    [InlineData(MatchSessionStatus.Matched)]
+    [InlineData(MatchSessionStatus.NoDriver)]
+    public void OfferDriver_EndedSession_DoesNotCreateInvitation(MatchSessionStatus status)
     {
         // Arrange
-        var session = new MatchSessionBuilder()
-            .WithStatus(MatchSessionStatus.Searching)
-            .Build();
-        var beforeUpdate = DateTime.UtcNow;
-
+        var session = new MatchSession { Status = status };
         // Act
-        session.MarkExpired();
-
+        var offered = session.OfferDriver(Guid.NewGuid());
         // Assert
-        Assert.Equal(MatchSessionStatus.Expired, session.Status);
-        Assert.True(session.LastModifiedAt >= beforeUpdate);
+        Assert.False(offered); Assert.Null(session.OfferedDriverId); Assert.Empty(session.DriverAttempts);
     }
+
 }

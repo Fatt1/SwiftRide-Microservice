@@ -1,7 +1,14 @@
-# Local: http://localhost:5003 | Docker: http://localhost:6003
-@Matching.API_HostAddress = http://localhost:5003
+@host = http://localhost:5000
+@tripId = 00000000-0000-0000-0000-000000000000
 
-GET {{Matching.API_HostAddress}}/weatherforecast/
-Accept: application/json
+### Call manually after viewing quote, and again after a driver rejects
+POST {{host}}/api/v1/matching/match
+Content-Type: application/json
 
-###
+{ "tripId": "{{tripId}}" }
+
+### Invitation history and configurable limit
+GET {{host}}/api/v1/matching/sessions
+
+### Current driver positions and availability
+GET {{host}}/api/v1/matching/drivers/locations

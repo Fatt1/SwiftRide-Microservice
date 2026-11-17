@@ -15,7 +15,7 @@ public class DriverAcceptCommandHandlerTests
     private readonly ITripRepository _tripRepository = Substitute.For<ITripRepository>();
     private readonly IPublishEndpoint _publishEndpoint = Substitute.For<IPublishEndpoint>();
 
-    private DriverAcceptHandler CreateHandler() => new(_tripRepository, _publishEndpoint);
+    private MediatR.IRequestHandler<DriverAcceptCommand, Shared.Result> CreateHandler() => global::Trip.UnitTests.ValidatedHandlers.DriverAccept(_tripRepository, _publishEndpoint);
 
     [Fact]
     public async Task Handle_WhenTripNotFound_ReturnsNotFoundError()
@@ -65,6 +65,8 @@ public class DriverAcceptCommandHandlerTests
         _tripRepository.FindByIdAsync(trip.Id).Returns(trip);
 
         var handler = CreateHandler();
+
+        trip.SetDriverOffer(trip.MatchSessionId!, driverId, 1);
         var command = new DriverAcceptCommand(trip.Id, driverId);
 
         // Act

@@ -9,7 +9,7 @@ internal sealed class GetAllMatchSessionsHandler(IMatchingRepository matchingRep
     : IQueryHandler<GetAllMatchSessionsQuery, IReadOnlyList<MatchSessionDto>>
 {
     public async Task<Result<IReadOnlyList<MatchSessionDto>>> Handle(
-        GetAllMatchSessionsQuery request, 
+        GetAllMatchSessionsQuery request,
         CancellationToken cancellationToken)
     {
         var sessions = await matchingRepository.GetAllMatchingSessionAsync(cancellationToken);
@@ -26,7 +26,7 @@ internal sealed class GetAllMatchSessionsHandler(IMatchingRepository matchingRep
             s.DriverAttempts,
             s.Status.ToString(),
             s.CreatedAt,
-            s.LastModifiedAt
+            s.LastModifiedAt, s.OfferedDriverId, s.MaxAllowedRejections, s.RejectCount
         )).ToList();
 
         return Result.Success<IReadOnlyList<MatchSessionDto>>(dtos);

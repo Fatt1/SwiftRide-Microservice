@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 
 namespace Shared.CQRS.Behaviors;
@@ -26,27 +26,17 @@ public sealed class ValidationBehavior<TRequest, TResponse>(
             return await next(cancellationToken);
         }
 
-
-
-        // Run all validators concurrently
-        var validationResults = await Task.WhenAll(
-            validators.Select(v => v.ValidateAsync(request, cancellationToken)));
-
-        // Collect ALL failures across all validators
-        var fieldErrors = validationResults
-            .SelectMany(r => r.Errors)
-            .Where(f => f is not null)
-            .Select(f => (Error)new FieldError(f.PropertyName, f.ErrorMessage))
-            .ToArray();
-
-        if (fieldErrors.Length == 0)
+        // Validators may share a scoped EF DbContext: never run them concurrently.
+        var failures = new List<FluentValidation.Results.ValidationFailure>();
+        foreach (var validator in validators)
         {
-            return await next(cancellationToken);
+            var result = await validator.ValidateAsync(request, cancellationToken);
+            failures.AddRange(result.Errors);
         }
+        if (failures.Count == 0) return await next(cancellationToken);
 
-
-        // Wrap all field errors into a single ValidationError
-        var validationError = new ValidationError(fieldErrors);
+        var validationError = new ValidationError(failures
+            .Select(f => (Error)new FieldError(f.PropertyName, f.ErrorMessage)).ToArray());
 
         // Build the correct Result / Result<T> failure
         var responseType = typeof(TResponse);

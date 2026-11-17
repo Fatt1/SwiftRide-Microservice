@@ -15,11 +15,9 @@ public class TripBuilder
     private double _dropoffLat = 10.772545;
     private double _dropoffLng = 106.698032;
     private decimal? _estimatedFare = 50000m;
-    private decimal? _finalFare;
     private decimal? _distanceKm = 5.0m;
     private string? _quoteId = Guid.NewGuid().ToString();
     private TripStatus _status = TripStatus.Requested;
-    private string? _paymentFailureReason;
 
     public TripBuilder WithId(Guid id)
     {
@@ -71,12 +69,6 @@ public class TripBuilder
         return this;
     }
 
-    public TripBuilder WithFinalFare(decimal fare)
-    {
-        _finalFare = fare;
-        return this;
-    }
-
     public TripBuilder WithDistanceKm(decimal distanceKm)
     {
         _distanceKm = distanceKm;
@@ -86,12 +78,6 @@ public class TripBuilder
     public TripBuilder WithQuoteId(string quoteId)
     {
         _quoteId = quoteId;
-        return this;
-    }
-
-    public TripBuilder WithPaymentFailureReason(string reason)
-    {
-        _paymentFailureReason = reason;
         return this;
     }
 
@@ -121,40 +107,26 @@ public class TripBuilder
 
         var driverId = _driverId ?? Guid.NewGuid();
 
-        switch (_status)
+        if (_status == TripStatus.Cancelled) trip.Cancel();
+        else if (_status == TripStatus.Failed) trip.MarkFailed("No available drivers.");
+        else if (_status != TripStatus.Requested)
         {
-            case TripStatus.Requested:
-                break;
-            case TripStatus.DriverAccepted:
-                trip.AcceptByDriver(driverId);
-                break;
-            case TripStatus.DriverRejected:
-                trip.RejectByDriver();
-                break;
-            case TripStatus.PickedUp:
-                trip.AcceptByDriver(driverId);
+
+            trip.SetDriverOffer(trip.MatchSessionId!, driverId, 3);
+            trip.AcceptByDriver(driverId);
+            if (_status != TripStatus.DriverAccepted)
+            {
                 trip.MarkPickedUp();
-                break;
-            case TripStatus.DroppedOff:
-                trip.AcceptByDriver(driverId);
-                trip.MarkPickedUp();
-                trip.MarkDroppedOff(_finalFare ?? _estimatedFare ?? 50000m);
-                break;
-            case TripStatus.Completed:
-                trip.AcceptByDriver(driverId);
-                trip.MarkPickedUp();
-                trip.MarkDroppedOff(_finalFare ?? _estimatedFare ?? 50000m);
-                trip.MarkCompleted();
-                break;
-            case TripStatus.PaymentFailed:
-                trip.AcceptByDriver(driverId);
-                trip.MarkPickedUp();
-                trip.MarkDroppedOff(_finalFare ?? _estimatedFare ?? 50000m);
-                trip.MarkPaymentFailed(_paymentFailureReason ?? "Payment declined by provider");
-                break;
-            case TripStatus.Cancelled:
-                trip.Cancel();
-                break;
+                if (_status != TripStatus.PickedUp)
+                {
+                    trip.MarkDroppedOff();
+                    if (_status != TripStatus.DroppedOff)
+                    {
+                        trip.BeginPayment();
+                        if (_status == TripStatus.Completed) trip.MarkCompleted();
+                    }
+                }
+            }
         }
 
         return trip;

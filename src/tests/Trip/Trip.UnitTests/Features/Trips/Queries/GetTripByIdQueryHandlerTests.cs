@@ -12,7 +12,7 @@ public class GetTripByIdQueryHandlerTests
 {
     private readonly ITripRepository _tripRepository = Substitute.For<ITripRepository>();
 
-    private GetTripByIdHandler CreateHandler() => new(_tripRepository);
+    private MediatR.IRequestHandler<GetTripByIdQuery, Result<Trip.Application.DTOs.TripDto>> CreateHandler() => global::Trip.UnitTests.ValidatedHandlers.GetTripById(_tripRepository);
 
     [Fact]
     public async Task Handle_WhenTripNotFound_ReturnsNotFoundError()

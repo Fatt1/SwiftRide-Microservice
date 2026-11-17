@@ -9,7 +9,7 @@ internal sealed class GetAllDriverLocationsHandler(IDriverLocationRepository dri
     : IQueryHandler<GetAllDriverLocationsQuery, IReadOnlyList<DriverLocationDto>>
 {
     public async Task<Result<IReadOnlyList<DriverLocationDto>>> Handle(
-        GetAllDriverLocationsQuery request, 
+        GetAllDriverLocationsQuery request,
         CancellationToken cancellationToken)
     {
         var locations = await driverLocationRepository.GetAllAsync(cancellationToken);

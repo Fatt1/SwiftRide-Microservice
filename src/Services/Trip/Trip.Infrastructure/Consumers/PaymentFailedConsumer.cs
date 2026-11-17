@@ -2,33 +2,31 @@ using EventBus.Messages.Events;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Trip.Domain.Repositories;
-
 namespace Trip.Infrastructure.Consumers;
 
-public class PaymentFailedConsumer(
-    ITripRepository tripRepository,
-    ILogger<PaymentFailedConsumer> logger) 
-    : IConsumer<PaymentFailedEvent>
+public class PaymentFailedConsumer(ITripRepository tripRepository, ILogger<PaymentFailedConsumer> logger) : IConsumer<PaymentFailedEvent>
 {
     public async Task Consume(ConsumeContext<PaymentFailedEvent> context)
     {
         var message = context.Message;
-        logger.LogWarning("Received PaymentFailedEvent for TripId: {TripId}, Reason: {Reason}", 
-            message.TripId, message.Reason);
-
         var trip = await tripRepository.FindByIdAsync(message.TripId);
-        if (trip is null)
-        {
-            logger.LogWarning("Trip with ID '{TripId}' not found when processing PaymentFailedEvent.", message.TripId);
+        if (trip == null)
             return;
-        }
 
-        // Cập nhật trạng thái chuyến đi sang PaymentFailed kèm lý do
-        trip.MarkPaymentFailed(message.Reason);
-        await tripRepository.Update(trip);
-        await tripRepository.SaveChangesAsync();
+        // Failures can arrive after a later attempt has started. Keep Trip pending.
+        logger.LogWarning("Payment failed for trip {TripId}, payment request {PaymentRequest}: {Reason}",
+            trip.Id, message.CorrelationId, message.Reason);
+    }
+}
 
-        logger.LogInformation("TripId: {TripId} marked as PaymentFailed with Reason: {Reason}", 
-            message.TripId, message.Reason);
+public sealed class PaymentFaultConsumer(ILogger<PaymentFaultConsumer> logger) : IConsumer<Fault<TripDropOffEvent>>
+{
+    public Task Consume(ConsumeContext<Fault<TripDropOffEvent>> context)
+    {
+        var message = context.Message.Message;
+        // An exhausted transport retry does not prove that the payment failed.
+        logger.LogError("Payment request {PaymentRequest} for trip {TripId} exhausted automatic retries; review is required",
+            message.IdempotencyKey, message.TripId);
+        return Task.CompletedTask;
     }
 }

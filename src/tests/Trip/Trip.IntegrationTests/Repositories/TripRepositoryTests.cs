@@ -68,13 +68,14 @@ public class TripRepositoryTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         await fixture.ResetDatabaseAsync();
         var (db, repo) = CreateRepository();
         var trip = new TripBuilder()
+            .WithEstimatedFare(72000m)
             .WithStatus(TripStatus.PickedUp)
             .Build();
         await repo.CreateAsync(trip);
         await db.SaveChangesAsync();
 
         // Act
-        trip.MarkDroppedOff(72000m);
+        trip.MarkDroppedOff();
         await repo.Update(trip);
         await repo.SaveChangesAsync();
 
@@ -82,7 +83,7 @@ public class TripRepositoryTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         var updated = await repo.FindByIdAsync(trip.Id);
         Assert.NotNull(updated);
         Assert.Equal(TripStatus.DroppedOff, updated.Status);
-        Assert.Equal(72000m, updated.FinalFare);
+        Assert.Equal(72000m, updated.EstimatedFare);
     }
 
     [Fact]

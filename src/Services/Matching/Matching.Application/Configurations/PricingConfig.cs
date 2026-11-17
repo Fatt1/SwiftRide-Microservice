@@ -5,6 +5,7 @@ namespace Matching.Application.Configurations;
 public class PricingConfig
 {
     public const string SectionName = "PricingConfig";
+    public int MaxAllowedRejections { get; set; } = 3; // Ngưỡng số lần tài xế từ chối tối đa (k)
     public double PerKmRate { get; set; } = 8000;
     public double PerMinRate { get; set; } = 500;
     public double TollFee { get; set; } = 10000;

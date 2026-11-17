@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Identity Service · ER Data Model</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1100px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 960px; display: block; }
+
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">SWIFTRIDE · IDENTITY SERVICE · ER MODEL</p>
+    <h1>Identity Service · Data Model</h1>
+    <p class="subtitle">Polyglot Persistence: SQL Server (IdentityDB) · ASP.NET Core Identity &amp; JWT Bearer Authentication</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="identity-er-title identity-er-desc">
+        <title id="identity-er-title">Identity Service Data Model</title>
+        <desc id="identity-er-desc">Entity-relationship diagram showing AspNetUsers aggregate root and related role, claim, and token entities in IdentityDB.</desc>
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/>
+
+        <!-- RELATIONSHIP LINES (Drawn before boxes) -->
+
+        <!-- 1. AspNetUsers — AspNetUserRoles (1:N) -->
+        <line x1="370" y1="335" x2="280" y2="335" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- 2. AspNetRoles — AspNetUserRoles (1:N) -->
+        <line x1="170" y1="220" x2="170" y2="280" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- 3. AspNetUsers — AspNetUserClaims (1:N) -->
+        <line x1="630" y1="150" x2="720" y2="150" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- 4. AspNetUsers — AspNetUserTokens (1:N) -->
+        <line x1="630" y1="350" x2="720" y2="350" stroke="#4f5d75" stroke-width="1"/>
+
+        <!-- CARDINALITY & RELATIONSHIP LABELS -->
+
+        <!-- AspNetUsers -> AspNetUserRoles -->
+        <rect x="342" y="327" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="350" y="339" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="294" y="327" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="302" y="339" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+
+        <!-- AspNetRoles -> AspNetUserRoles -->
+        <rect x="162" y="230" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="170" y="242" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="162" y="254" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="170" y="266" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+
+        <!-- AspNetUsers -> AspNetUserClaims -->
+        <rect x="642" y="142" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="650" y="154" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="692" y="142" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="700" y="154" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+
+        <!-- AspNetUsers -> AspNetUserTokens -->
+        <rect x="642" y="342" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="650" y="354" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">1</text>
+        <rect x="692" y="342" width="16" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="700" y="354" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle" font-weight="600">N</text>
+
+        <!-- ENTITY: AspNetUsers (AppUser - Focal Coral) -->
+        <rect x="370" y="60" width="260" height="340" rx="6" fill="rgba(191,69,32,0.03)" stroke="#bf4520" stroke-width="1"/>
+        <rect x="370" y="60" width="260" height="42" rx="6" fill="rgba(191,69,32,0.10)"/>
+        <rect x="370" y="94" width="260" height="8" fill="rgba(191,69,32,0.10)"/>
+        <line x1="370" y1="102" x2="630" y2="102" stroke="rgba(191,69,32,0.40)" stroke-width="1"/>
+        <text x="386" y="78" fill="#bf4520" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">ENTITY · AGGREGATE ROOT</text>
+        <text x="386" y="95" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">AspNetUsers (AppUser)</text>
+
+        <!-- Fields of AspNetUsers -->
+        <text x="386" y="124" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="614" y="124" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(450)</text>
+
+        <text x="386" y="148" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">FullName</text>
+        <text x="614" y="148" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(150)</text>
+
+        <text x="386" y="172" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Email</text>
+        <text x="614" y="172" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(256)</text>
+
+        <text x="386" y="196" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">NormalizedEmail</text>
+        <text x="614" y="196" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(256)</text>
+
+        <text x="386" y="220" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">UserName</text>
+        <text x="614" y="220" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(256)</text>
+
+        <text x="386" y="244" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">NormalizedUserName</text>
+        <text x="614" y="244" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(256)</text>
+
+        <text x="386" y="268" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">PasswordHash</text>
+        <text x="614" y="268" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <text x="386" y="292" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">PhoneNumber</text>
+        <text x="614" y="292" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <text x="386" y="316" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">EmailConfirmed</text>
+        <text x="614" y="316" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">bit</text>
+
+        <text x="386" y="340" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">SecurityStamp</text>
+        <text x="614" y="340" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <text x="386" y="364" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">CreatedAt</text>
+        <text x="614" y="364" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">datetime2</text>
+
+        <text x="386" y="388" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">AccessFailedCount</text>
+        <text x="614" y="388" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">int</text>
+
+        <!-- ENTITY: AspNetRoles -->
+        <rect x="60" y="80" width="220" height="140" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="60" y="80" width="220" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="60" y="110" width="220" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="60" y1="118" x2="280" y2="118" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="76" y="96" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">ENTITY</text>
+        <text x="76" y="112" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">AspNetRoles</text>
+
+        <text x="76" y="138" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="264" y="138" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(450)</text>
+
+        <text x="76" y="160" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Name</text>
+        <text x="264" y="160" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(256)</text>
+
+        <text x="76" y="182" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">NormalizedName</text>
+        <text x="264" y="182" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(256)</text>
+
+        <text x="76" y="204" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">ConcurrencyStamp</text>
+        <text x="264" y="204" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <!-- JOIN ENTITY: AspNetUserRoles -->
+        <rect x="60" y="280" width="220" height="110" rx="6" fill="rgba(45,49,66,0.03)" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="60" y="280" width="220" height="38" rx="6" fill="rgba(45,49,66,0.06)"/>
+        <rect x="60" y="310" width="220" height="8" fill="rgba(45,49,66,0.06)"/>
+        <line x1="60" y1="318" x2="280" y2="318" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="76" y="296" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">JOIN TABLE</text>
+        <text x="76" y="312" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">AspNetUserRoles</text>
+
+        <text x="76" y="342" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">#→ UserId</text>
+        <text x="264" y="342" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(450)</text>
+
+        <text x="76" y="366" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">#→ RoleId</text>
+        <text x="264" y="366" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(450)</text>
+
+        <!-- ENTITY: AspNetUserClaims -->
+        <rect x="720" y="80" width="220" height="140" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="720" y="80" width="220" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="720" y="110" width="220" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="720" y1="118" x2="940" y2="118" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="736" y="96" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">ENTITY</text>
+        <text x="736" y="112" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">AspNetUserClaims</text>
+
+        <text x="736" y="138" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Id</text>
+        <text x="924" y="138" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">int (identity)</text>
+
+        <text x="736" y="160" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">→ UserId</text>
+        <text x="924" y="160" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(450)</text>
+
+        <text x="736" y="182" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">ClaimType</text>
+        <text x="924" y="182" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <text x="736" y="204" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">ClaimValue</text>
+        <text x="924" y="204" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <!-- ENTITY: AspNetUserTokens -->
+        <rect x="720" y="280" width="220" height="140" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="720" y="280" width="220" height="38" rx="6" fill="rgba(45,49,66,0.04)"/>
+        <rect x="720" y="310" width="220" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="720" y1="318" x2="940" y2="318" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="736" y="296" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">ENTITY</text>
+        <text x="736" y="312" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif">AspNetUserTokens</text>
+
+        <text x="736" y="338" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">#→ UserId</text>
+        <text x="924" y="338" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(450)</text>
+
+        <text x="736" y="360" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># LoginProvider</text>
+        <text x="924" y="360" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(450)</text>
+
+        <text x="736" y="382" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># Name</text>
+        <text x="924" y="382" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(450)</text>
+
+        <text x="736" y="404" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">Value</text>
+        <text x="924" y="404" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">nvarchar(max)</text>
+
+        <!-- LEGEND STRIP (Horizontal bottom strip per skill rules) -->
+        <line x1="40" y1="460" x2="960" y2="460" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
+        <text x="40" y="482" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40" y="492" width="14" height="10" rx="2" fill="rgba(191,69,32,0.06)" stroke="#bf4520" stroke-width="1"/>
+        <text x="60" y="500" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Aggregate root</text>
+
+        <rect x="180" y="492" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="200" y="500" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Entity</text>
+
+        <rect x="270" y="492" width="14" height="10" rx="2" fill="rgba(45,49,66,0.04)" stroke="#4f5d75" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="290" y="500" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Join table</text>
+
+        <text x="380" y="501" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">#</text>
+        <text x="396" y="500" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Primary key</text>
+
+        <text x="480" y="501" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">→</text>
+        <text x="496" y="500" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Foreign key</text>
+
+        <text x="590" y="501" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">1 / N</text>
+        <text x="626" y="500" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Cardinality</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

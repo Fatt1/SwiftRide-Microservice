@@ -16,10 +16,10 @@ public class DropOffCommandHandlerTests
     private readonly ITripRepository _tripRepository = Substitute.For<ITripRepository>();
     private readonly IPublishEndpoint _publishEndpoint = Substitute.For<IPublishEndpoint>();
 
-    private DropOffHandler CreateHandler() => new(_tripRepository, _publishEndpoint);
+    private MediatR.IRequestHandler<DropOffCommand, Shared.Result> CreateHandler() => global::Trip.UnitTests.ValidatedHandlers.DropOff(_tripRepository, _publishEndpoint);
 
     [Fact]
-    public async Task Handle_WhenPaymentMethodIsInvalid_ReturnsBadError()
+    public async Task Handle_WhenPaymentMethodIsInvalid_ReturnsValidationError()
     {
         // Arrange
         var handler = CreateHandler();
@@ -30,15 +30,15 @@ public class DropOffCommandHandlerTests
 
         // Assert
         Assert.False(result.IsSuccess);
-        Assert.IsType<BadError>(result.Error);
-        Assert.Equal("Payment method is invalid.", result.Error.Message);
+        Assert.IsType<ValidationError>(result.Error);
+        Assert.Contains(((ValidationError)result.Error!).Errors, e => e.Message == "Payment method is invalid.");
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Handle_WhenCardPaymentWithoutGatewayToken_ReturnsBadError(string? gatewayToken)
+    public async Task Handle_WhenCardPaymentWithoutGatewayToken_ReturnsValidationError(string? gatewayToken)
     {
         // Arrange
         var handler = CreateHandler();
@@ -49,12 +49,12 @@ public class DropOffCommandHandlerTests
 
         // Assert
         Assert.False(result.IsSuccess);
-        Assert.IsType<BadError>(result.Error);
-        Assert.Contains("GatewayToken is required", result.Error.Message);
+        Assert.IsType<ValidationError>(result.Error);
+        Assert.Contains(((ValidationError)result.Error!).Errors, e => e.Message.Contains("GatewayToken is required"));
     }
 
     [Fact]
-    public async Task Handle_WhenCardPaymentGatewayTokenExceedsMaxLength_ReturnsBadError()
+    public async Task Handle_WhenCardPaymentGatewayTokenExceedsMaxLength_ReturnsValidationError()
     {
         // Arrange
         var handler = CreateHandler();
@@ -66,8 +66,8 @@ public class DropOffCommandHandlerTests
 
         // Assert
         Assert.False(result.IsSuccess);
-        Assert.IsType<BadError>(result.Error);
-        Assert.Contains("maximum 128 characters", result.Error.Message);
+        Assert.IsType<ValidationError>(result.Error);
+        Assert.Contains(((ValidationError)result.Error!).Errors, e => e.Message.Contains("maximum 128 characters"));
     }
 
     [Fact]
@@ -135,12 +135,14 @@ public class DropOffCommandHandlerTests
 
         // Assert
         Assert.True(result.IsSuccess);
-        Assert.Equal(TripStatus.DroppedOff, trip.Status);
-        Assert.Equal(estimatedFare, trip.FinalFare);
+        Assert.Equal(TripStatus.PaymentPending, trip.Status);
+        Assert.Equal(estimatedFare, trip.EstimatedFare);
 
         await _tripRepository.Received(1).Update(trip);
         await _publishEndpoint.Received(1).Publish(
             Arg.Is<TripDropOffEvent>(e =>
+                e.IdempotencyKey != Guid.Empty &&
+                e.IdempotencyKey != e.Id &&
                 e.TripId == trip.Id &&
                 e.RiderId == trip.RiderId &&
                 e.DriverId == driverId &&

@@ -15,9 +15,11 @@ public record TripDto(
     decimal? FinalFare,
     decimal? DistanceKm,
     DateTimeOffset CreatedAt,
-    string? PaymentFailureReason = null
-)
-{
-    public string? Reason => PaymentFailureReason;
-}
+    int RejectCount = 0,
+    string? MatchSessionId = null,
+    Guid? OfferedDriverId = null,
+    string? FailureReason = null,
+    int EstimatedMinutes = 0,
+    int MaxAllowedRejections = 0
+);
 

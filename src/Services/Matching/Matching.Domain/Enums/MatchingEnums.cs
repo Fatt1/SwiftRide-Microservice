@@ -5,7 +5,7 @@ public enum MatchSessionStatus
     Searching = 1,
     Matched = 2,
     NoDriver = 3,
-    Expired = 4
+    Cancelled = 4
 }
 
 

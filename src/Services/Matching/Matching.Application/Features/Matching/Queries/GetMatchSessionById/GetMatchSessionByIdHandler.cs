@@ -9,14 +9,12 @@ internal sealed class GetMatchSessionByIdHandler(IMatchingRepository matchingRep
     : IQueryHandler<GetMatchSessionByIdQuery, MatchSessionDto>
 {
     public async Task<Result<MatchSessionDto>> Handle(
-        GetMatchSessionByIdQuery request, 
+        GetMatchSessionByIdQuery request,
         CancellationToken cancellationToken)
     {
         var s = await matchingRepository.GetByIdAsync(request.Id, cancellationToken);
         if (s is null)
-        {
             return Result.Failure<MatchSessionDto>(new NotFoundError("MatchSession", request.Id));
-        }
 
         var dto = new MatchSessionDto(
             s.Id,
@@ -30,7 +28,7 @@ internal sealed class GetMatchSessionByIdHandler(IMatchingRepository matchingRep
             s.DriverAttempts,
             s.Status.ToString(),
             s.CreatedAt,
-            s.LastModifiedAt
+            s.LastModifiedAt, s.OfferedDriverId, s.MaxAllowedRejections, s.RejectCount
         );
 
         return Result.Success(dto);

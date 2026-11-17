@@ -1,7 +1,9 @@
 using Grpc.Core;
 using Matching.API.Protos;
 using Matching.Application.Features.Matching.Commands.CalculatePrice;
+using Matching.Application.Features.Matching.Dtos;
 using MediatR;
+using Shared;
 namespace Matching.API.Services;
 
 public class PricingGrpcService : PricingService.PricingServiceBase
@@ -33,17 +35,25 @@ public class PricingGrpcService : PricingService.PricingServiceBase
             request.PickupLatitude,
             request.DestinationLongitude,
             request.DestinationLatitude,
-            tripId,
-            request.DistanceKm > 0 ? request.DistanceKm : null,
-            request.EstimatedMinutes > 0 ? request.EstimatedMinutes : null
+            tripId
             );
-        var result = await _meditor.Send(command);
+        Result<CalculatePriceDto> result;
+
+        try
+        { result = await _meditor.Send(command, context.CancellationToken); }
+        catch (HttpRequestException)
+        {
+            throw new RpcException(new Status(StatusCode.Unavailable, "OSRM route estimation failed. No fallback quote was created."));
+        }
+        catch (OperationCanceledException) when (!context.CancellationToken.IsCancellationRequested)
+        { throw new RpcException(new Status(StatusCode.Unavailable, "OSRM route estimation timed out.")); }
 
         if (result.IsSuccess)
         {
             var pricing = result.Value;
             var response = new PricingResponse
             {
+                MatchSessionId = pricing.MatchSessionId,
                 DistanceFare = pricing.DistanceFare,
                 TimeFare = pricing.TimeFare,
                 TaxRate = pricing.TaxRate,
@@ -63,6 +73,7 @@ public class PricingGrpcService : PricingService.PricingServiceBase
                 response.AppliedSurges.Add(new AppliedSurge
                 {
                     Type = appliedSurge.Type.ToString(),
+                    Name = appliedSurge.Name,
                     Multiplier = appliedSurge.Multiplier
                 });
             }
@@ -72,7 +83,7 @@ public class PricingGrpcService : PricingService.PricingServiceBase
         else
         {
             _logger.LogError("ERROR: Failed to get pricing for request {Request}. Error: {Error}", request, result.Error);
-            throw new RpcException(new Status(StatusCode.Internal, $"Failed to get pricing: {result.Error}"));
+            throw new RpcException(new Status(result.Error is Shared.ValidationError ? StatusCode.InvalidArgument : StatusCode.Internal, $"Failed to get pricing: {result.Error}"));
         }
     }
 }

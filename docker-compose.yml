@@ -103,13 +103,6 @@ services:
     networks:
       - swiftride-network
 
-  notification.api:
-    image: ${DOCKER_REGISTRY-}notification-api:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: .
-      dockerfile: src/Services/Notification/Notification.API/Dockerfile
-    networks:
-      - swiftride-network
 
   yarpapigw:
     image: ${DOCKER_REGISTRY-}yarpapigw:${PLATFORM:-linux}-${TAG:-latest}

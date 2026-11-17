@@ -12,8 +12,8 @@ public sealed class TripDropOffConsumer(ISender sender, ILogger<TripDropOffConsu
     public async Task Consume(ConsumeContext<TripDropOffEvent> context)
     {
         var message = context.Message;
-        logger.LogInformation("Nhận TripDropOffEvent: MessageId={MessageId}, TripId={TripId}, RiderId={RiderId}, DriverId={DriverId}, Amount={Amount} {Currency}, PaymentMethod={PaymentMethod}, RetryAttempt={RetryAttempt}",
-            context.MessageId, message.TripId, message.RiderId, message.DriverId, message.Amount,
+        logger.LogInformation("Nhận TripDropOffEvent: MessageId={MessageId}, IdempotencyKey={IdempotencyKey}, TripId={TripId}, RiderId={RiderId}, DriverId={DriverId}, Amount={Amount} {Currency}, PaymentMethod={PaymentMethod}, RetryAttempt={RetryAttempt}",
+            context.MessageId, message.IdempotencyKey, message.TripId, message.RiderId, message.DriverId, message.Amount,
             message.Currency, message.PaymentMethod, context.GetRetryAttempt());
         var result = await sender.Send(new CreatePaymentCommand
         {
@@ -24,8 +24,7 @@ public sealed class TripDropOffConsumer(ISender sender, ILogger<TripDropOffConsu
             Currency = message.Currency,
             PaymentMethod = message.PaymentMethod,
             GatewayToken = message.GatewayToken,
-            IdempotencyKey = message.Id,
-            CorrelationId = message.CorrelationId,
+            IdempotencyKey = message.IdempotencyKey,
             RetryAttempt = context.GetRetryAttempt()
         }, context.CancellationToken);
         if (result.IsFailure)

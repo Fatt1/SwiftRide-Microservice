@@ -40,7 +40,7 @@ public class WalletEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<WalletDto>();
+        var result = await response.Content.ReadFromJsonAsync<WalletDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.UserId.ShouldBe(userId);
         result.Balance.ShouldBe(300_000m);
@@ -81,12 +81,12 @@ public class WalletEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture
         // Act - 1st call
         var response1 = await _client.PostAsJsonAsync($"/api/v1/payments/wallets/{userId}/top-up", request);
         response1.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result1 = await response1.Content.ReadFromJsonAsync<WalletDto>();
+        var result1 = await response1.Content.ReadFromJsonAsync<WalletDto>(TestJson.Options);
 
         // Act - 2nd call with same idempotency key
         var response2 = await _client.PostAsJsonAsync($"/api/v1/payments/wallets/{userId}/top-up", request);
         response2.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result2 = await response2.Content.ReadFromJsonAsync<WalletDto>();
+        var result2 = await response2.Content.ReadFromJsonAsync<WalletDto>(TestJson.Options);
 
         // Assert
         result1.ShouldNotBeNull();
@@ -153,7 +153,7 @@ public class WalletEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<WalletDto>();
+        var result = await response.Content.ReadFromJsonAsync<WalletDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.UserId.ShouldBe(userId);
         result.Balance.ShouldBe(450_000m);
@@ -171,7 +171,7 @@ public class WalletEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<WalletDto>();
+        var result = await response.Content.ReadFromJsonAsync<WalletDto>(TestJson.Options);
         result.ShouldNotBeNull();
         result.UserId.ShouldBe(newUserId);
         result.Balance.ShouldBe(0m);
@@ -208,7 +208,7 @@ public class WalletEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<LedgerEntryDto>>();
+        var result = await response.Content.ReadFromJsonAsync<List<LedgerEntryDto>>(TestJson.Options);
         result.ShouldNotBeNull();
         result.Count.ShouldBe(1);
         result[0].EntryType.ShouldBe(EntryType.Credit);
@@ -233,7 +233,7 @@ public class WalletEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<WalletDto>>();
+        var result = await response.Content.ReadFromJsonAsync<List<WalletDto>>(TestJson.Options);
         result.ShouldNotBeNull();
         result.Count.ShouldBe(2);
     }

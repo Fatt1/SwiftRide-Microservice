@@ -12,7 +12,7 @@ public class CancelTripCommandHandlerTests
 {
     private readonly ITripRepository _tripRepository = Substitute.For<ITripRepository>();
 
-    private CancelTripHandler CreateHandler() => new(_tripRepository);
+    private MediatR.IRequestHandler<CancelTripCommand, Shared.Result> CreateHandler() => global::Trip.UnitTests.ValidatedHandlers.CancelTrip(_tripRepository, Substitute.For<MassTransit.IPublishEndpoint>());
 
     [Fact]
     public async Task Handle_WhenTripNotFound_ReturnsNotFoundError()
@@ -34,6 +34,8 @@ public class CancelTripCommandHandlerTests
 
     [Theory]
     [InlineData(TripStatus.PickedUp)]
+    [InlineData(TripStatus.PaymentPending)]
+    [InlineData(TripStatus.Failed)]
     [InlineData(TripStatus.DroppedOff)]
     [InlineData(TripStatus.Completed)]
     [InlineData(TripStatus.Cancelled)]
@@ -59,7 +61,6 @@ public class CancelTripCommandHandlerTests
     [Theory]
     [InlineData(TripStatus.Requested)]
     [InlineData(TripStatus.DriverAccepted)]
-    [InlineData(TripStatus.DriverRejected)]
     public async Task Handle_WhenTripInCancellableStatus_CancelsTripAndReturnsSuccess(TripStatus cancellableStatus)
     {
         // Arrange

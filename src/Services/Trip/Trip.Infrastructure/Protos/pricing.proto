@@ -34,6 +34,8 @@ message PricingResponse {
   double final_total = 12;
   double distance_km = 13;
   int32 estimated_minutes = 14;
+  string match_session_id = 15;
+  int32 max_allowed_rejections = 16;
 }
 
 message AppliedSurge {

@@ -1,96 +1,83 @@
-using EventBus.Messages.Events;
+﻿using EventBus.Messages.Events;
 using MassTransit;
+using Matching.Domain.Entities;
 using Matching.Domain.Enums;
 using Matching.Domain.Repositories;
-using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.CQRS;
-
 namespace Matching.Application.Features.Matching.Commands.FindDriver;
 
-public class FindDriverCommandHandler : ICommandHandler<FindDriverCommand, FindDriverResult>
+public sealed class FindDriverCommandHandler(IMatchingRepository matchingRepository,
+    IDriverLocationRepository driverRepository, IPublishEndpoint publisher)
+    : ICommandHandler<FindDriverCommand, FindDriverResult>
 {
-    private readonly IMatchingRepository _matchingRepository;
-    private readonly ILogger<FindDriverCommandHandler> _logger;
-    private readonly IDriverLocationRepository _driverRepository;
-    private readonly IPublishEndpoint _publishEndpoint;
-    private readonly int MaxDriverAttempts = 3; // Giới hạn số lần thử tìm tài xế
-
-    public FindDriverCommandHandler(
-        IMatchingRepository matchingRepository,
-        IDriverLocationRepository driverRepository,
-        IPublishEndpoint publishEndpoint,
-        ILogger<FindDriverCommandHandler> logger)
+    public async Task<Result<FindDriverResult>> Handle(FindDriverCommand request, CancellationToken ct)
     {
-        _matchingRepository = matchingRepository;
-        _driverRepository = driverRepository;
-        _publishEndpoint = publishEndpoint;
-        _logger = logger;
-    }
+        // Validation and all matching decisions use Matching's own MongoDB only.
+        var session = await matchingRepository.GetByTripIdAsync(request.TripId, ct);
+        if (session is null)
+            return Result.Failure<FindDriverResult>(new NotFoundError("MatchSession for trip", request.TripId));
 
-    public async Task<Result<FindDriverResult>> Handle(FindDriverCommand request, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("BEGIN: Find driver for tripId: {TripId}", request.TripId);
-        var matching = await _matchingRepository.GetByTripIdAsync(request.TripId, cancellationToken);
+        if (session.Status is not MatchSessionStatus.Searching)
+            return Result.Failure<FindDriverResult>(new ConflictError("Matching has already ended."));
 
-        if (matching == null)
+        if (session.Status == MatchSessionStatus.NoDriver)
+            return Result.Failure<FindDriverResult>(new BadError("Matching has ended without a driver."));
+
+        // Nếu tài xế đã được đề xuất mà chưa chấp nhận hoặc từ chối chuyến, không tìm kiếm lại.
+        if (session.OfferedDriverId.HasValue)
         {
-            _logger.LogWarning("No matching session found for tripId: {TripId}", request.TripId);
-            return Result.Failure<FindDriverResult>(new NotFoundError("Trip", request.TripId));
+            return Result.Failure<FindDriverResult>(new ConflictError($"Driver with ID {session.OfferedDriverId.Value} has already been offered for this trip. "));
         }
 
-        var excludedDriverIds = matching.DriverAttempts.Select(d => d.DriverId).Distinct().ToList();
 
-        if (excludedDriverIds.Count >= MaxDriverAttempts)
+        var excluded = session.DriverAttempts.Select(x => x.DriverId).Distinct().ToList();
+        while (true)
         {
-            _logger.LogWarning("Maximum number of driver attempts reached for tripId: {TripId}", request.TripId);
+            ct.ThrowIfCancellationRequested();
+            var driver = await driverRepository.GetNearestAvailableDriverAsync(session.PickupLat, session.PickupLng, 5000, excluded, ct);
+            if (driver == null)
+                return Result.Failure<FindDriverResult>(new BadError("No available drivers within the search radius."));
 
-            if (matching.Status != MatchSessionStatus.NoDriver)
+            if (!await driverRepository.TryReserveAsync(driver.DriverId, session.TripId, ct))
             {
-                matching.MarkNoDriver();
-                await _matchingRepository.UpdateAsync(matching, cancellationToken);
-
-                await _publishEndpoint.Publish(new TripMatchingFailedEvent
-                {
-                    TripId = request.TripId
-                }, cancellationToken);
+                // Another trip took this candidate. Continue with the next nearest driver.
+                excluded.Add(driver.DriverId);
+                continue;
             }
 
-            return Result.Failure<FindDriverResult>(new BadError("Maximum number of driver attempts reached"));
+            // Only a successfully reserved driver becomes an invitation/attempt.
+            if (!session.OfferDriver(driver.DriverId))
+            {
+                await driverRepository.ReleaseAsync(driver.DriverId, session.TripId, ct);
+                return Result.Failure<FindDriverResult>(new ConflictError("Matching has already ended."));
+            }
+            await matchingRepository.UpdateAsync(session, ct);
+            return await PublishOfferAsync(session, ct);
         }
-
-        var nearestDriver = await _driverRepository.GetNearestAvailableDriverAsync(matching.PickupLat, matching.PickupLng, 5000, excludedDriverIds, cancellationToken);
-
-        if (nearestDriver == null)
-        {
-            _logger.LogWarning("No available drivers found for tripId: {TripId}", request.TripId);
-            return Result.Failure<FindDriverResult>(new BadError("No available drivers found"));
-        }
-
-        await _matchingRepository.AddDriverAttemptAsync(matching.Id, nearestDriver.DriverId, cancellationToken);
-
-        // Bắn sự kiện DriverFoundEvent sang Notification Service qua RabbitMQ (MassTransit)
-        // để thông báo chuyến đi mới cho tài xế qua WebSocket
-        await _publishEndpoint.Publish(new DriverFoundEvent
-        {
-            TripId = request.TripId,
-            DriverId = nearestDriver.DriverId,
-            DriverName = nearestDriver.FullName,
-            TotalFare = (decimal)matching.PricingBreakdown.FinalTotal,
-            EstimatedDurationMinutes = matching.EstimatedMinutes,
-            DistanceKm = matching.DistanceKm
-        }, cancellationToken);
-
-        _logger.LogInformation("END: Found driver {DriverId} for tripId: {TripId}. Published DriverFoundEvent.", nearestDriver.DriverId, request.TripId);
-        return Result.Success<FindDriverResult>(
-            new FindDriverResult(
-                nearestDriver.DriverId,
-                nearestDriver.FullName,
-                nearestDriver.Latitude,
-                nearestDriver.Longitude
-                )
-            );
-
-
     }
+
+    private async Task<Result<FindDriverResult>> PublishOfferAsync(MatchSession session, CancellationToken ct)
+    {
+        var driver = await driverRepository.GetByDriverIdAsync(session.OfferedDriverId!.Value, ct);
+        if (driver == null)
+            return Result.Failure<FindDriverResult>(new ConflictError("Offered driver no longer exists."));
+
+        // Publish only: Trip consumes and validates the invitation independently.
+        // Repeating Matching republishes the same offer, without another attempt.
+        await publisher.Publish(new DriverFoundEvent
+        {
+            TripId = session.TripId,
+            MatchSessionId = session.Id,
+            DriverId = driver.DriverId,
+            DriverName = driver.FullName,
+            MaxAllowedRejections = session.MaxAllowedRejections,
+            TotalFare = (decimal)session.PricingBreakdown.FinalTotal,
+            DistanceKm = session.DistanceKm,
+            EstimatedDurationMinutes = session.EstimatedMinutes
+        }, ct);
+        return Result.Success(new FindDriverResult(driver.DriverId, driver.FullName, driver.Latitude,
+            driver.Longitude, session.Id));
+    }
+
 }

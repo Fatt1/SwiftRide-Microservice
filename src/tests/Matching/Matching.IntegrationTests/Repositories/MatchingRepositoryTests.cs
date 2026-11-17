@@ -1,3 +1,7 @@
+using MongoDB.Bson;
+using MongoDB.Driver;
+using Matching.Infrastructure.Persistence;
+using Microsoft.Extensions.Logging.Abstractions;
 using Matching.Domain.Entities;
 using Matching.Domain.Enums;
 using Matching.Infrastructure.Repositories;
@@ -96,4 +100,23 @@ public class MatchingRepositoryTests(ApiFixture fixture) : IClassFixture<ApiFixt
         Assert.Equal(MatchSessionStatus.Matched, updated.Status);
         Assert.Equal(matchedDriverId, updated.MatchedDriverId);
     }
+    [Fact]
+    public async Task Initialize_LegacyVersionFields_RemovesOnlyVersionMetadata()
+    {
+        // Arrange
+        await fixture.ResetDatabaseAsync();
+        var repo = CreateRepository(); var session = new MatchSessionBuilder().Build();
+        await repo.CreateAsync(session);
+        var documents = fixture.GetDatabase().GetCollection<BsonDocument>("match_sessions");
+        var filter = new BsonDocument("_id", ObjectId.Parse(session.Id));
+        await documents.UpdateOneAsync(filter, new BsonDocument("$set", new BsonDocument { { "version", 7 }, { "Version", 9 } }));
+        var initializer = new MongoDbInitializer(fixture.GetDatabase(), NullLogger<MongoDbInitializer>.Instance);
+        // Act
+        await initializer.StartAsync(CancellationToken.None);
+        var document = await documents.Find(filter).SingleAsync();
+        // Assert
+        Assert.False(document.Contains("version")); Assert.False(document.Contains("Version"));
+        Assert.NotNull(await repo.GetByTripIdAsync(session.TripId));
+    }
+
 }

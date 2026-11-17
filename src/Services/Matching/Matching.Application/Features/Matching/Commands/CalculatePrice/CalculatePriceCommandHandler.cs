@@ -2,6 +2,7 @@ using Matching.Application.Abstractions;
 using Matching.Application.Configurations;
 using Matching.Application.Decorators.Pricing;
 using Matching.Application.Dtos;
+using Matching.Application.Features.Matching.Dtos;
 using Matching.Application.Helpers;
 using Matching.Domain.Entities;
 using Matching.Domain.Repositories;
@@ -12,7 +13,7 @@ using Shared.CQRS;
 
 namespace Matching.Application.Features.Matching.Commands.CalculatePrice;
 
-public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository, ILogger<CalculatePriceCommandHandler> logger, IOptions<PricingConfig> config)
+public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository, ILogger<CalculatePriceCommandHandler> logger, IOptions<PricingConfig> config, IRouteEstimator routes)
     : ICommandHandler<CalculatePriceCommand, CalculatePriceDto>
 {
 
@@ -20,27 +21,15 @@ public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository
     {
         logger.LogInformation("BEGIN: Calculating price for trip {TripId}", request.TripId);
 
-        double distance;
-        int estimatedTime;
-
-        if (request.DistanceKm.HasValue && request.DistanceKm.Value > 0)
-        {
-            distance = Math.Round(request.DistanceKm.Value, 1, MidpointRounding.AwayFromZero);
-            estimatedTime = request.EstimatedMinutes.HasValue && request.EstimatedMinutes.Value > 0
-                ? request.EstimatedMinutes.Value
-                : GeoHelper.CalculateEstimatedMinutes(distance);
-        }
-        else
-        {
-            var fallback = GeoHelper.CalculateTravelEstimate(request.PickupLatitude, request.PickupLongitude, request.DestinationLatitude, request.DestinationLongitude);
-            distance = fallback.DistanceKm;
-            estimatedTime = fallback.EstimatedMinutes;
-        }
+        var estimate = await routes.EstimateAsync(request.PickupLatitude, request.PickupLongitude,
+            request.DestinationLatitude, request.DestinationLongitude, cancellationToken);
+        var distance = estimate.DistanceKm;
+        var estimatedTime = estimate.EstimatedMinutes;
 
         var pricingContext = new PricingContext(
             distance,
             estimatedTime,
-            DateTime.UtcNow,
+            DateTime.UtcNow.AddHours(7),
             request.IsRaining,
             request.PromoCode,
             request.HasToll
@@ -68,26 +57,28 @@ public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository
         pricingBreakdown.TaxRate = config.Value.TaxRate;
 
         // Chỉ làm tròn duy nhất FinalTotal theo tiền VND (ví dụ: 67.891đ -> 68.000đ)
-        pricingBreakdown.FinalTotal = CurrencyHelper.RoundVnd(pricingBreakdown.FinalTotal + taxAmount);
+        pricingBreakdown.FinalTotal = CurrencyHelper.RoundVnd(pricingBreakdown.FinalTotal * (1 + config.Value.TaxRate));
 
-        await matchingRepository.CreateAsync(
-            new MatchSession
-            {
-                TripId = request.TripId,
-                PickupLocation = MatchSession.CreatePoint(request.PickupLatitude, request.PickupLongitude),
-                DistanceKm = distance,
-                EstimatedMinutes = estimatedTime,
-                PricingBreakdown = pricingBreakdown,
-                Status = Domain.Enums.MatchSessionStatus.Searching,
-                CreatedAt = DateTime.UtcNow,
-                LastModifiedAt = DateTime.UtcNow
-            }, cancellationToken
-            );
+        var session = new MatchSession
+        {
+            TripId = request.TripId,
+            MaxAllowedRejections = config.Value.MaxAllowedRejections,
+            PickupLocation = MatchSession.CreatePoint(request.PickupLatitude, request.PickupLongitude),
+            DistanceKm = distance,
+            EstimatedMinutes = estimatedTime,
+            PricingBreakdown = pricingBreakdown,
+            Status = Domain.Enums.MatchSessionStatus.Searching,
+            CreatedAt = DateTime.UtcNow,
+            LastModifiedAt = DateTime.UtcNow
+        };
+        await matchingRepository.CreateAsync(session, cancellationToken);
 
         logger.LogInformation("END: Calculating price for trip {TripId}. Final price: {FinalPrice}", request.TripId, pricingBreakdown.FinalTotal);
 
         var responseDto = new CalculatePriceDto
         {
+            MatchSessionId = session.Id,
+            MaxAllowedRejections = session.MaxAllowedRejections,
             DistanceKm = distance,
             EstimatedMinutes = estimatedTime,
             DistanceFare = pricingBreakdown.DistanceFare,

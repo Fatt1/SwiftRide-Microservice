@@ -1,0 +1,9 @@
+{
+  "messageId": "f588cbd1-12d4-47d2-ae81-ef7a0df548e1",
+  "tripId": "d597d9b9-43be-4ea6-b688-3e504daf205b",
+  "idempotencyKey": "46b6d65f-fdf7-442e-a313-a739dcb083ee",
+  "readyWhileOffline": 1,
+  "readyAfterRestart": 0,
+  "unackedAfterRestart": 0,
+  "paymentCountAfterDuplicate": 1
+}

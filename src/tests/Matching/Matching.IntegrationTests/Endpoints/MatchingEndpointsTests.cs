@@ -214,4 +214,16 @@ public class MatchingEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtu
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Validation_EmptyTripId_ReturnsBadRequestBeforeMatching()
+    {
+        // Arrange
+        await fixture.ResetDatabaseAsync();
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/matching/match", new FindDriverCommand(Guid.Empty));
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
 }

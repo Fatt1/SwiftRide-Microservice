@@ -9,6 +9,8 @@ namespace EventBus.Messages.Events;
 /// </summary>
 public record TripDropOffEvent : IntegrationBaseEvent
 {
+    // Stable for one payment attempt; redelivery must reuse this key.
+    public Guid IdempotencyKey { get; init; }
     public Guid TripId { get; init; }
     public Guid RiderId { get; init; }
     public Guid DriverId { get; init; }

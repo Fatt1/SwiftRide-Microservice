@@ -1,3 +1,6 @@
+> Current backend API flow and upgrade notes: [docs/backend-flow.md](docs/backend-flow.md).
+> Routing uses OSRM directly. Matching is manual; no offer expiry or confirmation endpoint.
+
 # 🚗 SwiftRide - Microservices Ride-Hailing Platform
 
 > **Đồ án môn học:** Kiến trúc Phần mềm (Software Architecture)  
@@ -65,7 +68,6 @@ flowchart TB
         TripSvc["📍 Trip.API<br/>(State Machine vòng đời cuốc xe)"]
         MatchingSvc["⚡ Matching.API<br/>(Geo-spatial Matching & Dynamic Pricing)"]
         PaymentSvc["💳 Payment.API<br/>(Xử lý thanh toán & Sổ cái Ví)"]
-        NotifySvc["🔔 Notification.API<br/>(SignalR WebSocket Hub)"]
     end
 
     subgraph Databases["Tầng Dữ liệu (Polyglot Persistence)"]
@@ -87,16 +89,13 @@ flowchart TB
 
     RiderApp -->|HTTP / REST| YARP
     DriverApp -->|HTTP / REST| YARP
-    RiderApp -.->|WebSocket SignalR| YARP
-    DriverApp -.->|WebSocket SignalR| YARP
 
     YARP --> IdentitySvc
     YARP --> TripSvc
     YARP --> MatchingSvc
     YARP --> PaymentSvc
-    YARP --> NotifySvc
 
-    TripSvc <-->|gRPC / REST High-speed| MatchingSvc
+    TripSvc -->|gRPC pricing| MatchingSvc
 
     IdentitySvc --- IdentityDB
     TripSvc --- TripDB
@@ -106,12 +105,13 @@ flowchart TB
     TripSvc -.->|Publish Domain Events| RabbitMQ
     PaymentSvc -.->|Publish Payment Events| RabbitMQ
     MatchingSvc -.->|Publish Matching Events| RabbitMQ
-    RabbitMQ -.->|Consume Events| NotifySvc
     RabbitMQ -.->|Consume Payment Events| TripSvc
+    RabbitMQ -.->|Driver offers| TripSvc
+    RabbitMQ -.->|Accept / Reject / Cancel| MatchingSvc
     RabbitMQ -.->|Consume DropOff Events| PaymentSvc
 
-    IdentitySvc & TripSvc & MatchingSvc & PaymentSvc & NotifySvc -.->|Trace Spans| Jaeger
-    IdentitySvc & TripSvc & MatchingSvc & PaymentSvc & NotifySvc -.->|Structured Logs| Loki
+    IdentitySvc & TripSvc & MatchingSvc & PaymentSvc -.->|Trace Spans| Jaeger
+    IdentitySvc & TripSvc & MatchingSvc & PaymentSvc -.->|Structured Logs| Loki
     Grafana --> Jaeger
     Grafana --> Loki
 ```
@@ -134,10 +134,9 @@ Mỗi dịch vụ sở hữu cơ sở dữ liệu riêng biệt (**Database-per-
 ### 2.3 API Gateway (YARP Reverse Proxy)
 
 Cổng vào duy nhất của hệ thống được xây dựng bằng **YARP (Yet Another Reverse Proxy)** của Microsoft chạy tại port `5000`:
-- **Định tuyến thông minh (Routing)**: Tự động forward request đến đúng cụm microservice (`/api/v1/trips/*`, `/api/v1/matching/*`, `/api/v1/payments/*`, `/api/v1/auth/*`, `/hubs/notification/*`).
+- **Định tuyến thông minh (Routing)**: Tự động forward request đến đúng cụm microservice (`/api/v1/trips/*`, `/api/v1/matching/*`, `/api/v1/payments/*`, `/api/v1/auth/*`).
 - **Phân quyền tập trung (Authorization)**: Áp dụng `authenticated` policy qua JWT Bearer token tại gateway cho các route nhạy cảm như thanh toán.
 - **Bảo vệ hệ thống (Rate Limiting)**: Áp dụng chính sách `Sliding Window Rate Limiter` ngăn chặn tấn công từ chối dịch vụ (DDoS) và lạm dụng tài nguyên.
-- **Hỗ trợ WebSocket / SignalR**: Định tuyến thông suốt các kết nối thời gian thực cho `NotificationHub`.
 
 ---
 
@@ -154,28 +153,24 @@ Hệ thống điều phối quy trình nghiệp vụ phức tạp giữa các d�
 
 ### 3.1 Máy trạng thái (Trip State Machine)
 
-Vòng đời chuyến đi được quản lý bởi **State Pattern** trong `Trip Service` tuân thủ các bước chuyển hợp lệ:
+Vòng đời chuyến đi được quản lý bởi **state machine** trong `Trip Service` tuân thủ các bước chuyển hợp lệ:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Requested: Rider tạo yêu cầu đặt xe
-    
-    Requested --> DriverAccepted: Matching tìm thấy tài xế & Tài xế bấm Nhận
-    Requested --> Cancelled: Rider hủy chuyến khi đang tìm xe
-    Requested --> DriverRejected: Tài xế từ chối (quay lại tìm tài xế khác)
-    
-    DriverAccepted --> PickedUp: Tài xế di chuyển đến đón khách thành công
-    DriverAccepted --> Cancelled: Hủy trước khi đón khách
-    
-    PickedUp --> DroppedOff: Tài xế trả khách tại điểm đến
-    
-    DroppedOff --> Completed: Thanh toán thành công (Ví / Thẻ)
-    DroppedOff --> PaymentFailed: Thanh toán thất bại (Ví thiếu tiền / Cổng thẻ lỗi)
-    
-    PaymentFailed --> Completed: Khách hàng nạp tiền & Bấm 'Thanh toán lại' thành công
-    
-    Completed --> [*]
+    [*] --> Requested: Create trip and view quote
+    Requested --> Requested: Call Matching manually / reject count <= k
+    Requested --> DriverAccepted: Accept current offer
+    Requested --> Failed: No driver / reject count > k
+    Requested --> Cancelled
+    DriverAccepted --> PickedUp
+    DriverAccepted --> Cancelled
+    PickedUp --> DroppedOff
+    DroppedOff --> PaymentPending: Start payment atomically
+    PaymentPending --> PaymentPending: Automatic retry / pending review
+    PaymentPending --> Completed: Current payment succeeded
+    Failed --> [*]
     Cancelled --> [*]
+    Completed --> [*]
 ```
 
 ---
@@ -188,7 +183,7 @@ $$\text{Fare} = \left[ \text{BaseFare} + (d \times \text{Rate}_{\text{dist}}) + 
 
 Trong đó:
 - $\text{BaseFare}$: Cước phí mở cửa tối thiểu.
-- $d$: Khoảng cách di chuyển tính theo km (tính bằng tọa độ GPS Haversine hoặc định tuyến OSRM).
+- $d$: Khoảng cách di chuyển tính theo km (OSRM road routing).
 - $t$: Thời gian ước lượng tính theo phút.
 - $s$: Hệ số giá động (**Surge Multiplier**) – tự động tăng khi trời mưa hoặc khu vực có nhu cầu cao.
 - $c_m$: Phí phụ thu đặc biệt (phí cầu đường, trạm thu phí Toll).
@@ -225,7 +220,7 @@ Dự án áp dụng triệt để 5 nguyên tắc SOLID xuyên suốt các tần
 
 | Nhóm Pattern | Pattern | Ứng dụng cụ thể trong SwiftRide |
 | :--- | :--- | :--- |
-| **Behavioral** | **State Pattern** | Quản lý máy trạng thái chuyến đi (`TripState`, `RequestedState`, `AcceptedState`, `DroppedOffState`...) đảm bảo các transition hợp lệ. |
+| **Behavioral** | **state machine** | Quản lý máy trạng thái chuyến đi (`TripState`, `RequestedState`, `AcceptedState`, `DroppedOffState`...) đảm bảo các transition hợp lệ. |
 | **Behavioral** | **Strategy Pattern** | Đóng gói thuật toán tính cước (`IPricingStrategy`: Standard, Surge, Rainy, Toll, Promo) và xử lý thanh toán (`IPaymentStrategy`: Wallet, Card). |
 | **Behavioral** | **Observer / Pub-Sub** | Phát và lắng nghe Domain Events qua MassTransit & RabbitMQ (`TripCreatedEvent`, `TripDropOffEvent`, `PaymentCompletedEvent`...). |
 | **Creational** | **Factory Pattern** | `PaymentStrategyFactory` tạo đúng đối tượng xử lý thanh toán theo `PaymentMethod` được chỉ định tại runtime. |
@@ -245,7 +240,6 @@ Dự án áp dụng triệt để 5 nguyên tắc SOLID xuyên suốt các tần
 | **Trip.API** | ASP.NET Core Minimal API | `5002` | `6002` | Quản lý vòng đời cuốc xe (State Machine) |
 | **Matching.API** | MongoDB Driver, gRPC/REST | `5003` (HTTP) / `5004` (gRPC) | `6003` / `6004` | Ghép tài xế không gian & tính cước động |
 | **Payment.API** | Npgsql, EF Core | `5005` | `6005` | Xử lý thanh toán ví, cổng thẻ & sổ cái |
-| **Notification.API** | ASP.NET Core SignalR | `5006` | `6006` | Đẩy thông báo thời gian thực qua WebSocket |
 | **TripDB** | Microsoft SQL Server 2022 | `1435` | `1435:1433` | CSDL lưu trữ cuốc xe |
 | **IdentityDB** | Microsoft SQL Server 2022 | `1436` | `1436:1433` | CSDL tài khoản & phân quyền |
 | **PaymentDB** | PostgreSQL 16 | `5433` | `5433:5432` | CSDL thanh toán & sổ cái ví |
@@ -288,10 +282,6 @@ Tất cả các API bên dưới đều được gọi qua **API Gateway** tại
 - `POST /api/v1/payments/wallets/{userId}/topup`: Nạp tiền trực tiếp vào ví SwiftRide.
 - `GET /api/v1/payments/wallets/{userId}/ledger`: Xem lịch sử biến động số dư / sổ cái giao dịch.
 
-### 7.5 Kết nối thời gian thực (Notification Service)
-- `WS /hubs/notification`: Kết nối WebSocket SignalR nhận thông báo realtime (Trạng thái chuyến, Tài xế nhận cuốc, Bị từ chối, v.v.).
-
----
 
 ## 8. Khả năng quan sát (Observability - Jaeger, Loki, Grafana)
 
@@ -333,7 +323,6 @@ SwiftRide-Microservice/
 │   ├── Services/
 │   │   ├── Identity/             # Dịch vụ Quản lý User & Xác thực (SQL Server)
 │   │   ├── Matching/             # Dịch vụ Ghép tài xế & Tính cước (MongoDB)
-│   │   ├── Notification/         # Dịch vụ Thông báo Realtime qua SignalR Hub
 │   │   ├── Payment/              # Dịch vụ Thanh toán & Sổ cái Ví (PostgreSQL)
 │   │   └── Trip/                 # Dịch vụ Vòng đời Chuyến đi (SQL Server)
 │   └── tests/                    # Dự án Kiểm thử

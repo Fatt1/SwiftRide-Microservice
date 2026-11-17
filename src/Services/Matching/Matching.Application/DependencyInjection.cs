@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.CQRS.Behaviors;
 
@@ -7,6 +8,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddMatchingApplication(this IServiceCollection services)
     {
+        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         services.ConfigureMediatR();
         return services;
     }

@@ -6,7 +6,6 @@ $services = @(
     @{ Name = "Trip.API"; Project = "$baseDir\src\Services\Trip\Trip.API\Trip.API.csproj" },
     @{ Name = "Matching.API"; Project = "$baseDir\src\Services\Matching\Matching.API\Matching.API.csproj" },
     @{ Name = "Payment.API"; Project = "$baseDir\src\Services\Payment\Payment.API\Payment.API.csproj" },
-    @{ Name = "Notification.API"; Project = "$baseDir\src\Services\Notification\Notification.API\Notification.API.csproj" },
     @{ Name = "YARPAPiGw"; Project = "$baseDir\src\ApiGateways\YARPAPiGw\YARPAPiGw.csproj" }
 )
 

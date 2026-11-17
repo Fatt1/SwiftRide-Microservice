@@ -148,4 +148,19 @@ public class DriverLocationRepositoryTests(ApiFixture fixture) : IClassFixture<A
         // Assert
         Assert.Null(result);
     }
+    [Fact]
+    public async Task GetNearestAvailableDriverAsync_WithActiveTrip_ExcludesReservedDriver()
+    {
+        // Arrange
+        await fixture.ResetDatabaseAsync(); var repo = CreateRepository();
+        var reserved = DriverLocation.Create(Guid.NewGuid(), "Reserved", 10.7725, 106.6980);
+        reserved.ActiveTripId = Guid.NewGuid();
+        var available = DriverLocation.Create(Guid.NewGuid(), "Available", 10.7735, 106.6990);
+        await repo.CreateAsync(reserved); await repo.CreateAsync(available);
+        // Act
+        var nearest = await repo.GetNearestAvailableDriverAsync(10.7725, 106.6980, 5000, []);
+        // Assert
+        Assert.NotNull(nearest); Assert.Equal(available.DriverId, nearest.DriverId);
+    }
+
 }

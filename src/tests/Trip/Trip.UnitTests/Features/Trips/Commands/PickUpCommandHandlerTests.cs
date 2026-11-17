@@ -12,7 +12,7 @@ public class PickUpCommandHandlerTests
 {
     private readonly ITripRepository _tripRepository = Substitute.For<ITripRepository>();
 
-    private PickUpHandler CreateHandler() => new(_tripRepository);
+    private MediatR.IRequestHandler<PickUpCommand, Shared.Result> CreateHandler() => global::Trip.UnitTests.ValidatedHandlers.PickUp(_tripRepository);
 
     [Fact]
     public async Task Handle_WhenTripNotFound_ReturnsNotFoundError()

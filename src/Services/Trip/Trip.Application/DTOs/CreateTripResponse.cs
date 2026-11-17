@@ -9,6 +9,8 @@ public sealed record CreateTripResponse(
     decimal? EstimatedFare,
     decimal? DistanceKm,
     DateTimeOffset CreatedAt,
-    PricingDetailsDto? Pricing = null
+    PricingDetailsDto? Pricing = null,
+    int RejectCount = 0,
+    string? MatchSessionId = null
 );
 

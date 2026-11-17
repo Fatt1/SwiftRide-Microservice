@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Shared.Extensions;
@@ -44,6 +44,7 @@ public static class ResultExtensions
 
         var (statusCode, type) = error switch
         {
+            UnavailableError => (StatusCodes.Status503ServiceUnavailable, "https://www.rfc-editor.org/rfc/rfc9110#section-15.6.4"),
             NotFoundError => (StatusCodes.Status404NotFound, "https://tools.ietf.org/html/rfc9110#section-15.5.5"),
             ConflictError => (StatusCodes.Status409Conflict, "https://tools.ietf.org/html/rfc9110#section-15.5.10"),
             ForbiddenError => (StatusCodes.Status403Forbidden, "https://tools.ietf.org/html/rfc9110#section-15.5.4"),

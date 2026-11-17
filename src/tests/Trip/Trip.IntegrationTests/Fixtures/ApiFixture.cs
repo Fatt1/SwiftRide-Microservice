@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using Testcontainers.MsSql;
 using Trip.API;
-using Trip.Application.Common.Interfaces;
+using Trip.Application.Interfaces;
 using Trip.Infrastructure.Persistence;
 using Xunit;
 
@@ -55,6 +55,9 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     public async Task InitializeAsync()
     {
         await _mssql.StartAsync();
+        PricingGrpcServiceMock.GetPricingAsync(Arg.Any<Guid>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(),
+            Arg.Any<bool>(), Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<double?>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
+            .Returns(new Trip.Application.DTOs.PricingDetailsDto(40000, 10000, 0.1, 50000, 1, 50000, 50000, 0, [], 0, 5000, 55000, 5, 20, "507f1f77bcf86cd799439011"));
 
         // Apply EF migrations to initialize schema
         using var scope = Services.CreateScope();

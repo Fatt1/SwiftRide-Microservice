@@ -1,9 +1,9 @@
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Shared;
-using Trip.Application.Common.Interfaces;
 using Trip.Application.DTOs;
 using Trip.Application.Features.Trips.Commands.CreateTrip;
+using Trip.Application.Interfaces;
 using Trip.Domain.Enums;
 using Trip.Domain.Repositories;
 using Xunit;
@@ -51,7 +51,7 @@ public class CreateTripCommandHandlerTests
             TaxAmount: 4640.0,
             FinalTotal: 62640.0,
             DistanceKm: 6.8,
-            EstimatedMinutes: 18
+            EstimatedMinutes: 18, MatchSessionId: "507f1f77bcf86cd799439011"
         );
 
         _pricingGrpcService.GetPricingAsync(
@@ -87,54 +87,21 @@ public class CreateTripCommandHandlerTests
             t.RiderId == command.RiderId &&
             t.PickupAddress == command.PickupAddress &&
             t.Status == TripStatus.Requested));
-        await _tripRepository.Received(1).Update(Arg.Any<TripEntity>());
-        await _tripRepository.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task Handle_WhenPricingGrpcThrows_FallsBackToDefaultPricingAndReturnsSuccess()
+    public async Task Handle_WhenRoutingUnavailable_ReturnsFailureWithoutSavingTrip()
     {
         // Arrange
-        var command = new CreateTripCommand(
-            RiderId: Guid.NewGuid(),
-            PickupAddress: "123 Le Loi",
-            DropoffAddress: "456 Nguyen Hue",
-            PickupLat: 10.7769,
-            PickupLng: 106.7009,
-            DropoffLat: 10.7770,
-            DropoffLng: 106.7010,
-            HasToll: false
-        );
-
-        _pricingGrpcService.GetPricingAsync(
-            Arg.Any<Guid>(),
-            Arg.Any<double>(),
-            Arg.Any<double>(),
-            Arg.Any<double>(),
-            Arg.Any<double>(),
-            Arg.Any<bool>(),
-            Arg.Any<string?>(),
-            Arg.Any<bool>(),
-            Arg.Any<double?>(),
-            Arg.Any<int?>(),
-            Arg.Any<CancellationToken>())
-            .Throws(new HttpRequestException("Matching Service unavailable"));
-
-        var handler = CreateHandler();
-
+        var command = new CreateTripCommand(Guid.NewGuid(), "Pickup", "Dropoff", 10.7, 106.7, 10.8, 106.8);
+        _pricingGrpcService.GetPricingAsync(Arg.Any<Guid>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(),
+            Arg.Any<double>(), Arg.Any<bool>(), Arg.Any<string?>(), Arg.Any<bool>(), Arg.Any<double?>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
+            .Throws(new PricingUnavailableException("OSRM unavailable"));
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
+        var result = await CreateHandler().Handle(command, CancellationToken.None);
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Value);
-        Assert.Equal(50000m, result.Value.EstimatedFare);
-        Assert.Equal(5.0m, result.Value.DistanceKm);
-        Assert.NotNull(result.Value.Pricing);
-        Assert.Equal(50000.0, result.Value.Pricing.FinalTotal);
-
-        await _tripRepository.Received(1).CreateAsync(Arg.Any<TripEntity>());
-        await _tripRepository.Received(1).Update(Arg.Any<TripEntity>());
-        await _tripRepository.Received(1).SaveChangesAsync();
+        Assert.False(result.IsSuccess);
+        Assert.IsType<UnavailableError>(result.Error);
+        await _tripRepository.DidNotReceive().CreateAsync(Arg.Any<TripEntity>());
     }
 }
