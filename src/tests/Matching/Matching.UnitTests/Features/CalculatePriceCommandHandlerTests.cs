@@ -16,11 +16,11 @@ public class CalculatePriceCommandHandlerTests
     private readonly IMatchingRepository _matchingRepository = Substitute.For<IMatchingRepository>();
     private readonly ILogger<CalculatePriceCommandHandler> _logger = Substitute.For<ILogger<CalculatePriceCommandHandler>>();
 
-    private static IRouteEstimator Routes()
+    private static IRouteEstimator Routes(double distanceKm = 3.5)
     {
         var routes = Substitute.For<IRouteEstimator>();
         routes.EstimateAsync(Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
-            .Returns(new RouteEstimate(3.5, 12));
+            .Returns(new RouteEstimate(distanceKm, 12));
         return routes;
     }
     [Fact]
@@ -33,10 +33,10 @@ public class CalculatePriceCommandHandlerTests
             .WithTaxRate(0.10)
             .Build();
         var options = Options.Create(pricingConfig);
-        var handler = new CalculatePriceCommandHandler(_matchingRepository, _logger, options, Routes());
+        const double routeDistanceKm = 5.3804;
+        var handler = new CalculatePriceCommandHandler(_matchingRepository, _logger, options, Routes(routeDistanceKm));
 
         var tripId = Guid.NewGuid();
-        // Coordinates for roughly 3.5 km trip in HCMC
         var command = new CalculatePriceCommand(
             IsRaining: false,
             PromoCode: null,
@@ -55,7 +55,8 @@ public class CalculatePriceCommandHandlerTests
         Assert.True(result.IsSuccess);
         var dto = result.Value;
         Assert.NotNull(dto);
-        Assert.True(dto.DistanceKm > 0);
+        Assert.Equal(5.4, dto.DistanceKm);
+        Assert.Equal(43200, dto.DistanceFare, precision: 2);
         Assert.True(dto.EstimatedMinutes > 0);
         Assert.True(dto.FinalTotal > 0);
         Assert.Equal(0.10, dto.TaxRate);

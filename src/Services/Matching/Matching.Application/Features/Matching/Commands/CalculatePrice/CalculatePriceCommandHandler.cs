@@ -23,7 +23,7 @@ public class CalculatePriceCommandHandler(IMatchingRepository matchingRepository
 
         var estimate = await routes.EstimateAsync(request.PickupLatitude, request.PickupLongitude,
             request.DestinationLatitude, request.DestinationLongitude, cancellationToken);
-        var distance = estimate.DistanceKm;
+        var distance = Math.Round(estimate.DistanceKm, 1, MidpointRounding.AwayFromZero);
         var estimatedTime = estimate.EstimatedMinutes;
 
         var pricingContext = new PricingContext(

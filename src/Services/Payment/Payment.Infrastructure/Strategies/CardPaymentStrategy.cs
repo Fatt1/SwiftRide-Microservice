@@ -1,6 +1,6 @@
 using Payment.Application.Abstractions;
-using Payment.Application.Payments.Contexts;
 using Payment.Application.Payments;
+using Payment.Application.Payments.Contexts;
 using Payment.Domain.Enums;
 using Payment.Domain.Repositories;
 using Shared;
@@ -16,10 +16,10 @@ public sealed class CardPaymentStrategy(IWalletRepository wallets, ICardPaymentP
     public async Task<Result> ChargeAsync(PaymentExecutionContext context, CancellationToken ct)
     {
         var payment = context.Payment;
-        var driver = await wallets.GetByUserIdAsync(payment.DriverId!.Value, ct);
-        if (driver is null)
+        var driverWallet = await wallets.GetByUserIdAsync(payment.DriverId!.Value, ct);
+        if (driverWallet is null)
             return Result.Failure(new ConflictError("A driver wallet is required."));
-        if (driver.Currency != payment.Currency)
+        if (driverWallet.Currency != payment.Currency)
             return Result.Failure(new ConflictError("Driver wallet currency does not match."));
 
         var result = await processor.ChargeAsync(payment.Amount, payment.GatewayToken!, payment.IdempotencyKey, context.RetryAttempt, ct);
@@ -27,22 +27,22 @@ public sealed class CardPaymentStrategy(IWalletRepository wallets, ICardPaymentP
         if (!result.IsSuccess)
             return Result.Failure(new ConflictError(result.FailureReason!));
         ledgerPosting.Record(payment.Id, null, payment.PaymentMethod, EntryType.Debit, payment.Amount, "Payment charge");
-        ledgerPosting.Record(payment.Id, driver, payment.PaymentMethod, EntryType.Credit, payment.Amount, "Driver earnings");
+        ledgerPosting.Record(payment.Id, driverWallet, payment.PaymentMethod, EntryType.Credit, payment.Amount, "Driver earnings");
         return Result.Success();
     }
 
     public async Task<Result> RefundAsync(RefundExecutionContext context, CancellationToken ct)
     {
         var payment = context.Payment;
-        var driver = await wallets.GetByUserIdAsync(payment.DriverId!.Value, ct);
-        if (driver is null || driver.Currency != payment.Currency ||
-            driver.Balance < payment.Amount)
+        var driverWallet = await wallets.GetByUserIdAsync(payment.DriverId!.Value, ct);
+        if (driverWallet is null || driverWallet.Currency != payment.Currency ||
+            driverWallet.Balance < payment.Amount)
             return Result.Failure(new ConflictError("Driver wallet is missing, incompatible or has insufficient balance."));
 
         var result = await processor.RefundAsync(payment.Amount, payment.GatewayToken!, payment.Id, ct);
         if (!result.IsSuccess)
             return Result.Failure(new ConflictError(result.FailureReason!));
-        ledgerPosting.Record(payment.Id, driver, payment.PaymentMethod, EntryType.Debit, payment.Amount, "Refund: reverse driver earnings");
+        ledgerPosting.Record(payment.Id, driverWallet, payment.PaymentMethod, EntryType.Debit, payment.Amount, "Refund: reverse driver earnings");
         ledgerPosting.Record(payment.Id, null, payment.PaymentMethod, EntryType.Credit, payment.Amount, "Refund: return rider payment");
         return Result.Success();
     }

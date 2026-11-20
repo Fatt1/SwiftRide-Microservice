@@ -1,4 +1,5 @@
 namespace Trip.Domain.Enums;
+
 public enum TripStatus
 {
     Requested = 0,

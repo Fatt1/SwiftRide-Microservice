@@ -1,8 +1,8 @@
 using MediatR;
 using Payment.Application.Features.Ledger.Queries.GetLedger;
 using Payment.Application.Features.Ledger.Queries.GetLedgerByPaymentId;
-using Payment.Application.Features.Payments.Commands.CreatePayment;
 using Payment.Application.Features.Payments.Commands.RefundPayment;
+using Payment.Application.Features.Payments.Commands.RetryPayment;
 using Payment.Application.Features.Payments.Queries.GetPaymentById;
 using Payment.Application.Features.Payments.Queries.GetPayments;
 using Payment.Application.Features.Payments.Queries.GetPaymentByTripId;
@@ -16,14 +16,13 @@ public static class PaymentEndpoints
     {
         var group = endpoints.MapApiV1Group("payments").WithTags("Payments");
 
-        // 1. Tạo giao dịch thanh toán chuyến đi
-        group.MapPost("", async (CreatePaymentCommand command, ISender sender, CancellationToken ct) =>
+        group.MapPost("", async (RetryPaymentCommand command, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(command, ct);
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
-        .WithSummary("Thanh toán một chuyến đi")
-        .WithDescription("Gửi TripId, RiderId, DriverId, số tiền, phương thức thanh toán và IdempotencyKey. Với thẻ, cần thêm GatewayToken. API trả về PaymentId và trạng thái; gửi lại cùng IdempotencyKey sẽ trả giao dịch đã có.");
+        .WithSummary("Thanh toán lại cho một chuyến đi")
+        .WithDescription("Gửi TripId, PaymentMethod và IdempotencyKey. Với thẻ, cần thêm GatewayToken. API lấy số tiền và các bên từ giao dịch đầu tiên của chuyến. Chuyến đã thanh toán hoặc đang có giao dịch chờ xử lý trả về HTTP 409.");
 
         // 2. Lấy danh sách tất cả giao dịch thanh toán
         group.MapGet("", async (ISender sender, CancellationToken ct) =>

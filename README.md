@@ -179,16 +179,16 @@ stateDiagram-v2
 
 Cước phí chuyến đi được tính toán động bởi `Matching & Pricing Service` dựa trên khoảng cách, thời gian và các yếu tố môi trường thực tế:
 
-$$\text{Fare} = \left[ \text{BaseFare} + (d \times \text{Rate}_{\text{dist}}) + (t \times \text{Rate}_{\text{time}}) \right] \times s + c_m - \text{Promo} + \text{Tax}$$
+$$p = \bigl((c_d \cdot d + c_t \cdot t) \cdot s + c_m\bigr) \cdot \eta \cdot (1 + T)$$
 
-Trong đó:
-- $\text{BaseFare}$: Cước phí mở cửa tối thiểu.
-- $d$: Khoảng cách di chuyển tính theo km (OSRM road routing).
-- $t$: Thời gian ước lượng tính theo phút.
-- $s$: Hệ số giá động (**Surge Multiplier**) – tự động tăng khi trời mưa hoặc khu vực có nhu cầu cao.
-- $c_m$: Phí phụ thu đặc biệt (phí cầu đường, trạm thu phí Toll).
-- $\text{Promo}$: Giá trị chiết khấu từ mã giảm giá voucher.
-- $\text{Tax}$: Thuế VAT theo quy định.
+- $d$ là quãng đường theo OSRM và $c_d$ là đơn giá mỗi km.
+- $t$ là thời gian ước lượng và $c_t$ là đơn giá mỗi phút.
+- $s$ là tích các hệ số surge theo giờ và thời tiết được áp dụng.
+- $c_m$ là phí cầu đường.
+- $\eta$ là tỷ lệ tiền phải trả sau khuyến mãi (ví dụ $0{,}9$ khi giảm 10%).
+- $T$ là thuế suất.
+
+Matching làm tròn quãng đường đến một chữ số thập phân trước khi tính cước và làm tròn tổng tiền sau thuế đến 1.000đ gần nhất.
 
 ---
 
@@ -277,7 +277,7 @@ Tất cả các API bên dưới đều được gọi qua **API Gateway** tại
 - `GET /api/v1/matching/drivers/locations`: Lấy tọa độ GPS thời gian thực của các tài xế trực tuyến trên bản đồ.
 
 ### 7.4 Thanh toán & Ví tiền (Payment Service)
-- `POST /api/v1/payments`: Tạo giao dịch thanh toán mới cho cuốc xe (hỗ trợ thanh toán lại cuốc lỗi).
+- `POST /api/v1/payments` thử lại thanh toán của chuyến đã có giao dịch thất bại. Gửi `tripId`, `paymentMethod`, `idempotencyKey` mới và `gatewayToken` nếu dùng thẻ. Chuyến đã thanh toán trả về HTTP 409.
 - `GET /api/v1/payments/wallets/{userId}`: Lấy thông tin số dư ví điện tử của người dùng.
 - `POST /api/v1/payments/wallets/{userId}/topup`: Nạp tiền trực tiếp vào ví SwiftRide.
 - `GET /api/v1/payments/wallets/{userId}/ledger`: Xem lịch sử biến động số dư / sổ cái giao dịch.

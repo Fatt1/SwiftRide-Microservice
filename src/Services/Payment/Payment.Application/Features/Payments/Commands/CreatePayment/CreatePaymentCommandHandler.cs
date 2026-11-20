@@ -23,9 +23,9 @@ public sealed class CreatePaymentCommandHandler(
         try
         {
             await transactions.LockPaymentsAsync([request.TripId, request.IdempotencyKey], ct);
-            logger.LogInformation("Bắt đầu xử lý thanh toán: TripId={TripId}, RiderId={RiderId}, DriverId={DriverId}, Amount={Amount} {Currency}, PaymentMethod={PaymentMethod}, IdempotencyKey={IdempotencyKey}",
+            logger.LogInformation("Bắt đầu xử lý thanh toán: TripId={TripId}, RiderId={RiderId}, DriverId={DriverId}, Amount={Amount} {Currency}, PaymentMethod={PaymentMethod}, IdempotencyKey={IdempotencyKey}, RetryAttempt={RetryAttempt}",
                 request.TripId, request.RiderId, request.DriverId, request.Amount, request.Currency,
-                request.PaymentMethod, request.IdempotencyKey);
+                request.PaymentMethod, request.IdempotencyKey, request.RetryAttempt);
 
             // 1. Kiểm tra trùng lặp theo IdempotencyKey (cùng key trả lại kết quả cũ)
             var existingByKey = await payments.GetByIdempotencyKeyAsync(request.IdempotencyKey, ct);
@@ -45,37 +45,17 @@ public sealed class CreatePaymentCommandHandler(
                 return Result.Success(PaymentDto.From(existingByKey));
             }
 
-            // 2. Kiểm tra nếu chuyến đi này ĐÃ có giao dịch hoàn tất thành công (Completed)
+            // The drop-off consumer can also receive an older event with a different key.
             var completedPayment = await payments.GetCompletedByTripIdAsync(request.TripId, ct);
             if (completedPayment is not null)
             {
-                logger.LogInformation("Chuyến đi {TripId} đã được thanh toán thành công trước đó (PaymentId={PaymentId})",
-                    request.TripId, completedPayment.Id);
                 if (completedPayment.RiderId != request.RiderId || completedPayment.DriverId != request.DriverId ||
                     completedPayment.Amount != request.Amount || completedPayment.Currency != request.Currency)
                     return Result.Failure<PaymentDto>(new ConflictError("Trip is settled with different payment details."));
 
-                await publisher.Publish(new PaymentCompletedEvent
-                {
-                    CorrelationId = request.IdempotencyKey,
-                    PaymentId = completedPayment.Id,
-                    TripId = request.TripId,
-                    RiderId = completedPayment.RiderId,
-                    DriverId = completedPayment.DriverId!.Value,
-                    Amount = completedPayment.Amount,
-                    PaymentMethod = completedPayment.PaymentMethod
-                }, ct);
-
-                if (transaction is not null)
-                    await transactions.EndTransactionAsync();
-
-                else
-                    await transactions.SaveChangesAsync();
-
                 return Result.Success(PaymentDto.From(completedPayment));
             }
 
-            // 3. Cho phép 1 chuyến đi có nhiều PaymentTransactions (khi thanh toán lại là tạo mới hoàn toàn)
             await transactions.LockWalletsAsync([request.RiderId, request.DriverId], ct);
             var payment = PaymentTransaction.Create(request.TripId, request.RiderId, request.DriverId,
                 request.Amount, request.PaymentMethod, request.IdempotencyKey, request.GatewayToken, request.Currency);
@@ -125,17 +105,15 @@ public sealed class CreatePaymentCommandHandler(
             else
             {
                 await transactions.SaveChangesAsync();
-                logger.LogInformation("Đã lưu payment và event vào transaction của consumer: TripId={TripId}, PaymentId={PaymentId}, Status={Status}; chờ consumer commit rồi outbox mới chuyển event sang RabbitMQ",
+                logger.LogInformation("Đã lưu payment và event trong transaction hiện tại: TripId={TripId}, PaymentId={PaymentId}, Status={Status}; outbox sẽ gửi event sau khi commit",
                     payment.TripId, payment.Id, payment.Status);
             }
             return Result.Success(PaymentDto.From(payment));
         }
-        catch (Exception exception)
+        catch (TransientCardPaymentException exception)
         {
-            logger.LogError(exception, "Lỗi xử lý thanh toán: TripId={TripId}, IdempotencyKey={IdempotencyKey}, PaymentMethod={PaymentMethod}; transaction do handler sở hữu sẽ rollback nếu có",
-                request.TripId, request.IdempotencyKey, request.PaymentMethod);
-            if (transaction is not null)
-                await transactions.RollBackTransactionAsync();
+            logger.LogWarning("Lỗi tạm thời từ cổng thanh toán: TripId={TripId}, IdempotencyKey={IdempotencyKey}, RetryAttempt={RetryAttempt}, Reason={Reason}",
+                request.TripId, request.IdempotencyKey, request.RetryAttempt, exception.Message);
             throw;
         }
     }

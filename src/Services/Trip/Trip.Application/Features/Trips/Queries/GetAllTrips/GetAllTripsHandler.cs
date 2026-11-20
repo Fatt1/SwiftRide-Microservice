@@ -44,7 +44,6 @@ internal sealed class GetAllTripsHandler(ITripRepository tripRepository)
                 trip.DropoffLat,
                 trip.DropoffLng,
                 trip.EstimatedFare,
-                trip.EstimatedFare,
                 trip.DistanceKm,
                 trip.CreatedAt,
                 trip.RejectCount, trip.MatchSessionId, trip.OfferedDriverId,

@@ -73,7 +73,7 @@ public sealed class FindDriverCommandHandler(IMatchingRepository matchingReposit
             DriverName = driver.FullName,
             MaxAllowedRejections = session.MaxAllowedRejections,
             TotalFare = (decimal)session.PricingBreakdown.FinalTotal,
-            DistanceKm = session.DistanceKm,
+            DistanceKm = Math.Round(session.DistanceKm, 1, MidpointRounding.AwayFromZero),
             EstimatedDurationMinutes = session.EstimatedMinutes
         }, ct);
         return Result.Success(new FindDriverResult(driver.DriverId, driver.FullName, driver.Latitude,
