@@ -146,8 +146,10 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
             Arg.Any<CancellationToken>());
     }
 
-    [Fact]
-    public async Task CreatePayment_WithCardAndMockSuccessToken_ReturnsOkWithCompletedStatusAndPublishesEvent()
+    [Theory]
+    [InlineData("mock-success")]
+    [InlineData("mock-retry-success")]
+    public async Task CreatePayment_WhenCardChargeSucceeds_ReturnsCompletedAndPublishesOnce(string token)
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
@@ -159,7 +161,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         {
             TripId = tripId,
             PaymentMethod = PaymentMethod.Card,
-            GatewayToken = "mock-success",
+            GatewayToken = token,
             IdempotencyKey = Guid.NewGuid(),
             Currency = "VND"
         };
@@ -403,18 +405,18 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
     }
 
     [Fact]
-    public async Task GetPaymentByTripId_WhenExists_ReturnsOkWithPaymentHistory()
+    public async Task GetPaymentByTripId_WhenMultiplePaymentsExist_ReturnsAllForTripNewestFirst()
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
         var tripId = Guid.NewGuid();
+        var failedPayment = new PaymentTransactionBuilder().WithTripId(tripId).WithStatus(PaymentStatus.Failed).Build();
+        var completedPayment = new PaymentTransactionBuilder().WithTripId(tripId).WithStatus(PaymentStatus.Completed).Build();
+        failedPayment.CreatedAt = completedPayment.CreatedAt.AddMinutes(-1);
+
         using (var db = fixture.GetDbContext())
         {
-            var payment = new PaymentTransactionBuilder()
-                .WithTripId(tripId)
-                .WithAmount(99_000m)
-                .Build();
-            await db.Payments.AddAsync(payment);
+            await db.Payments.AddRangeAsync(failedPayment, completedPayment, new PaymentTransactionBuilder().Build());
             await db.SaveChangesAsync();
         }
 
@@ -423,10 +425,10 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaymentHistoryDto>(TestJson.Options);
+        var result = await response.Content.ReadFromJsonAsync<PaymentHistoryDto[]>(TestJson.Options);
         result.ShouldNotBeNull();
-        result.TripId.ShouldBe(tripId);
-        result.Amount.ShouldBe(99_000m);
+        result.Select(payment => payment.PaymentId).ShouldBe(new[] { completedPayment.Id, failedPayment.Id });
+        result.Select(payment => payment.Status).ShouldBe(new[] { PaymentStatus.Completed, PaymentStatus.Failed });
     }
 
     [Fact]

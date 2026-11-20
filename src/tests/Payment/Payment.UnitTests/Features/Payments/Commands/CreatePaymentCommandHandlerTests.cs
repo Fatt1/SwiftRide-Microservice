@@ -4,6 +4,7 @@ using MassTransit.Testing;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Payment.Application.Abstractions;
 using Payment.Application.Features.Payments.Commands.CreatePayment;
@@ -321,7 +322,7 @@ public class CreatePaymentCommandHandlerTests
     [Theory]
     [InlineData("mock-retry-success", 3, false)]
     [InlineData("mock-retry-exhausted", 4, true)]
-    public async Task Consume_WhenGatewayThrowsTransientError_RetriesWithSamePaymentKey(
+    public async Task Consume_WhenGatewayThrowsTransientError_RetriesGatewayWithoutReplayingConsumer(
         string token, int expectedAttempts, bool expectFault)
     {
         var message = new TripDropOffEvent
@@ -338,8 +339,13 @@ public class CreatePaymentCommandHandlerTests
         var ledger = Substitute.For<ILedgerRepository>();
         var driver = new WalletBuilder().WithUserId(message.DriverId).WithBalance(0m).Build();
         wallets.GetByUserIdAsync(message.DriverId, Arg.Any<CancellationToken>()).Returns(driver);
+        var mockGateway = new MockCardPaymentProcessor();
+        var processor = Substitute.For<ICardPaymentProcessor>();
+        processor.ChargeAsync(Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(call => mockGateway.ChargeAsync(call.ArgAt<decimal>(0), call.ArgAt<string>(1),
+                call.ArgAt<Guid>(2), call.ArgAt<int>(3), call.ArgAt<CancellationToken>(4)));
         _strategies.GetStrategy(PaymentMethod.Card)
-            .Returns(new CardPaymentStrategy(wallets, new MockCardPaymentProcessor(), new LedgerPostingService(ledger)));
+            .Returns(new CardPaymentStrategy(wallets, processor, new LedgerPostingService(ledger), NullLogger<CardPaymentStrategy>.Instance));
         var paymentHandled = new TaskCompletionSource<PaymentStatus>(TaskCreationOptions.RunContinuationsAsynchronously);
         var sender = Substitute.For<ISender>();
         sender.Send(Arg.Any<CreatePaymentCommand>(), Arg.Any<CancellationToken>())
@@ -357,7 +363,11 @@ public class CreatePaymentCommandHandlerTests
                 bus.AddConsumer<TripDropOffConsumer>();
                 bus.UsingInMemory((context, transport) =>
                 {
-                    transport.UseMessageRetry(retry => retry.Immediate(3));
+                    transport.UseMessageRetry(retry =>
+                    {
+                        retry.Ignore<TransientCardPaymentException>();
+                        retry.Immediate(3);
+                    });
                     transport.ConfigureEndpoints(context);
                 });
             })
@@ -372,10 +382,12 @@ public class CreatePaymentCommandHandlerTests
         else
             (await paymentHandled.Task.WaitAsync(timeout.Token)).ShouldBe(PaymentStatus.Completed);
 
-        var commands = sender.ReceivedCalls().Select(call => call.GetArguments()[0]).OfType<CreatePaymentCommand>().ToArray();
-        commands.Select(command => command.IdempotencyKey)
-            .ShouldBe(Enumerable.Repeat(message.IdempotencyKey, expectedAttempts));
-        commands.Select(command => command.RetryAttempt).ShouldBe(Enumerable.Range(0, expectedAttempts));
+        await sender.Received(1).Send(Arg.Is<CreatePaymentCommand>(command =>
+            command.IdempotencyKey == message.IdempotencyKey && command.RetryAttempt == 0), Arg.Any<CancellationToken>());
+        sender.ReceivedCalls().Count().ShouldBe(1);
+        processor.ReceivedCalls().Count().ShouldBe(expectedAttempts);
+        for (var attempt = 0; attempt < expectedAttempts; attempt++)
+            await processor.Received(1).ChargeAsync(message.Amount, token, message.IdempotencyKey, attempt, Arg.Any<CancellationToken>());
         await _publisher.Received(expectFault ? 0 : 1)
             .Publish(Arg.Any<PaymentCompletedEvent>(), Arg.Any<CancellationToken>());
         await _publisher.DidNotReceive().Publish(Arg.Any<PaymentFailedEvent>(), Arg.Any<CancellationToken>());

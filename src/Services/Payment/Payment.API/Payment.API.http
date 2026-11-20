@@ -3,7 +3,7 @@
 @paymentId = REPLACE_WITH_PAYMENT_ID
 @tripId = REPLACE_WITH_TRIP_ID_FROM_FAILED_PAYMENT
 
-### Retry a failed trip payment with a new idempotency key
+### Retry a failed trip payment with a new idempotency key and simulate two gateway errors before success
 POST {{Payment.API_HostAddress}}/api/v1/payments
 Content-Type: application/json
 
@@ -12,11 +12,14 @@ Content-Type: application/json
   "paymentMethod": "Card",
   "idempotencyKey": "44444444-4444-4444-4444-444444444444",
   "currency": "VND",
-  "gatewayToken": "mock-success"
+  "gatewayToken": "mock-retry-success"
 }
 
 ### Get the payment ID returned by the charge request.
 GET {{Payment.API_HostAddress}}/api/v1/payments/{{paymentId}}
+
+### Get all payment attempts for a trip, newest first
+GET {{Payment.API_HostAddress}}/api/v1/payments/trip/{{tripId}}
 
 ### Full refund via HTTP only. Repeating this returns the existing refund.
 POST {{Payment.API_HostAddress}}/api/v1/payments/{{paymentId}}/refund

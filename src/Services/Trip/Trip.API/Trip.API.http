@@ -47,7 +47,7 @@ POST {{host}}/api/v1/trips/{{tripId}}/pickup
 
 ### Drop off and pay using a fresh picked-up trip for each scenario
 # mock-retry-success: transient error on the initial attempt and first retry, then success on the second retry
-# mock-retry-exhausted: transient error on every attempt, trip stays PaymentPending
+# mock-retry-exhausted: all four gateway calls fail, the message goes to the error queue and the trip stays PaymentPending
 # mock-decline: confirmed rejection, publishes PaymentFailedEvent
 # mock-success: immediate success
 POST {{host}}/api/v1/trips/{{tripId}}/dropoff

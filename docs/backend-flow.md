@@ -8,7 +8,9 @@
 4. `POST /api/v1/trips/{id}/driver-accept` or `driver-reject`: send `{ "driverId": "..." }` using the current invitation.
 5. After rejection, call Matching manually again. The backend does not automatically find another driver. Repeated rejection of the same invitation counts once. Repeated matching while an invitation is pending returns that invitation. After rejection/cancellation, Matching updates its own session from events. Calling again before those events arrive can still return the previous invitation; it cannot be accepted in Trip.
 6. After acceptance: `POST .../pickup`, then `.../dropoff` with `{ "paymentMethod": "Wallet" }` or `{ "paymentMethod": "Card", "gatewayToken": "mock-success" }`.
-7. Payment is asynchronous. Read the trip and its payment until Trip reaches `Completed` or Payment records a failure. Temporary processing errors are retried automatically with the same idempotency key. After a recorded failure, call `POST /api/v1/payments` with the trip ID, payment method and a new idempotency key. Include a gateway token for card. The endpoint uses the first payment's participants and amount and returns HTTP 409 if any payment for the trip is settled or still pending.
+7. Payment after dropoff is asynchronous. Read the trip and its payment until Trip reaches `Completed` or Payment records a failure. After a recorded failure, call `POST /api/v1/payments` with the trip ID, payment method and a new idempotency key. Include a gateway token for card. The endpoint uses the first payment's participants and amount and returns HTTP 409 if any payment for the trip is settled or still pending.
+
+Both paths retry transient card gateway errors in the card strategy with the same idempotency key. Up to three retries wait 200 ms, 500 ms and 1 s respectively. If all gateway calls fail, the exception reaches HTTP for a direct request or RabbitMQ's error queue for dropoff. The payment consumer's retry policy skips this gateway exception. A confirmed decline follows the regular failed-payment flow.
 
 There is no price confirmation endpoint, offer expiry or additional authorization policy in this change.
 

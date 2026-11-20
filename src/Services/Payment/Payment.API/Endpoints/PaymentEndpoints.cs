@@ -48,8 +48,8 @@ public static class PaymentEndpoints
             var result = await sender.Send(new GetPaymentByTripIdQuery(tripId), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : result.ToProblemDetails();
         })
-        .WithSummary("Xem giao dịch thanh toán theo TripId")
-        .WithDescription("Trả về giao dịch của chuyến đi, gồm trạng thái và lý do thất bại; trả 404 nếu chuyến chưa có giao dịch.");
+        .WithSummary("Xem danh sách giao dịch thanh toán theo TripId")
+        .WithDescription("Trả về mọi giao dịch của chuyến đi, từ mới nhất đến cũ nhất. Trả 404 nếu chuyến chưa có giao dịch.");
 
         // 5. Hoàn tiền cho giao dịch thanh toán chuyến
         group.MapPost("/{id:guid}/refund", async (Guid id, RefundPaymentCommand command, ISender sender, CancellationToken ct) =>

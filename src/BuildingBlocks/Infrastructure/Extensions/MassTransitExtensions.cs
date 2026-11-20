@@ -104,7 +104,8 @@ public static class MassTransitExtensions
         this IServiceCollection services,
         IConfiguration configuration,
         string servicePrefix = "",
-        Action<IBusRegistrationConfigurator>? configure = null)
+        Action<IBusRegistrationConfigurator>? configure = null,
+        Action<IRetryConfigurator>? configureRetry = null)
         where TDbContext : DbContext
     {
         var settings = GetEventBusSettings(configuration);
@@ -139,7 +140,7 @@ public static class MassTransitExtensions
 
             busConfig.UsingRabbitMq((context, rabbit) =>
             {
-                ConfigureRabbitMqBus(rabbit, context, settings);
+                ConfigureRabbitMqBus(rabbit, context, settings, configureRetry);
             });
         });
 
@@ -196,7 +197,8 @@ public static class MassTransitExtensions
     private static void ConfigureRabbitMqBus(
         IRabbitMqBusFactoryConfigurator rabbit,
         IBusRegistrationContext context,
-        EventBusSettings settings)
+        EventBusSettings settings,
+        Action<IRetryConfigurator>? configureRetry = null)
     {
         rabbit.Host(settings.HostAddress, settings.Port, "/", host =>
         {
@@ -209,6 +211,7 @@ public static class MassTransitExtensions
         rabbit.UseMessageRetry(retry =>
         {
             retry.Ignore<ArgumentException>();
+            configureRetry?.Invoke(retry);
             retry.Intervals(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15));
         });
 

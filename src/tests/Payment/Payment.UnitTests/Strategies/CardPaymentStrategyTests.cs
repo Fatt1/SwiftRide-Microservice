@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Payment.Application.Abstractions;
 using Payment.Application.Payments;
@@ -24,7 +25,7 @@ public class CardPaymentStrategyTests
     public CardPaymentStrategyTests()
     {
         _ledgerPosting = new LedgerPostingService(_ledger);
-        _strategy = new CardPaymentStrategy(_wallets, _processor, _ledgerPosting);
+        _strategy = new CardPaymentStrategy(_wallets, _processor, _ledgerPosting, NullLogger<CardPaymentStrategy>.Instance);
     }
 
     [Fact]
@@ -108,6 +109,7 @@ public class CardPaymentStrategyTests
         // Assert
         result.IsFailure.ShouldBeTrue();
         result.Error!.Message.ShouldBe("Card expired");
+        _processor.ReceivedCalls().Count().ShouldBe(1);
         _ledger.DidNotReceive().Add(Arg.Any<LedgerEntry>());
     }
 
