@@ -5,8 +5,8 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using Payment.Application.Dtos;
-using Payment.Application.Features.Payments.Commands.CreatePayment;
 using Payment.Application.Features.Payments.Commands.RefundPayment;
+using Payment.Application.Features.Payments.Commands.RetryPayment;
 using Payment.Domain.Entities;
 using Payment.Domain.Enums;
 using Payment.IntegrationTests.Common.Builders;
@@ -20,6 +20,16 @@ namespace Payment.IntegrationTests.Endpoints;
 public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixture>
 {
     private readonly HttpClient _client = fixture.CreateClient();
+
+    private async Task AddPriorPaymentAsync(Guid tripId, Guid riderId, Guid driverId, decimal amount,
+        PaymentStatus status = PaymentStatus.Failed)
+    {
+        using var db = fixture.GetDbContext();
+        var payment = new PaymentTransactionBuilder().WithTripId(tripId).WithRiderId(riderId)
+            .WithDriverId(driverId).WithAmount(amount).WithStatus(status).Build();
+        db.Payments.Add(payment);
+        await db.SaveChangesAsync();
+    }
 
     [Fact]
     public async Task CreatePayment_WithWalletAndSufficientBalance_ReturnsOkAndDeductsBalanceAndPublishesEvent()
@@ -39,15 +49,13 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         var tripId = Guid.NewGuid();
         var idempotencyKey = Guid.NewGuid();
-        var command = new CreatePaymentCommand
+        await AddPriorPaymentAsync(tripId, riderId, driverId, 100_000m);
+        await AddPriorPaymentAsync(tripId, riderId, driverId, 150_000m);
+        var command = new RetryPaymentCommand
         {
             TripId = tripId,
-            RiderId = riderId,
-            DriverId = driverId,
-            Amount = 100_000m,
             PaymentMethod = PaymentMethod.Wallet,
-            IdempotencyKey = idempotencyKey,
-            Currency = "VND"
+            IdempotencyKey = idempotencyKey
         };
 
         // Act
@@ -103,12 +111,10 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         }
 
         var tripId = Guid.NewGuid();
-        var command = new CreatePaymentCommand
+        await AddPriorPaymentAsync(tripId, riderId, driverId, 100_000m);
+        var command = new RetryPaymentCommand
         {
             TripId = tripId,
-            RiderId = riderId,
-            DriverId = driverId,
-            Amount = 100_000m,
             PaymentMethod = PaymentMethod.Wallet,
             IdempotencyKey = Guid.NewGuid(),
             Currency = "VND"
@@ -140,29 +146,29 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
             Arg.Any<CancellationToken>());
     }
 
-    [Fact]
-    public async Task CreatePayment_WithCardAndMockSuccessToken_ReturnsOkWithCompletedStatusAndPublishesEvent()
+    [Theory]
+    [InlineData("mock-success")]
+    [InlineData("mock-retry-success")]
+    public async Task CreatePayment_WhenCardChargeSucceeds_ReturnsCompletedAndPublishesOnce(string token)
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
         var tripId = Guid.NewGuid();
         var riderId = Guid.NewGuid();
         var driverId = Guid.NewGuid();
-        var command = new CreatePaymentCommand
+        await AddPriorPaymentAsync(tripId, riderId, driverId, 80_000m);
+        var command = new RetryPaymentCommand
         {
             TripId = tripId,
-            RiderId = riderId,
-            DriverId = driverId,
-            Amount = 80_000m,
             PaymentMethod = PaymentMethod.Card,
-            GatewayToken = "mock-success",
+            GatewayToken = token,
             IdempotencyKey = Guid.NewGuid(),
             Currency = "VND"
         };
 
         using (var seed = fixture.GetDbContext())
         {
-            seed.Wallets.Add(new WalletBuilder().WithUserId(command.DriverId).WithBalance(0m).Build());
+            seed.Wallets.Add(new WalletBuilder().WithUserId(driverId).WithBalance(0m).Build());
             await seed.SaveChangesAsync();
         }
 
@@ -189,12 +195,12 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
-        var command = new CreatePaymentCommand
+        var tripId = Guid.NewGuid();
+        var driverId = Guid.NewGuid();
+        await AddPriorPaymentAsync(tripId, Guid.NewGuid(), driverId, 80_000m);
+        var command = new RetryPaymentCommand
         {
-            TripId = Guid.NewGuid(),
-            RiderId = Guid.NewGuid(),
-            DriverId = Guid.NewGuid(),
-            Amount = 80_000m,
+            TripId = tripId,
             PaymentMethod = PaymentMethod.Card,
             GatewayToken = "mock-decline",
             IdempotencyKey = Guid.NewGuid(),
@@ -203,7 +209,7 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         using (var seed = fixture.GetDbContext())
         {
-            seed.Wallets.Add(new WalletBuilder().WithUserId(command.DriverId).WithBalance(0m).Build());
+            seed.Wallets.Add(new WalletBuilder().WithUserId(driverId).WithBalance(0m).Build());
             await seed.SaveChangesAsync();
         }
 
@@ -216,10 +222,16 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         result.ShouldNotBeNull();
         result.Status.ShouldBe(PaymentStatus.Failed);
         result.FailureReason.ShouldBe("Mock card was declined.");
+
+        var replay = await _client.PostAsJsonAsync("/api/v1/payments", command);
+        replay.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var replayedPayment = await replay.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
+        replayedPayment.ShouldNotBeNull();
+        replayedPayment.PaymentId.ShouldBe(result.PaymentId);
     }
 
     [Fact]
-    public async Task CreatePayment_WhenCalledTwiceWithSameIdempotencyKey_ReturnsSamePaymentWithoutDuplicateCharge()
+    public async Task CreatePayment_WithConcurrentRetries_ChargesOnlyOnce()
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
@@ -235,32 +247,19 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         }
 
         var tripId = Guid.NewGuid();
-        var idempotencyKey = Guid.NewGuid();
-        var command = new CreatePaymentCommand
-        {
-            TripId = tripId,
-            RiderId = riderId,
-            DriverId = driverId,
-            Amount = 100_000m,
-            PaymentMethod = PaymentMethod.Wallet,
-            IdempotencyKey = idempotencyKey,
-            Currency = "VND"
-        };
+        await AddPriorPaymentAsync(tripId, riderId, driverId, 100_000m);
+        var responses = await Task.WhenAll(
+            _client.PostAsJsonAsync("/api/v1/payments", new RetryPaymentCommand
+            {
+                TripId = tripId, PaymentMethod = PaymentMethod.Wallet, IdempotencyKey = Guid.NewGuid()
+            }),
+            _client.PostAsJsonAsync("/api/v1/payments", new RetryPaymentCommand
+            {
+                TripId = tripId, PaymentMethod = PaymentMethod.Wallet, IdempotencyKey = Guid.NewGuid()
+            }));
 
-        // Act - Call 1
-        var response1 = await _client.PostAsJsonAsync("/api/v1/payments", command);
-        response1.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result1 = await response1.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
-
-        // Act - Call 2 with identical command
-        var response2 = await _client.PostAsJsonAsync("/api/v1/payments", command);
-        response2.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result2 = await response2.Content.ReadFromJsonAsync<PaymentDto>(TestJson.Options);
-
-        // Assert
-        result1.ShouldNotBeNull();
-        result2.ShouldNotBeNull();
-        result2.PaymentId.ShouldBe(result1.PaymentId);
+        responses.Count(response => response.StatusCode == HttpStatusCode.OK).ShouldBe(1);
+        responses.Count(response => response.StatusCode == HttpStatusCode.Conflict).ShouldBe(1);
 
         using (var verifyDb = fixture.GetDbContext())
         {
@@ -269,8 +268,11 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         }
     }
 
-    [Fact]
-    public async Task CreatePayment_WithConflictingRequestForSameTrip_ReturnsConflict()
+    [Theory]
+    [InlineData(PaymentStatus.Completed)]
+    [InlineData(PaymentStatus.Refunded)]
+    [InlineData(PaymentStatus.Pending)]
+    public async Task CreatePayment_WithSettledOrPendingPayment_ReturnsConflict(PaymentStatus status)
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
@@ -278,26 +280,11 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
         var riderId = Guid.NewGuid();
         var driverId = Guid.NewGuid();
 
-        using (var db = fixture.GetDbContext())
-        {
-            var payment = new PaymentTransactionBuilder()
-                .WithTripId(tripId)
-                .WithRiderId(riderId)
-                .WithDriverId(driverId)
-                .WithAmount(100_000m)
-                .WithStatus(PaymentStatus.Completed)
-                .Build();
-            await db.Payments.AddAsync(payment);
-            await db.SaveChangesAsync();
-        }
-
-        // Different amount or different idempotency key for same trip
-        var conflictingCommand = new CreatePaymentCommand
+        await AddPriorPaymentAsync(tripId, riderId, driverId, 100_000m, status);
+        await AddPriorPaymentAsync(tripId, riderId, driverId, 100_000m);
+        var conflictingCommand = new RetryPaymentCommand
         {
             TripId = tripId,
-            RiderId = riderId,
-            DriverId = driverId,
-            Amount = 200_000m,
             PaymentMethod = PaymentMethod.Wallet,
             IdempotencyKey = Guid.NewGuid(),
             Currency = "VND"
@@ -315,12 +302,9 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
-        var command = new CreatePaymentCommand
+        var command = new RetryPaymentCommand
         {
             TripId = Guid.Empty, // Invalid empty Guid
-            RiderId = Guid.NewGuid(),
-            DriverId = Guid.NewGuid(),
-            Amount = -50_000m, // Invalid negative amount
             PaymentMethod = PaymentMethod.Wallet,
             IdempotencyKey = Guid.NewGuid(),
             Currency = "VND"
@@ -331,6 +315,32 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CreatePayment_ForCardWithoutGatewayToken_ReturnsBadRequest()
+    {
+        var command = new RetryPaymentCommand
+        {
+            TripId = Guid.NewGuid(), PaymentMethod = PaymentMethod.Card, IdempotencyKey = Guid.NewGuid()
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/v1/payments", command);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CreatePayment_WithoutPriorPayment_ReturnsNotFound()
+    {
+        var command = new RetryPaymentCommand
+        {
+            TripId = Guid.NewGuid(), PaymentMethod = PaymentMethod.Wallet, IdempotencyKey = Guid.NewGuid()
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/v1/payments", command);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -395,18 +405,18 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
     }
 
     [Fact]
-    public async Task GetPaymentByTripId_WhenExists_ReturnsOkWithPaymentHistory()
+    public async Task GetPaymentByTripId_WhenMultiplePaymentsExist_ReturnsAllForTripNewestFirst()
     {
         // Arrange
         await fixture.ResetDatabaseAsync();
         var tripId = Guid.NewGuid();
+        var failedPayment = new PaymentTransactionBuilder().WithTripId(tripId).WithStatus(PaymentStatus.Failed).Build();
+        var completedPayment = new PaymentTransactionBuilder().WithTripId(tripId).WithStatus(PaymentStatus.Completed).Build();
+        failedPayment.CreatedAt = completedPayment.CreatedAt.AddMinutes(-1);
+
         using (var db = fixture.GetDbContext())
         {
-            var payment = new PaymentTransactionBuilder()
-                .WithTripId(tripId)
-                .WithAmount(99_000m)
-                .Build();
-            await db.Payments.AddAsync(payment);
+            await db.Payments.AddRangeAsync(failedPayment, completedPayment, new PaymentTransactionBuilder().Build());
             await db.SaveChangesAsync();
         }
 
@@ -415,10 +425,10 @@ public class PaymentEndpointsTests(ApiFixture fixture) : IClassFixture<ApiFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<PaymentHistoryDto>(TestJson.Options);
+        var result = await response.Content.ReadFromJsonAsync<PaymentHistoryDto[]>(TestJson.Options);
         result.ShouldNotBeNull();
-        result.TripId.ShouldBe(tripId);
-        result.Amount.ShouldBe(99_000m);
+        result.Select(payment => payment.PaymentId).ShouldBe(new[] { completedPayment.Id, failedPayment.Id });
+        result.Select(payment => payment.Status).ShouldBe(new[] { PaymentStatus.Completed, PaymentStatus.Failed });
     }
 
     [Fact]

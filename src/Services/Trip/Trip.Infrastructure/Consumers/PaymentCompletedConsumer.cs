@@ -1,7 +1,6 @@
 using EventBus.Messages.Events;
 using MassTransit;
 using Microsoft.Extensions.Logging;
-using Trip.Domain.Enums;
 using Trip.Domain.Repositories;
 namespace Trip.Infrastructure.Consumers;
 
@@ -11,7 +10,7 @@ public class PaymentCompletedConsumer(ITripRepository tripRepository, ILogger<Pa
     {
         var m = context.Message;
         var trip = await tripRepository.FindByIdAsync(m.TripId);
-        if (trip == null || trip.Status != TripStatus.PaymentPending)
+        if (trip == null)
             return;
         trip.MarkCompleted();
         await tripRepository.Update(trip);

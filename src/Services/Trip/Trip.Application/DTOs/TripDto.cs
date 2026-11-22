@@ -12,7 +12,6 @@ public record TripDto(
     double DropoffLat,
     double DropoffLng,
     decimal? EstimatedFare,
-    decimal? FinalFare,
     decimal? DistanceKm,
     DateTimeOffset CreatedAt,
     int RejectCount = 0,

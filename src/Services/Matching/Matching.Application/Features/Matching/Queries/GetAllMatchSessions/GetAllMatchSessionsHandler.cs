@@ -19,7 +19,7 @@ internal sealed class GetAllMatchSessionsHandler(IMatchingRepository matchingRep
             s.TripId,
             s.PickupLat,
             s.PickupLng,
-            s.DistanceKm,
+            Math.Round(s.DistanceKm, 1, MidpointRounding.AwayFromZero),
             s.EstimatedMinutes,
             s.PricingBreakdown,
             s.MatchedDriverId,

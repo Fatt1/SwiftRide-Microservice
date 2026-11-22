@@ -3,4 +3,4 @@ using Shared.CQRS;
 
 namespace Payment.Application.Features.Payments.Queries.GetPaymentByTripId;
 
-public sealed record GetPaymentByTripIdQuery(Guid TripId) : IQuery<PaymentHistoryDto>;
+public sealed record GetPaymentByTripIdQuery(Guid TripId) : IQuery<IReadOnlyList<PaymentHistoryDto>>;

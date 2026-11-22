@@ -67,6 +67,8 @@ Hệ thống đặt xe là một sàn giao dịch hai phía (two-sided marketpla
 
 Giá tiền một chuyến đi được ước lượng theo công thức:
 
+$$p = \bigl((c_d \cdot d + c_t \cdot t) \cdot s + c_m\bigr) \cdot \eta \cdot (1 + T)$$
+
 trong đó d là quãng đường, t là thời gian ước lượng, s là hệ số giá động (surge), cm là phí phụ (toll), η là hệ số khuyến mãi, T là thuế.
 
 ## 2.4 Quyết định thiết kế: 3 microservice cho SwiftRide
@@ -290,7 +292,7 @@ Module cấp cao phụ thuộc trừu tượng, không phụ thuộc chi tiết.
 
 ```
 1 // Vi du rut gon de minh hoa pattern. Bang trang thai nghiep vu day du:
-2 // Requested -> DriverAccepted -> EnRoute -> PickedUp -> DroppedOff
+2 // Requested -> DriverAccepted -> PickedUp -> DroppedOff
 3 // -> PaymentPending -> Paid; nhanh ket thuc: Cancelled / Failed.
 4 public abstract class TripState
 5 {

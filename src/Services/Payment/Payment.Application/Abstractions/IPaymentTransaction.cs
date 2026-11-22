@@ -2,7 +2,7 @@ namespace Payment.Application.Abstractions;
 
 public interface IPaymentTransaction
 {
-    // Null means the caller must leave transaction ownership to the consumer.
+    // Null means an existing transaction is owned by the surrounding handler or consumer.
     Task<IAsyncDisposable?> BeginOwnedTransactionAsync();
     Task EndTransactionAsync();
     Task RollBackTransactionAsync();

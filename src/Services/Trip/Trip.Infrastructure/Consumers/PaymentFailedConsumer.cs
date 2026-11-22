@@ -16,6 +16,9 @@ public class PaymentFailedConsumer(ITripRepository tripRepository, ILogger<Payme
         // Failures can arrive after a later attempt has started. Keep Trip pending.
         logger.LogWarning("Payment failed for trip {TripId}, payment request {PaymentRequest}: {Reason}",
             trip.Id, message.CorrelationId, message.Reason);
+
+        trip.MarkFailed(message.Reason);
+        await tripRepository.Update(trip);
     }
 }
 

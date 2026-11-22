@@ -15,6 +15,7 @@ public sealed record CreatePaymentCommand : ICommand<PaymentDto>
     public Guid IdempotencyKey { get; init; }
     public string Currency { get; init; } = "VND";
     public string? GatewayToken { get; init; }
+
     [JsonIgnore]
     public int RetryAttempt { get; init; }
 }
